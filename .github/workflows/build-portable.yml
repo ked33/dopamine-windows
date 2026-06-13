@@ -16,9 +16,7 @@ env:
   BUILD_CONFIGURATION: Release
   BUILD_PLATFORM: AnyCPU
   OUTPUT_DIR: Dopamine\bin\Release
-  ARTIFACT_DIR: artifacts\portable
-  ZIP_DIR: artifacts
-  ZIP_NAME: Dopamine-Portable-${{ github.sha }}.zip
+  ARTIFACTS_STAGE_DIR: artifacts\portable  # 暂存准备上传的文件目录
   WINRT_CONTRACTS_VERSION: 10.0.19041.1
 
 jobs:
@@ -161,7 +159,7 @@ jobs:
             "/p:WinRTContractsRoot=$env:WINRT_CONTRACTS_ROOT" `
             /verbosity:minimal
 
-      - name: Package Portable zip
+      - name: Stage Portable Files
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -169,19 +167,19 @@ jobs:
           [xml]$config = Get-Content -LiteralPath $env:PACKAGER_CONFIG
 
           $sourceRoot = Join-Path $env:GITHUB_WORKSPACE $env:OUTPUT_DIR
-          $stageRoot = Join-Path $env:GITHUB_WORKSPACE $env:ARTIFACT_DIR
-          $zipPath = Join-Path (Join-Path $env:GITHUB_WORKSPACE $env:ZIP_DIR) $env:ZIP_NAME
+          $stageRoot = Join-Path $env:GITHUB_WORKSPACE $env:ARTIFACTS_STAGE_DIR
 
           if (-not (Test-Path -LiteralPath $sourceRoot -PathType Container)) {
             throw "Build output directory was not found: $sourceRoot"
           }
 
+          # 清理并创建暂存目录
           if (Test-Path -LiteralPath $stageRoot) {
             Remove-Item -LiteralPath $stageRoot -Recurse -Force
           }
-
           New-Item -ItemType Directory -Path $stageRoot -Force | Out-Null
 
+          # 根据 XML 配置拷贝文件夹
           foreach ($directory in $config.Packager.Packaging.Portable.Directories.Directory) {
             $relativePath = [string]$directory
             $source = Join-Path $sourceRoot $relativePath
@@ -195,6 +193,7 @@ jobs:
             Copy-Item -LiteralPath $source -Destination $destination -Recurse -Force
           }
 
+          # 根据 XML 配置拷贝文件
           foreach ($file in $config.Packager.Packaging.Portable.Files.File) {
             $relativePath = [string]$file
             $source = Join-Path $sourceRoot $relativePath
@@ -208,21 +207,15 @@ jobs:
             Copy-Item -LiteralPath $source -Destination $destination -Force
           }
 
-          $zipParent = Split-Path -Parent $zipPath
-          New-Item -ItemType Directory -Path $zipParent -Force | Out-Null
-
-          if (Test-Path -LiteralPath $zipPath) {
-            Remove-Item -LiteralPath $zipPath -Force
-          }
-
-          Compress-Archive -Path (Join-Path $stageRoot '*') -DestinationPath $zipPath -CompressionLevel Optimal
-
           $fileCount = (Get-ChildItem -LiteralPath $stageRoot -Recurse -File | Measure-Object).Count
-          Write-Host "Packaged $fileCount files into $zipPath"
+          Write-Host "Prepared $fileCount files in $stageRoot for artifact upload."
 
       - name: Upload Portable artifact
         uses: actions/upload-artifact@v4
         with:
+          # 下载时的压缩包名称将基于此 name
           name: Dopamine-Portable-${{ github.sha }}
-          path: artifacts/Dopamine-Portable-${{ github.sha }}.zip
+          # 指向准备好的暂存目录，不要指向单个 zip 文件
+          path: ${{ env.ARTIFACTS_STAGE_DIR }}
           if-no-files-found: error
+          retention-days: 7
