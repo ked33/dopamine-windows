@@ -14,7 +14,7 @@ env:
   PROJECT_FILE: Dopamine\Dopamine.csproj
   PACKAGER_CONFIG: Dopamine.Packager\PackagerConfiguration.xml
   BUILD_CONFIGURATION: Release
-  BUILD_PLATFORM: Any CPU
+  BUILD_PLATFORM: AnyCPU
   OUTPUT_DIR: Dopamine\bin\Release
   ARTIFACT_DIR: artifacts\portable
   ZIP_DIR: artifacts
