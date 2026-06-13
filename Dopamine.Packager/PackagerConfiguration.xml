@@ -24,7 +24,6 @@
         <File>Dopamine.exe.config</File>
         <File>License.txt</File>
         <File>Changelog.txt</File>
-        <File>BaseSettings.xml</File>
         <File>GongSolutions.WPF.DragDrop.dll</File>
         <File>Prism.dll</File>
         <File>Prism.DryIoc.Wpf.dll</File>
