@@ -1,0 +1,157 @@
+name: Build Portable
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SOLUTION_FILE: Dopamine.sln
+  PROJECT_FILE: Dopamine\Dopamine.csproj
+  PACKAGER_CONFIG: Dopamine.Packager\PackagerConfiguration.xml
+  BUILD_CONFIGURATION: Release
+  BUILD_PLATFORM: Any CPU
+  OUTPUT_DIR: Dopamine\bin\Release
+  ARTIFACT_DIR: artifacts\portable
+  ZIP_DIR: artifacts
+  ZIP_NAME: Dopamine-Portable-${{ github.sha }}.zip
+
+jobs:
+  build-portable:
+    name: Build Portable
+    runs-on: windows-2022
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      - name: Restore NuGet packages
+        shell: pwsh
+        run: nuget restore $env:SOLUTION_FILE -NonInteractive
+
+      - name: Ensure Windows.winmd reference
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $target = 'C:\Program Files (x86)\Windows Kits\10\UnionMetadata\Windows.winmd'
+          if (Test-Path -LiteralPath $target) {
+            Write-Host "Found required Windows.winmd: $target"
+            return
+          }
+
+          $sdkRoot = 'C:\Program Files (x86)\Windows Kits\10\UnionMetadata'
+          if (-not (Test-Path -LiteralPath $sdkRoot)) {
+            throw "Windows SDK UnionMetadata directory was not found: $sdkRoot"
+          }
+
+          $source = Get-ChildItem -LiteralPath $sdkRoot -Filter Windows.winmd -Recurse -File |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1
+
+          if ($null -eq $source) {
+            throw "Windows.winmd was not found under: $sdkRoot"
+          }
+
+          Copy-Item -LiteralPath $source.FullName -Destination $target -Force
+          Write-Host "Copied Windows.winmd from '$($source.FullName)' to '$target'"
+
+      - name: Verify Windows Runtime reference
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $runtime = 'C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETCore\v4.5\System.Runtime.WindowsRuntime.dll'
+          if (-not (Test-Path -LiteralPath $runtime)) {
+            throw "Missing required reference: $runtime"
+          }
+
+          Write-Host "Found required Windows Runtime reference: $runtime"
+
+      - name: Build Dopamine
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          msbuild $env:PROJECT_FILE `
+            /m `
+            "/p:Configuration=$env:BUILD_CONFIGURATION" `
+            "/p:Platform=$env:BUILD_PLATFORM" `
+            /verbosity:minimal
+
+      - name: Package Portable zip
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          [xml]$config = Get-Content -LiteralPath $env:PACKAGER_CONFIG
+
+          $sourceRoot = Join-Path $env:GITHUB_WORKSPACE $env:OUTPUT_DIR
+          $stageRoot = Join-Path $env:GITHUB_WORKSPACE $env:ARTIFACT_DIR
+          $zipPath = Join-Path (Join-Path $env:GITHUB_WORKSPACE $env:ZIP_DIR) $env:ZIP_NAME
+
+          if (-not (Test-Path -LiteralPath $sourceRoot -PathType Container)) {
+            throw "Build output directory was not found: $sourceRoot"
+          }
+
+          if (Test-Path -LiteralPath $stageRoot) {
+            Remove-Item -LiteralPath $stageRoot -Recurse -Force
+          }
+
+          New-Item -ItemType Directory -Path $stageRoot -Force | Out-Null
+
+          foreach ($directory in $config.Packager.Packaging.Portable.Directories.Directory) {
+            $relativePath = [string]$directory
+            $source = Join-Path $sourceRoot $relativePath
+            $destination = Join-Path $stageRoot $relativePath
+
+            if (-not (Test-Path -LiteralPath $source -PathType Container)) {
+              throw "Missing Portable directory: $relativePath"
+            }
+
+            New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
+            Copy-Item -LiteralPath $source -Destination $destination -Recurse -Force
+          }
+
+          foreach ($file in $config.Packager.Packaging.Portable.Files.File) {
+            $relativePath = [string]$file
+            $source = Join-Path $sourceRoot $relativePath
+            $destination = Join-Path $stageRoot $relativePath
+
+            if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
+              throw "Missing Portable file: $relativePath"
+            }
+
+            New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
+            Copy-Item -LiteralPath $source -Destination $destination -Force
+          }
+
+          $zipParent = Split-Path -Parent $zipPath
+          New-Item -ItemType Directory -Path $zipParent -Force | Out-Null
+
+          if (Test-Path -LiteralPath $zipPath) {
+            Remove-Item -LiteralPath $zipPath -Force
+          }
+
+          Compress-Archive -Path (Join-Path $stageRoot '*') -DestinationPath $zipPath -CompressionLevel Optimal
+
+          $fileCount = (Get-ChildItem -LiteralPath $stageRoot -Recurse -File | Measure-Object).Count
+          Write-Host "Packaged $fileCount files into $zipPath"
+
+      - name: Upload Portable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dopamine-Portable-${{ github.sha }}
+          path: artifacts/Dopamine-Portable-${{ github.sha }}.zip
+          if-no-files-found: error
