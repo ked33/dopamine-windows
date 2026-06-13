@@ -5,6 +5,7 @@ using Dopamine.Core.Audio;
 using Dopamine.Core.Base;
 using Dopamine.Core.Extensions;
 using Dopamine.Core.Helpers;
+using Dopamine.Core.Settings;
 using Dopamine.Data;
 using Dopamine.Data.Entities;
 using Dopamine.Data.Metadata;
@@ -80,8 +81,8 @@ namespace Dopamine.Services.Playback
         private bool isLoadingTrack;
 
         private AudioDevice audioDevice;
-        private const int PlaybackFadeDurationMilliseconds = 500;
-        private const int PlaybackFadeSteps = 10;
+        private const int PlaybackFadeDurationMilliseconds = 1000;
+        private const int PlaybackFadeSteps = 20;
         private int fadeOperationId;
 
         public bool IsSavingQueuedTracks => this.isSavingQueuedTracks;
@@ -1008,14 +1009,7 @@ namespace Dopamine.Services.Playback
 
         private bool IsPlaybackFadeEnabled()
         {
-            try
-            {
-                return SettingsClient.Get<bool>("Playback", "EnablePlaybackFade");
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+            return PlaybackFadeSettings.IsEnabled();
         }
 
         private void CancelPlaybackFade()

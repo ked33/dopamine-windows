@@ -3,6 +3,7 @@ using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Audio;
 using Dopamine.Core.Base;
+using Dopamine.Core.Settings;
 using Dopamine.Services.Dialog;
 using Dopamine.Services.ExternalControl;
 using Dopamine.Services.I18n;
@@ -321,7 +322,8 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             get => this.checkBoxEnablePlaybackFadeChecked;
             set
             {
-                SetProperty<bool>(ref this.checkBoxEnablePlaybackFadeChecked, this.SetPlaybackFadeEnabled(value) ? value : false);
+                PlaybackFadeSettings.SetEnabled(value);
+                SetProperty<bool>(ref this.checkBoxEnablePlaybackFadeChecked, value);
             }
         }
 
@@ -475,29 +477,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
 
         private bool GetPlaybackFadeEnabled()
         {
-            try
-            {
-                return SettingsClient.Get<bool>("Playback", "EnablePlaybackFade");
-            }
-            catch
-            {
-                this.SetPlaybackFadeEnabled(false);
-                return false;
-            }
-        }
-
-        private bool SetPlaybackFadeEnabled(bool isEnabled)
-        {
-            try
-            {
-                SettingsClient.Set<bool>("Playback", "EnablePlaybackFade", isEnabled);
-                return true;
-            }
-            catch
-            {
-                // Older portable configurations may not contain this setting yet.
-                return false;
-            }
+            return PlaybackFadeSettings.IsEnabled();
         }
 
         private async void GetSpectrumStylesAsync()
