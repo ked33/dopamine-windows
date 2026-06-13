@@ -394,8 +394,8 @@
   <Text Key="Unknown_Genre">未知流派</Text>
   <Text Key="Refresh_Collection_Automatically">自动更新音乐库</Text>
   <Text Key="Loop_When_Shuffle">在随机播放模式中,在最后一首歌曲播放结束后返回播放列表的开头。</Text>
-  <Text Key="Language_Playback_Fade">播放渐入渐出</Text>
-  <Text Key="Language_Fade_Playback_On_Play_Pause_And_Song_Changes">播放、暂停和切歌时使用音频渐入渐出效果</Text>
+  <Text Key="Playback_Fade">播放渐入渐出</Text>
+  <Text Key="Fade_Playback_On_Play_Pause_And_Song_Changes">播放、暂停和切歌时使用音频渐入渐出效果</Text>
   <Text Key="Show_Song_Covers">显示曲目封面</Text>
   <Text Key="Hide_Song_Covers">隐藏曲目封面</Text>
   <Text Key="Check_For_Updates_At_Startup">启动时检查更新</Text>
