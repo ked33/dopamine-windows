@@ -67,17 +67,62 @@ jobs:
           Copy-Item -LiteralPath $source.FullName -Destination $target -Force
           Write-Host "Copied Windows.winmd from '$($source.FullName)' to '$target'"
 
-      - name: Verify Windows Runtime reference
+      - name: Ensure Windows Runtime reference
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
 
-          $runtime = 'C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETCore\v4.5\System.Runtime.WindowsRuntime.dll'
-          if (-not (Test-Path -LiteralPath $runtime)) {
-            throw "Missing required reference: $runtime"
+          $target = 'C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETCore\v4.5\System.Runtime.WindowsRuntime.dll'
+          if (Test-Path -LiteralPath $target) {
+            Write-Host "Found required Windows Runtime reference: $target"
+            return
           }
 
-          Write-Host "Found required Windows Runtime reference: $runtime"
+          $searchRoots = @(
+            'C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework',
+            'C:\Program Files\Reference Assemblies\Microsoft\Framework',
+            'C:\Program Files (x86)\Windows Kits\10',
+            'C:\Program Files (x86)\Microsoft SDKs'
+          ) | Where-Object { Test-Path -LiteralPath $_ }
+
+          if ($searchRoots.Count -eq 0) {
+            throw "No Windows Runtime reference search roots were found."
+          }
+
+          $candidates = foreach ($root in $searchRoots) {
+            Get-ChildItem -LiteralPath $root -Filter System.Runtime.WindowsRuntime.dll -Recurse -File -ErrorAction SilentlyContinue
+          }
+
+          if ($null -eq $candidates -or $candidates.Count -eq 0) {
+            throw "System.Runtime.WindowsRuntime.dll was not found under: $($searchRoots -join '; ')"
+          }
+
+          $preferredPatterns = @(
+            '*\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\Facades\System.Runtime.WindowsRuntime.dll',
+            '*\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\Facades\System.Runtime.WindowsRuntime.dll',
+            '*\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\Facades\System.Runtime.WindowsRuntime.dll',
+            '*\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.1\Facades\System.Runtime.WindowsRuntime.dll',
+            '*\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7\Facades\System.Runtime.WindowsRuntime.dll',
+            '*\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6.2\Facades\System.Runtime.WindowsRuntime.dll',
+            '*\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6.1\Facades\System.Runtime.WindowsRuntime.dll',
+            '*\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6\Facades\System.Runtime.WindowsRuntime.dll'
+          )
+
+          $source = $null
+          foreach ($pattern in $preferredPatterns) {
+            $source = $candidates | Where-Object { $_.FullName -like $pattern } | Select-Object -First 1
+            if ($null -ne $source) {
+              break
+            }
+          }
+
+          if ($null -eq $source) {
+            $source = $candidates | Sort-Object FullName -Descending | Select-Object -First 1
+          }
+
+          New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
+          Copy-Item -LiteralPath $source.FullName -Destination $target -Force
+          Write-Host "Copied Windows Runtime reference from '$($source.FullName)' to '$target'"
 
       - name: Build Dopamine
         shell: pwsh
