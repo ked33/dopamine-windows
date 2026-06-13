@@ -321,8 +321,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             get => this.checkBoxEnablePlaybackFadeChecked;
             set
             {
-                SettingsClient.Set<bool>("Playback", "EnablePlaybackFade", value);
-                SetProperty<bool>(ref this.checkBoxEnablePlaybackFadeChecked, value);
+                SetProperty<bool>(ref this.checkBoxEnablePlaybackFadeChecked, this.SetPlaybackFadeEnabled(value) ? value : false);
             }
         }
 
@@ -469,9 +468,36 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                 this.checkBoxEnableExternalControlChecked = SettingsClient.Get<bool>("Playback", "EnableExternalControl");
                 this.checkBoxLoopWhenShuffleChecked = SettingsClient.Get<bool>("Playback", "LoopWhenShuffle");
                 this.checkBoxPreventSleepWhilePlaying = SettingsClient.Get<bool>("Playback", "PreventSleepWhilePlaying");
-                this.checkBoxEnablePlaybackFadeChecked = SettingsClient.Get<bool>("Playback", "EnablePlaybackFade");
+                this.checkBoxEnablePlaybackFadeChecked = this.GetPlaybackFadeEnabled();
                 this.checkBoxEnableSystemNotificationChecked = this.notificationService.SystemNotificationIsEnabled;
             });
+        }
+
+        private bool GetPlaybackFadeEnabled()
+        {
+            try
+            {
+                return SettingsClient.Get<bool>("Playback", "EnablePlaybackFade");
+            }
+            catch
+            {
+                this.SetPlaybackFadeEnabled(false);
+                return false;
+            }
+        }
+
+        private bool SetPlaybackFadeEnabled(bool isEnabled)
+        {
+            try
+            {
+                SettingsClient.Set<bool>("Playback", "EnablePlaybackFade", isEnabled);
+                return true;
+            }
+            catch
+            {
+                // Older portable configurations may not contain this setting yet.
+                return false;
+            }
         }
 
         private async void GetSpectrumStylesAsync()

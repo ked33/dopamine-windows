@@ -1003,7 +1003,19 @@ namespace Dopamine.Services.Playback
 
         private bool ShouldUsePlaybackFade(bool isSilent = false)
         {
-            return !isSilent && !this.mute && SettingsClient.Get<bool>("Playback", "EnablePlaybackFade");
+            return !isSilent && !this.mute && this.IsPlaybackFadeEnabled();
+        }
+
+        private bool IsPlaybackFadeEnabled()
+        {
+            try
+            {
+                return SettingsClient.Get<bool>("Playback", "EnablePlaybackFade");
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         private void CancelPlaybackFade()
@@ -1110,6 +1122,11 @@ namespace Dopamine.Services.Playback
                     else
                     {
                         this.CancelPlaybackFade();
+
+                        if (!this.mute)
+                        {
+                            resumePlayer.SetVolume(this.Volume);
+                        }
                     }
 
                     await Task.Run(() => isResumed = resumePlayer.Resume());
