@@ -7,6 +7,9 @@ namespace Dopamine.Core.Extensions
 {
     public static class ListExtensions
     {
+        private static readonly object randomLock = new object();
+        private static readonly Random random = new Random();
+
         public static string FirstNonEmpty(this IEnumerable<string> strings, string alternateString)
         {
             foreach (string item in strings)
@@ -27,18 +30,17 @@ namespace Dopamine.Core.Extensions
 
         public static List<T> Randomize<T>(this List<T> list)
         {
-            var originalList = new List<T>(list); // Create a new list, so no operation performed here affects the original list object.
-            var randomList = new List<T>();
+            var randomList = new List<T>(list); // Create a new list, so no operation performed here affects the original list object.
 
-            var r = new Random();
-
-            int randomIndex = 0;
-
-            while (originalList.Count > 0)
+            lock (randomLock)
             {
-                randomIndex = r.Next(0, originalList.Count);  // Choose a random object in the list
-                randomList.Add(originalList[randomIndex]); // Add it to the new, random list
-                originalList.RemoveAt(randomIndex); // Remove to avoid duplicates
+                for (int i = randomList.Count - 1; i > 0; i--)
+                {
+                    int randomIndex = random.Next(0, i + 1);
+                    T temp = randomList[i];
+                    randomList[i] = randomList[randomIndex];
+                    randomList[randomIndex] = temp;
+                }
             }
 
             return randomList;

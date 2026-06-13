@@ -14,6 +14,8 @@ namespace Dopamine.Services.Playback
 {
     internal class QueueManager
     {
+        private static readonly object randomLock = new object();
+        private static readonly Random random = new Random();
         private ITrackRepository trackRepository;
         private TrackViewModel currentTrack;
         private object queueLock = new object();
@@ -38,6 +40,69 @@ namespace Dopamine.Services.Playback
             }
 
             return new List<int>();
+        }
+
+        private static int GetRandomNumber(int minValue, int maxValue)
+        {
+            lock (randomLock)
+            {
+                return random.Next(minValue, maxValue);
+            }
+        }
+
+        private static void EnsureQueueID(TrackViewModel track)
+        {
+            if (track != null && string.IsNullOrWhiteSpace(track.QueueID))
+            {
+                track.QueueID = Guid.NewGuid().ToString();
+            }
+        }
+
+        private List<int> GetRandomizedQueueIndices(int firstQueueIndexToAvoid)
+        {
+            List<int> randomizedQueueIndices = this.GetQueueIndices().Randomize();
+
+            if (firstQueueIndexToAvoid >= 0 && randomizedQueueIndices.Count > 1 && randomizedQueueIndices.First().Equals(firstQueueIndexToAvoid))
+            {
+                randomizedQueueIndices[0] = randomizedQueueIndices[1];
+                randomizedQueueIndices[1] = firstQueueIndexToAvoid;
+            }
+
+            return randomizedQueueIndices;
+        }
+
+        private void InsertShuffledIndicesAfterCurrentTrack(List<int> queueIndices)
+        {
+            if (queueIndices == null || queueIndices.Count == 0)
+            {
+                return;
+            }
+
+            if (this.currentTrack == null || !this.queue.Contains(this.currentTrack) || this.playbackOrder.Count == 0)
+            {
+                this.playbackOrder.AddRange(queueIndices.Randomize());
+                return;
+            }
+
+            int currentTrackIndex = this.FindPlaybackOrderIndex(this.currentTrack);
+
+            if (currentTrackIndex < 0)
+            {
+                this.playbackOrder.AddRange(queueIndices.Randomize());
+                return;
+            }
+
+            List<int> playedAndCurrentIndices = this.playbackOrder.Take(currentTrackIndex + 1).ToList();
+            List<int> notYetPlayedIndices = this.playbackOrder.Skip(currentTrackIndex + 1).ToList();
+
+            foreach (int queueIndex in queueIndices.Randomize())
+            {
+                int insertIndex = GetRandomNumber(0, notYetPlayedIndices.Count + 1);
+                notYetPlayedIndices.Insert(insertIndex, queueIndex);
+            }
+
+            playedAndCurrentIndices.AddRange(notYetPlayedIndices);
+            this.playbackOrder = playedAndCurrentIndices;
         }
 
         private int FindQueueIndex(TrackViewModel track)
@@ -69,10 +134,10 @@ namespace Dopamine.Services.Playback
                 {
                     if (this.queue.Count > 0)
                     {
-                        if (this.currentTrack != null || !this.queue.Contains(this.currentTrack))
+                        if (this.currentTrack == null || !this.queue.Contains(this.currentTrack))
                         {
                             // We're not playing a track from the queue: just shuffle.
-                            this.playbackOrder = this.GetQueueIndices().Randomize();
+                            this.playbackOrder = this.GetRandomizedQueueIndices(-1);
                         }
                         else
                         {
@@ -101,6 +166,28 @@ namespace Dopamine.Services.Playback
                     }
                 }
             });
+        }
+
+        public IDictionary<string, long> GetShuffleOrderByQueueID()
+        {
+            var shuffleOrderByQueueID = new Dictionary<string, long>();
+
+            lock (this.queueLock)
+            {
+                for (int shuffleOrderID = 0; shuffleOrderID < this.playbackOrder.Count; shuffleOrderID++)
+                {
+                    int queueIndex = this.playbackOrder[shuffleOrderID];
+
+                    if (queueIndex >= 0 && queueIndex < this.queue.Count)
+                    {
+                        TrackViewModel track = this.queue[queueIndex];
+                        EnsureQueueID(track);
+                        shuffleOrderByQueueID[track.QueueID] = shuffleOrderID;
+                    }
+                }
+            }
+
+            return shuffleOrderByQueueID;
         }
 
         public TrackViewModel CurrentTrack()
@@ -187,7 +274,7 @@ namespace Dopamine.Services.Playback
             return previousTrack;
         }
 
-        public async Task<TrackViewModel> NextTrackAsync(LoopMode loopMode, bool returnToStart)
+        public async Task<TrackViewModel> NextTrackAsync(LoopMode loopMode, bool returnToStart, bool startNewShuffleRound)
         {
             TrackViewModel nextTrack = null;
 
@@ -224,6 +311,11 @@ namespace Dopamine.Services.Playback
                                 }
                                 else if (loopMode.Equals(LoopMode.All) | returnToStart)
                                 {
+                                    if (startNewShuffleRound)
+                                    {
+                                        this.playbackOrder = this.GetRandomizedQueueIndices(this.FindQueueIndex(this.currentTrack));
+                                    }
+
                                     // When LoopMode.All is enabled, when we reach the end of the queue, return the first track.
                                     nextTrack = this.queue[this.playbackOrder.First()];
                                 }
@@ -243,6 +335,7 @@ namespace Dopamine.Services.Playback
         public async Task<EnqueueResult> EnqueueAsync(IList<TrackViewModel> tracks, bool shuffle)
         {
             var result = new EnqueueResult { IsSuccess = true };
+            var addedQueueIndices = new List<int>();
 
             try
             {
@@ -252,7 +345,11 @@ namespace Dopamine.Services.Playback
                     {
                         foreach (TrackViewModel track in tracks)
                         {
-                            this.queue.Add(track.DeepCopy());
+                            TrackViewModel queuedTrack = track.DeepCopy();
+                            EnsureQueueID(queuedTrack);
+
+                            this.queue.Add(queuedTrack);
+                            addedQueueIndices.Add(this.queue.Count - 1);
                         }
 
                         result.EnqueuedTracks = tracks;
@@ -261,7 +358,20 @@ namespace Dopamine.Services.Playback
 
                 if (shuffle)
                 {
-                    await this.ShuffleAsync();
+                    await Task.Run(() =>
+                    {
+                        lock (this.queueLock)
+                        {
+                            if (this.playbackOrder.Count == 0 || this.currentTrack == null || !this.queue.Contains(this.currentTrack))
+                            {
+                                this.playbackOrder = this.GetRandomizedQueueIndices(-1);
+                            }
+                            else
+                            {
+                                this.InsertShuffledIndicesAfterCurrentTrack(addedQueueIndices);
+                            }
+                        }
+                    });
                 }
                 else
                 {
@@ -272,6 +382,49 @@ namespace Dopamine.Services.Playback
             {
                 result.IsSuccess = false;
                 LogClient.Error("Error while enqueuing tracks. Exception: {0}", ex.Message);
+            }
+
+            return result;
+        }
+
+        public async Task<EnqueueResult> EnqueueRestoredAsync(IList<TrackViewModel> tracks, IList<long> shuffleOrderIDs, bool shuffle)
+        {
+            var result = new EnqueueResult { IsSuccess = true };
+
+            try
+            {
+                await Task.Run(() =>
+                {
+                    lock (this.queueLock)
+                    {
+                        foreach (TrackViewModel track in tracks)
+                        {
+                            TrackViewModel queuedTrack = track.DeepCopy(true);
+                            EnsureQueueID(queuedTrack);
+                            this.queue.Add(queuedTrack);
+                        }
+
+                        result.EnqueuedTracks = tracks;
+
+                        if (shuffle && shuffleOrderIDs != null && shuffleOrderIDs.Count == this.queue.Count)
+                        {
+                            this.playbackOrder = Enumerable.Range(0, this.queue.Count).OrderBy(i => shuffleOrderIDs[i]).ThenBy(i => i).ToList();
+                        }
+                        else if (shuffle)
+                        {
+                            this.playbackOrder = this.GetRandomizedQueueIndices(-1);
+                        }
+                        else
+                        {
+                            this.playbackOrder = this.GetQueueIndices();
+                        }
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                result.IsSuccess = false;
+                LogClient.Error("Error while restoring queued tracks. Exception: {0}", ex.Message);
             }
 
             return result;
@@ -301,7 +454,9 @@ namespace Dopamine.Services.Playback
 
                         foreach (TrackViewModel track in tracks)
                         {
-                            tracksToAdd.Add(track.DeepCopy());
+                            TrackViewModel queuedTrack = track.DeepCopy();
+                            EnsureQueueID(queuedTrack);
+                            tracksToAdd.Add(queuedTrack);
                         }
 
                         this.queue.InsertRange(queueIndex + 1, tracksToAdd);
@@ -370,45 +525,55 @@ namespace Dopamine.Services.Playback
                     {
                         // First, get the tracks to dequeue and which are in the queue (normally it's all of them. But we're just making sure.)
                         IList<TrackViewModel> tracksToDequeue = this.queue.Where(x => tracks.Contains(x)).ToList();
+                        List<int> queueIndicesToRemove = tracksToDequeue.Select(x => this.queue.IndexOf(x)).Where(x => x >= 0).Distinct().OrderByDescending(x => x).ToList();
 
-                        // Then, remove from playbackOrder
-                        foreach (TrackViewModel trackToDequeue in tracksToDequeue)
+                        if (tracksToDequeue.Contains(this.currentTrack))
                         {
-                            try
-                            {
-                                nextAvailableTrack = null;
+                            int currentPlaybackOrderIndex = this.FindPlaybackOrderIndex(this.currentTrack);
+                            int nextPlaybackOrderIndex = currentPlaybackOrderIndex + 1;
+                            List<int> queueIndicesToRemoveAscending = queueIndicesToRemove.OrderBy(x => x).ToList();
 
-                                try
-                                {
-                                    nextAvailableTrack = this.queue[this.playbackOrder[this.FindPlaybackOrderIndex(trackToDequeue) + 1]];
-                                }
-                                catch (Exception)
-                                {
-                                    // Intended suppression
-                                }
-
-                                this.playbackOrder.Remove(this.FindPlaybackOrderIndex(trackToDequeue));
-                            }
-                            catch (Exception ex)
+                            while (nextPlaybackOrderIndex < this.playbackOrder.Count && queueIndicesToRemoveAscending.Contains(this.playbackOrder[nextPlaybackOrderIndex]))
                             {
-                                LogClient.Error($"Error while removing track with path='{trackToDequeue.Path}' from the playbackOrder. Exception: {ex.Message}");
-                                throw;
+                                nextPlaybackOrderIndex++;
                             }
 
+                            if (nextPlaybackOrderIndex < this.playbackOrder.Count)
+                            {
+                                nextAvailableTrack = this.queue[this.playbackOrder[nextPlaybackOrderIndex]];
+                            }
                         }
 
-                        // Finally, remove from queue
-                        foreach (TrackViewModel trackToDequeue in tracksToDequeue)
+                        foreach (int queueIndexToRemove in queueIndicesToRemove)
                         {
+                            TrackViewModel trackToDequeue = null;
+
                             try
                             {
-                                this.queue.Remove(trackToDequeue);
-                                isPlayingTrackDequeued = isPlayingTrackDequeued || trackToDequeue.Equals(this.currentTrack);
+                                trackToDequeue = this.queue[queueIndexToRemove];
+
+                                this.playbackOrder.RemoveAll(x => x == queueIndexToRemove);
+
+                                for (int i = 0; i < this.playbackOrder.Count; i++)
+                                {
+                                    if (this.playbackOrder[i] > queueIndexToRemove)
+                                    {
+                                        this.playbackOrder[i] -= 1;
+                                    }
+                                }
+
+                                if (trackToDequeue.Equals(this.currentTrack))
+                                {
+                                    isPlayingTrackDequeued = true;
+                                    this.currentTrack = null;
+                                }
+
                                 dequeuedTracks.Add(trackToDequeue);
+                                this.queue.RemoveAt(queueIndexToRemove);
                             }
                             catch (Exception ex)
                             {
-                                LogClient.Error($"Error while removing track with path='{trackToDequeue.Path}' from the queue. Exception: {ex.Message}");
+                                LogClient.Error($"Error while removing track with path='{trackToDequeue?.Path}' from the queue. Exception: {ex.Message}");
                                 throw;
                             }
 
@@ -440,9 +605,22 @@ namespace Dopamine.Services.Playback
             return dequeueResult;
         }
 
-        public void SetCurrentTrack(string path)
+        public void SetCurrentTrack(TrackViewModel track)
         {
-            this.currentTrack = this.queue.Where(x=> x.SafePath.Equals(path.ToSafePath())).FirstOrDefault();
+            if (track == null)
+            {
+                this.currentTrack = null;
+                return;
+            }
+
+            EnsureQueueID(track);
+
+            this.currentTrack = this.queue.Where(x => !string.IsNullOrWhiteSpace(x.QueueID) && x.QueueID.Equals(track.QueueID)).FirstOrDefault();
+
+            if (this.currentTrack == null)
+            {
+                this.currentTrack = this.queue.Where(x=> x.SafePath.Equals(track.SafePath)).FirstOrDefault();
+            }
         }
 
         public async Task<bool> UpdateQueueOrderAsync(IList<TrackViewModel> tracks, bool isShuffled)
@@ -460,10 +638,44 @@ namespace Dopamine.Services.Playback
                 {
                     lock (this.queueLock)
                     {
+                        List<string> currentPlaybackQueueIDs = this.playbackOrder
+                            .Where(i => i >= 0 && i < this.queue.Count)
+                            .Select(i => this.queue[i].QueueID)
+                            .ToList();
+
                         this.queue.Clear();
                         this.queue.AddRange(tracks);
 
-                        if (!isShuffled)
+                        foreach (TrackViewModel track in this.queue)
+                        {
+                            EnsureQueueID(track);
+                        }
+
+                        if (isShuffled)
+                        {
+                            var updatedPlaybackOrder = new List<int>();
+
+                            foreach (string queueID in currentPlaybackQueueIDs)
+                            {
+                                int queueIndex = this.queue.FindIndex(x => !string.IsNullOrWhiteSpace(x.QueueID) && x.QueueID.Equals(queueID));
+
+                                if (queueIndex >= 0 && !updatedPlaybackOrder.Contains(queueIndex))
+                                {
+                                    updatedPlaybackOrder.Add(queueIndex);
+                                }
+                            }
+
+                            foreach (int queueIndex in this.GetQueueIndices())
+                            {
+                                if (!updatedPlaybackOrder.Contains(queueIndex))
+                                {
+                                    updatedPlaybackOrder.Add(queueIndex);
+                                }
+                            }
+
+                            this.playbackOrder = updatedPlaybackOrder;
+                        }
+                        else
                         {
                             this.playbackOrder = this.GetQueueIndices();
                         }

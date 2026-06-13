@@ -11,12 +11,16 @@ namespace Dopamine.Data.Entities
 
         public string SafePath { get; set; }
 
+        public string QueueID { get; set; }
+
         public long IsPlaying { get; set; }
 
         public long ProgressSeconds { get; set; }
 
         public long OrderID { get; set; }
-      
+
+        public long ShuffleOrderID { get; set; }
+
         public override bool Equals(object obj)
         {
             if (obj == null || !GetType().Equals(obj.GetType()))

@@ -25,7 +25,7 @@ namespace Dopamine.Data
         // NOTE: whenever there is a change in the database schema,
         // this version MUST be incremented and a migration method
         // MUST be supplied to match the new version number
-        protected const int CURRENT_VERSION = 27;
+        protected const int CURRENT_VERSION = 28;
         private ISQLiteConnectionFactory factory;
         private int userDatabaseVersion;
 
@@ -120,9 +120,11 @@ namespace Dopamine.Data
                              "QueuedTrackID         INTEGER," +
                              "Path	                TEXT," +
                              "SafePath	            TEXT," +
+                             "QueueID               TEXT," +
                              "IsPlaying             INTEGER," +
                              "ProgressSeconds       INTEGER," +
                              "OrderID               INTEGER," +
+                             "ShuffleOrderID        INTEGER," +
                              "PRIMARY KEY(QueuedTrackID));");
 
                 conn.Execute("CREATE TABLE TrackStatistic (" +
@@ -1104,6 +1106,39 @@ namespace Dopamine.Data
                              "SafePath	            TEXT);");
 
                 conn.Execute("CREATE INDEX BlacklistTrackSafePathIndex ON BlacklistTrack(SafePath);");
+
+                conn.Execute("COMMIT;");
+                conn.Execute("VACUUM;");
+            }
+        }
+
+        [DatabaseVersion(28)]
+        private void Migrate28()
+        {
+            using (var conn = this.factory.GetConnection())
+            {
+                conn.Execute("BEGIN TRANSACTION;");
+
+                try
+                {
+                    conn.Execute("ALTER TABLE QueuedTrack ADD QueueID TEXT;");
+                }
+                catch (Exception)
+                {
+                    // The column already exists in databases migrated through version 17.
+                }
+
+                try
+                {
+                    conn.Execute("ALTER TABLE QueuedTrack ADD ShuffleOrderID INTEGER;");
+                }
+                catch (Exception)
+                {
+                    // The column already exists if this migration was partially applied.
+                }
+
+                conn.Execute("UPDATE QueuedTrack SET QueueID=QueuedTrackID WHERE QueueID IS NULL OR TRIM(QueueID)='';");
+                conn.Execute("UPDATE QueuedTrack SET ShuffleOrderID=OrderID;");
 
                 conn.Execute("COMMIT;");
                 conn.Execute("VACUUM;");

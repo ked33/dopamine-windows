@@ -25,9 +25,12 @@ namespace Dopamine.Services.Entities
             this.metadataService = metadataService;
             this.scrobblingService = scrobblingService;
             this.Track = track;
+            this.QueueID = Guid.NewGuid().ToString();
         }
 
         public string PlaylistEntry { get; set; }
+
+        public string QueueID { get; set; }
 
         public bool IsPlaylistEntry => !string.IsNullOrEmpty(this.PlaylistEntry);
 
@@ -220,7 +223,19 @@ namespace Dopamine.Services.Entities
 
         public TrackViewModel DeepCopy()
         {
-            return new TrackViewModel(this.metadataService, this.scrobblingService, this.Track);
+            return this.DeepCopy(false);
+        }
+
+        public TrackViewModel DeepCopy(bool preserveQueueID)
+        {
+            var copy = new TrackViewModel(this.metadataService, this.scrobblingService, this.Track);
+
+            if (preserveQueueID && !string.IsNullOrWhiteSpace(this.QueueID))
+            {
+                copy.QueueID = this.QueueID;
+            }
+
+            return copy;
         }
 
         public void UpdateTrack(Track track)
