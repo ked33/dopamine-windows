@@ -80,6 +80,9 @@ namespace Dopamine.Services.Playback
         private bool isLoadingTrack;
 
         private AudioDevice audioDevice;
+        private const int PlaybackFadeDurationMilliseconds = 500;
+        private const int PlaybackFadeSteps = 10;
+        private int fadeOperationId;
 
         public bool IsSavingQueuedTracks => this.isSavingQueuedTracks;
 
@@ -149,6 +152,7 @@ namespace Dopamine.Services.Playback
 
                 this.volume = value;
 
+                this.CancelPlaybackFade();
                 if (this.player != null && !this.mute) this.player.SetVolume(value);
 
                 SettingsClient.Set<double>("Playback", "Volume", Math.Round(value, 2));
@@ -585,6 +589,7 @@ namespace Dopamine.Services.Playback
         public void SetMute(bool mute)
         {
             this.mute = mute;
+            this.CancelPlaybackFade();
 
             if (this.player != null)
             {
@@ -634,6 +639,8 @@ namespace Dopamine.Services.Playback
 
         public void Stop()
         {
+            this.CancelPlaybackFade();
+
             if (this.player != null && this.player.CanStop)
             {
                 this.player.Stop();
@@ -994,13 +1001,88 @@ namespace Dopamine.Services.Playback
             this.ResetSavePlaybackCountersTimer();
         }
 
+        private bool ShouldUsePlaybackFade(bool isSilent = false)
+        {
+            return !isSilent && !this.mute && SettingsClient.Get<bool>("Playback", "EnablePlaybackFade");
+        }
+
+        private void CancelPlaybackFade()
+        {
+            Interlocked.Increment(ref this.fadeOperationId);
+        }
+
+        private async Task FadeCurrentPlayerVolumeAsync(float targetVolume)
+        {
+            IPlayer fadePlayer = this.player;
+
+            if (fadePlayer == null)
+            {
+                return;
+            }
+
+            int operationId = Interlocked.Increment(ref this.fadeOperationId);
+
+            targetVolume = Math.Max(0.0f, Math.Min(1.0f, targetVolume));
+            float startVolume;
+
+            try
+            {
+                startVolume = fadePlayer.GetVolume();
+            }
+            catch (Exception)
+            {
+                startVolume = this.Volume;
+            }
+
+            startVolume = Math.Max(0.0f, Math.Min(1.0f, startVolume));
+
+            if (Math.Abs(startVolume - targetVolume) < 0.001f)
+            {
+                fadePlayer.SetVolume(targetVolume);
+                return;
+            }
+
+            for (int step = 1; step <= PlaybackFadeSteps; step++)
+            {
+                if (operationId != this.fadeOperationId || !object.ReferenceEquals(fadePlayer, this.player))
+                {
+                    return;
+                }
+
+                float nextVolume = startVolume + ((targetVolume - startVolume) * step / PlaybackFadeSteps);
+                fadePlayer.SetVolume(nextVolume);
+                await Task.Delay(PlaybackFadeDurationMilliseconds / PlaybackFadeSteps);
+            }
+
+            if (operationId == this.fadeOperationId && object.ReferenceEquals(fadePlayer, this.player))
+            {
+                fadePlayer.SetVolume(targetVolume);
+            }
+        }
+
         private async Task PauseAsync(bool isSilent = false)
         {
             try
             {
-                if (this.player != null)
+                IPlayer pausePlayer = this.player;
+
+                if (pausePlayer != null)
                 {
-                    await Task.Run(() => this.player.Pause());
+                    if (this.ShouldUsePlaybackFade(isSilent) && this.IsPlaying)
+                    {
+                        await this.FadeCurrentPlayerVolumeAsync(0.0f);
+                    }
+                    else
+                    {
+                        this.CancelPlaybackFade();
+                    }
+
+                    if (!object.ReferenceEquals(pausePlayer, this.player))
+                    {
+                        return;
+                    }
+
+                    await Task.Run(() => pausePlayer.Pause());
                     this.PlaybackPaused(this, new PlaybackPausedEventArgs() { IsSilent = isSilent });
                 }
             }
@@ -1014,14 +1096,37 @@ namespace Dopamine.Services.Playback
         {
             try
             {
-                if (this.player != null)
+                IPlayer resumePlayer = this.player;
+
+                if (resumePlayer != null)
                 {
                     bool isResumed = false;
-                    await Task.Run(() => isResumed = this.player.Resume());
+                    bool shouldFade = this.ShouldUsePlaybackFade();
+
+                    if (shouldFade)
+                    {
+                        resumePlayer.SetVolume(0.0f);
+                    }
+                    else
+                    {
+                        this.CancelPlaybackFade();
+                    }
+
+                    await Task.Run(() => isResumed = resumePlayer.Resume());
+
+                    if (!object.ReferenceEquals(resumePlayer, this.player))
+                    {
+                        return;
+                    }
 
                     if (isResumed)
                     {
                         this.PlaybackResumed(this, new EventArgs());
+
+                        if (shouldFade)
+                        {
+                            await this.FadeCurrentPlayerVolumeAsync(this.Volume);
+                        }
                     }
                     else
                     {
@@ -1053,6 +1158,8 @@ namespace Dopamine.Services.Playback
 
         private void StopPlayback()
         {
+            this.CancelPlaybackFade();
+
             if (this.player != null)
             {
                 // Remove the previous Stopped handler (not sure this is needed)
@@ -1078,7 +1185,7 @@ namespace Dopamine.Services.Playback
             this.player = this.playerFactory.Create(this.hasMediaFoundationSupport);
 
             this.player.SetPlaybackSettings(this.Latency, this.EventMode, this.ExclusiveMode, this.activePreset.Bands, this.UseAllAvailableChannels);
-            this.player.SetVolume(silent | this.Mute ? 0.0f : this.Volume);
+            this.player.SetVolume(silent || this.Mute || this.ShouldUsePlaybackFade(silent) ? 0.0f : this.Volume);
 
             // We need to set PlayingTrack before trying to play the Track.
             // So if we go into the Catch when trying to play the Track,
@@ -1097,7 +1204,7 @@ namespace Dopamine.Services.Playback
             this.player.PlaybackFinished += this.PlaybackFinishedHandler;
         }
 
-        private async Task<bool> TryPlayAsync(TrackViewModel track, bool isSilent = false)
+        private async Task<bool> TryPlayAsync(TrackViewModel track, bool isSilent = false, bool fadeOutCurrentTrack = true)
         {
             if (track == null)
             {
@@ -1113,11 +1220,21 @@ namespace Dopamine.Services.Playback
             this.OnLoadingTrack(true);
 
             bool isPlaybackSuccess = true;
+            bool fadeInAfterPlaybackSuccess = false;
             PlaybackFailedEventArgs playbackFailedEventArgs = null;
 
             try
             {
                 // If a Track was playing, make sure it is now stopped.
+                if (fadeOutCurrentTrack && this.ShouldUsePlaybackFade() && this.IsPlaying)
+                {
+                    await this.FadeCurrentPlayerVolumeAsync(0.0f);
+                }
+                else
+                {
+                    this.CancelPlaybackFade();
+                }
+
                 this.StopPlayback();
 
                 // Check that the file exists
@@ -1140,6 +1257,8 @@ namespace Dopamine.Services.Playback
                 // direction for cover art when the next Track is a file from double click in Windows.
                 this.isPlayingPreviousTrack = false;
                 LogClient.Info("Playing the file {0}. EventMode={1}, ExclusiveMode={2}, LoopMode={3}, Shuffle={4}", track.Path, this.EventMode, this.ExclusiveMode, this.LoopMode, this.shuffle);
+
+                fadeInAfterPlaybackSuccess = this.ShouldUsePlaybackFade(isSilent);
             }
             catch (FileNotFoundException fnfex)
             {
@@ -1172,6 +1291,11 @@ namespace Dopamine.Services.Playback
             }
 
             this.OnLoadingTrack(false);
+
+            if (isPlaybackSuccess && fadeInAfterPlaybackSuccess)
+            {
+                await this.FadeCurrentPlayerVolumeAsync(this.Volume);
+            }
 
             return isPlaybackSuccess;
         }
@@ -1260,7 +1384,7 @@ namespace Dopamine.Services.Playback
                 }
             }
 
-            return await this.TryPlayAsync(nextTrack);
+            return await this.TryPlayAsync(nextTrack, false, userHasRequestedNextTrack);
         }
 
 

@@ -24,6 +24,10 @@
             <ComboBox x:Name="ComboBoxAudioDevice" MinWidth="150" Style="{StaticResource MetroComboBox}" Margin="0,15,0,0" Padding="0" HorizontalAlignment="Left" VerticalContentAlignment="Center" ItemsSource="{Binding AudioDevices}" SelectedItem="{Binding SelectedAudioDevice}"/>
             <TextBlock Margin="0,15,0,0" Text="{DynamicResource Language_Latency}" Foreground="{DynamicResource Brush_PrimaryText}"/>
             <ComboBox x:Name="ComboBoxLatency" Style="{StaticResource MetroComboBox}" Margin="0,15,0,0" Padding="0" HorizontalAlignment="Left" VerticalContentAlignment="Center" Width="150" ItemsSource="{Binding Latencies}" SelectedItem="{Binding SelectedLatency}"/>
+            <!-- Playback fade -->
+            <Label Margin="0,20,0,0" Style="{StaticResource TitleLabel}" Content="{DynamicResource Language_Playback_Fade}" />
+            <TextBlock Margin="0,5,0,0" Text="{DynamicResource Language_Fade_Playback_On_Play_Pause_And_Song_Changes}" Foreground="{DynamicResource Brush_PrimaryText}"/>
+            <dc:Windows10ToggleSwitch x:Name="CheckBoxEnablePlaybackFade" Margin="0,10,0,0" HorizontalAlignment="Left" FontSize="12" OnLabel="{DynamicResource Language_Yes}" OffLabel="{DynamicResource Language_No}" Foreground="{DynamicResource Brush_PrimaryText}" Accent="{DynamicResource Brush_Accent}" IsChecked="{Binding CheckBoxEnablePlaybackFadeChecked}"/>
             <!--<StackPanel Margin="0,20,0,0">
                 <TextBlock Text="{DynamicResource Language_Wasapi_Event_Mode}" Foreground="{DynamicResource Brush_PrimaryText}"/>
                 <dc:Windows10ToggleSwitch x:Name="CheckBoxWasapiEventMode"  Margin="0,10,0,0" HorizontalAlignment="Left" FontSize="12" OnLabel="{DynamicResource Language_Yes}" OffLabel="{DynamicResource Language_No}" Foreground="{DynamicResource Brush_PrimaryText}" Accent="{DynamicResource Brush_Accent}" IsChecked="{Binding CheckBoxWasapiEventModeChecked}"/>

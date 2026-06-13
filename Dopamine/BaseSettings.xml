@@ -226,6 +226,9 @@
     <Setting Name="LoopWhenShuffle">
       <Value>True</Value>
     </Setting>
+    <Setting Name="EnablePlaybackFade">
+      <Value>False</Value>
+    </Setting>
   </Namespace>
   <Namespace Name="Ordering">
     <Setting Name="ArtistsArtistType">

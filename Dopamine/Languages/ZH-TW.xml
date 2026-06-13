@@ -394,6 +394,8 @@
   <Text Key="Unknown_Genre">未知類型</Text>
   <Text Key="Refresh_Collection_Automatically">自動重新整理媒體庫</Text>
   <Text Key="Loop_When_Shuffle">在隨機播放模式中，當最后一首音樂播放結束後返回播放清單的開頭。</Text>
+  <Text Key="Playback_Fade">播放淡入淡出</Text>
+  <Text Key="Fade_Playback_On_Play_Pause_And_Song_Changes">播放、暫停和切歌時使用音訊淡入淡出效果</Text>
   <Text Key="Show_Song_Covers">顯示音樂封面</Text>
   <Text Key="Hide_Song_Covers">隱藏音樂封面</Text>
   <Text Key="Check_For_Updates_At_Startup">啟動時檢查更新</Text>

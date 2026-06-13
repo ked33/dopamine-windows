@@ -394,6 +394,8 @@
   <Text Key="Unknown_Genre">Unknown genre</Text>
   <Text Key="Refresh_Collection_Automatically">Refresh the collection automatically</Text>
   <Text Key="Loop_When_Shuffle">During shuffled playback, return to the start of the playlist after the last song.</Text>
+  <Text Key="Playback_Fade">Playback fade</Text>
+  <Text Key="Fade_Playback_On_Play_Pause_And_Song_Changes">Fade audio in and out when playing, pausing, and changing songs</Text>
   <Text Key="Show_Song_Covers">Show song covers</Text>
   <Text Key="Hide_Song_Covers">Hide song covers</Text>
   <Text Key="Check_For_Updates_At_Startup">Check for updates at startup</Text>
