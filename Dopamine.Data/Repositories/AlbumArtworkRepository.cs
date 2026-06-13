@@ -171,7 +171,7 @@ namespace Dopamine.Data.Repositories
                     {
                         try
                         {
-                            artworkIds = conn.Query<AlbumArtwork>("SELECT * FROM AlbumArtwork;").Select(a => a.ArtworkID).ToList();
+                            artworkIds = conn.Query<AlbumArtwork>("SELECT ArtworkID FROM AlbumArtwork;").Select(a => a.ArtworkID).ToList();
                         }
                         catch (Exception ex)
                         {

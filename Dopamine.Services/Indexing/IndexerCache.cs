@@ -4,13 +4,12 @@ using Dopamine.Data.Entities;
 using SQLite;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Dopamine.Services.Indexing
 {
     internal class IndexerCache
     {
-        private Dictionary<long, Track> cachedTracks;
+        private Dictionary<string, long> cachedTrackIdsBySafePath;
 
         private ISQLiteConnectionFactory factory;
 
@@ -24,21 +23,22 @@ namespace Dopamine.Services.Indexing
             bool hasCachedTrack = false;
             long similarTrackId = 0;
 
-            Track tempTrack = track;
+            if (this.cachedTrackIdsBySafePath == null || string.IsNullOrEmpty(track.SafePath))
+            {
+                return false;
+            }
 
             try
             {
-                similarTrackId = this.cachedTracks.Where((t) => t.Value.Equals(tempTrack)).Select((t) => t.Key).FirstOrDefault();
+                if (this.cachedTrackIdsBySafePath.TryGetValue(track.SafePath, out similarTrackId))
+                {
+                    hasCachedTrack = true;
+                    track.TrackID = similarTrackId;
+                }
             }
             catch (Exception ex)
             {
                 LogClient.Error("There was a problem checking if Track with path '{0}' exists in the cache. Exception: {1}", track.Path, ex.Message);
-            }
-
-            if (similarTrackId != 0)
-            {
-                hasCachedTrack = true;
-                track.TrackID = similarTrackId;
             }
 
             return hasCachedTrack;
@@ -46,16 +46,35 @@ namespace Dopamine.Services.Indexing
 
         public void AddTrack(Track track)
         {
-            this.cachedTracks.Add(track.TrackID, track);
+            if (!string.IsNullOrEmpty(track.SafePath))
+            {
+                if (this.cachedTrackIdsBySafePath == null)
+                {
+                    this.cachedTrackIdsBySafePath = new Dictionary<string, long>();
+                }
+
+                this.cachedTrackIdsBySafePath[track.SafePath] = track.TrackID;
+            }
         }
 
         public void Initialize()
         {
-            // Comparing new and existing objects will happen in a Dictionary cache. This should improve performance.
+            // Track lookup only needs SafePath -> TrackID. Avoid keeping full Track entities in memory while indexing.
             using (SQLiteConnection conn = this.factory.GetConnection())
             {
-                this.cachedTracks = conn.Table<Track>().ToDictionary(trk => trk.TrackID, trk => trk);
+                this.cachedTrackIdsBySafePath = new Dictionary<string, long>();
+
+                foreach (Track track in conn.Query<Track>("SELECT TrackID, SafePath FROM Track;"))
+                {
+                    this.AddTrack(track);
+                }
             }
+        }
+
+        public void Clear()
+        {
+            this.cachedTrackIdsBySafePath?.Clear();
+            this.cachedTrackIdsBySafePath = null;
         }
     }
 }

@@ -166,10 +166,10 @@ namespace Dopamine.Services.Indexing
                     }
                     else
                     {
-                        long databaseNeedsIndexingCount = conn.Table<Track>().Select(t => t).ToList().Where(t => t.NeedsIndexing == 1).LongCount();
-                        long databaseLastDateFileModified = conn.Table<Track>().Select(t => t).ToList().OrderByDescending(t => t.DateFileModified).Select(t => t.DateFileModified).FirstOrDefault();
-                        long diskLastDateFileModified = this.allDiskPaths.Count > 0 ? this.allDiskPaths.Select((t) => t.DateModifiedTicks).OrderByDescending((t) => t).First() : 0;
-                        long databaseTrackCount = conn.Table<Track>().Select(t => t).LongCount();
+                        long databaseNeedsIndexingCount = conn.ExecuteScalar<long>("SELECT COUNT(*) FROM Track WHERE NeedsIndexing = 1;");
+                        long databaseLastDateFileModified = conn.ExecuteScalar<long>("SELECT IFNULL(MAX(DateFileModified), 0) FROM Track;");
+                        long diskLastDateFileModified = this.allDiskPaths.Count > 0 ? this.allDiskPaths.Max((t) => t.DateModifiedTicks) : 0;
+                        long databaseTrackCount = conn.ExecuteScalar<long>("SELECT COUNT(*) FROM Track;");
 
                         performIndexing = databaseNeedsIndexingCount > 0 |
                                           databaseTrackCount != this.allDiskPaths.Count |
@@ -195,6 +195,17 @@ namespace Dopamine.Services.Indexing
             {
                 LogClient.Error("Could not check the collection. Exception: {0}", ex.Message);
             }
+            finally
+            {
+                this.ReleaseIndexingMemory();
+            }
+        }
+
+        private void ReleaseIndexingMemory()
+        {
+            this.allDiskPaths = null;
+            this.newDiskPaths = null;
+            this.cache.Clear();
         }
 
         private async Task IndexCollectionAsync()
@@ -320,25 +331,27 @@ namespace Dopamine.Services.Indexing
         {
             await Task.Run(() =>
             {
-                var dbPaths = new List<string>();
+                var dbPaths = new HashSet<string>();
 
                 using (var conn = this.factory.GetConnection())
                 {
-                    dbPaths = conn.Table<Track>().ToList().Select((trk) => trk.SafePath).ToList();
+                    dbPaths = new HashSet<string>(conn.Query<Track>("SELECT SafePath FROM Track;").Select((trk) => trk.SafePath));
                 }
 
-                var removedPaths = new List<string>();
+                var removedPaths = new HashSet<string>();
 
                 using (var conn = this.factory.GetConnection())
                 {
-                    removedPaths = conn.Table<RemovedTrack>().ToList().Select((t) => t.SafePath).ToList();
+                    removedPaths = new HashSet<string>(conn.Query<RemovedTrack>("SELECT SafePath FROM RemovedTrack;").Select((t) => t.SafePath));
                 }
 
                 this.newDiskPaths = new List<FolderPathInfo>();
 
                 foreach (FolderPathInfo diskpath in this.allDiskPaths)
                 {
-                    if (!dbPaths.Contains(diskpath.Path.ToSafePath()) && (ignoreRemovedFiles ? !removedPaths.Contains(diskpath.Path.ToSafePath()) : true))
+                    string safePath = diskpath.Path.ToSafePath();
+
+                    if (!dbPaths.Contains(safePath) && (ignoreRemovedFiles ? !removedPaths.Contains(safePath) : true))
                     {
                         this.newDiskPaths.Add(diskpath);
                     }
@@ -623,7 +636,7 @@ namespace Dopamine.Services.Indexing
 
                 using (SQLiteConnection conn = this.factory.GetConnection())
                 {
-                    IList<string> artworkIds = await this.albumArtworkRepository.GetArtworkIdsAsync();
+                    var artworkIds = new HashSet<string>(await this.albumArtworkRepository.GetArtworkIdsAsync());
 
                     foreach (string artworkFile in artworkFiles)
                     {

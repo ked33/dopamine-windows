@@ -4,7 +4,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 namespace Dopamine.Core.IO
 {
@@ -16,30 +15,14 @@ namespace Dopamine.Core.IO
 
             try
             {
-                var files = new List<string>();
                 var exceptions = new ConcurrentQueue<Exception>();
+                var validExtensionSet = new HashSet<string>(validExtensions, StringComparer.OrdinalIgnoreCase);
 
-                TryDirectoryRecursiveGetFiles(directory, files, exceptions);
+                TryDirectoryRecursiveGetFolderPaths(folderId, directory, validExtensionSet, folderPaths, exceptions);
 
                 foreach (Exception ex in exceptions)
                 {
                     LogClient.Error("Error occurred while getting files recursively. Exception: {0}", ex.Message);
-                }
-
-                foreach (string file in files)
-                {
-                    try
-                    {
-                        // Only add the file if they have a valid extension
-                        if (validExtensions.Contains(Path.GetExtension(file.ToLower())))
-                        {
-                            folderPaths.Add(new FolderPathInfo(folderId, file, FileUtils.DateModifiedTicks(file)));
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        LogClient.Error("Error occurred while getting folder path for file '{0}'. Exception: {1}", file, ex.Message);
-                    }
                 }
             }
             catch (Exception ex)
@@ -50,7 +33,7 @@ namespace Dopamine.Core.IO
             return folderPaths;
         }
 
-        private static void TryDirectoryRecursiveGetFiles(string path, List<String> files, ConcurrentQueue<Exception> exceptions)
+        private static void TryDirectoryRecursiveGetFolderPaths(long folderId, string path, ISet<string> validExtensions, List<FolderPathInfo> folderPaths, ConcurrentQueue<Exception> exceptions)
         {
             try
             {
@@ -66,13 +49,16 @@ namespace Dopamine.Core.IO
                     exceptions.Enqueue(ex);
                 }
 
-                if (fileEntries != null && fileEntries.Count() > 0)
+                if (fileEntries != null && fileEntries.Length > 0)
                 {
                     foreach (string fileName in fileEntries)
                     {
                         try
                         {
-                            files.Add(fileName);
+                            if (validExtensions.Contains(Path.GetExtension(fileName)))
+                            {
+                                folderPaths.Add(new FolderPathInfo(folderId, fileName, FileUtils.DateModifiedTicks(fileName)));
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -93,14 +79,14 @@ namespace Dopamine.Core.IO
                     exceptions.Enqueue(ex);
                 }
 
-                if (subdirectoryEntries != null && subdirectoryEntries.Count() > 0)
+                if (subdirectoryEntries != null && subdirectoryEntries.Length > 0)
                 {
 
                     foreach (string subdirectory in subdirectoryEntries)
                     {
                         try
                         {
-                            TryDirectoryRecursiveGetFiles(subdirectory, files, exceptions);
+                            TryDirectoryRecursiveGetFolderPaths(folderId, subdirectory, validExtensions, folderPaths, exceptions);
                         }
                         catch (Exception ex)
                         {
