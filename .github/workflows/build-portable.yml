@@ -77,14 +77,14 @@ jobs:
           <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
             <ItemGroup Condition="'$(UseWinRTContracts)' == 'true' and '$(WinRTContractsRoot)' != ''">
               <Reference Remove="Windows" />
-              <WinRTContractReference Include="$(WinRTContractsRoot)\*.winmd" />
-            </ItemGroup>
-            <ItemGroup Condition="'$(UseWinRTContracts)' == 'true' and '$(WinRTContractsRoot)' != ''">
-              <Reference Include="%(WinRTContractReference.Filename)">
-                <HintPath>%(WinRTContractReference.FullPath)</HintPath>
+              <Reference Include="$(WinRTContractsRoot)\*.winmd">
                 <Private>false</Private>
+                <EmbedInteropTypes>false</EmbedInteropTypes>
               </Reference>
             </ItemGroup>
+            <Target Name="LogWinRTContractsRoot" BeforeTargets="ResolveReferences" Condition="'$(UseWinRTContracts)' == 'true' and '$(WinRTContractsRoot)' != ''">
+              <Message Importance="high" Text="Using WinRT contracts from $(WinRTContractsRoot)" />
+            </Target>
           </Project>
           '@ | Set-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'Directory.Build.targets') -Encoding utf8
 
