@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Helpers;
+using Digimezzo.Foundation.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Audio;
@@ -357,122 +358,201 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
 
         private async void GetAudioDevicesAsync()
         {
-            IList<AudioDevice> audioDevices = await this.playbackService.GetAllAudioDevicesAsync();
+            try
+            {
+                IList<AudioDevice> audioDevices = await this.playbackService.GetAllAudioDevicesAsync();
 
-            this.AudioDevices = new ObservableCollection<AudioDevice>();
+                this.AudioDevices = new ObservableCollection<AudioDevice>();
 
-            this.AudioDevices.AddRange(audioDevices);
+                this.AudioDevices.AddRange(audioDevices);
 
-            AudioDevice savedAudioDevice = await this.playbackService.GetSavedAudioDeviceAsync();
+                AudioDevice savedAudioDevice = await this.playbackService.GetSavedAudioDeviceAsync();
 
-            this.selectedAudioDevice = null;
-            RaisePropertyChanged(nameof(this.SelectedAudioDevice));
-            this.selectedAudioDevice = savedAudioDevice == null ? this.AudioDevices.First() : savedAudioDevice;
-            RaisePropertyChanged(nameof(this.SelectedAudioDevice));
+                this.selectedAudioDevice = null;
+                RaisePropertyChanged(nameof(this.SelectedAudioDevice));
+                this.selectedAudioDevice = savedAudioDevice == null ? this.AudioDevices.FirstOrDefault() : savedAudioDevice;
+                RaisePropertyChanged(nameof(this.SelectedAudioDevice));
+            }
+            catch (System.Exception ex)
+            {
+                this.LogPlaybackSettingsError(nameof(this.GetAudioDevicesAsync), ex);
+                this.AudioDevices = new ObservableCollection<AudioDevice>();
+                this.selectedAudioDevice = null;
+                RaisePropertyChanged(nameof(this.SelectedAudioDevice));
+            }
         }
 
         private async void GetLatenciesAsync()
         {
-            var localLatencies = new ObservableCollection<NameValue>();
-
-            await Task.Run(() =>
+            try
             {
-                // Increment by 50
-                for (int index = 50; index <= 500; index += 50)
+                var localLatencies = new ObservableCollection<NameValue>();
+                string defaultText = Application.Current.FindResource("Language_Default").ToString().ToLower();
+
+                await Task.Run(() =>
                 {
-                    if (index == 200)
+                    // Increment by 50
+                    for (int index = 50; index <= 500; index += 50)
                     {
-                        localLatencies.Add(new NameValue
+                        if (index == 200)
                         {
-                            Name = index + " ms (" + Application.Current.FindResource("Language_Default").ToString().ToLower() + ")",
-                            Value = index
-                        });
+                            localLatencies.Add(new NameValue
+                            {
+                                Name = index + " ms (" + defaultText + ")",
+                                Value = index
+                            });
+                        }
+                        else
+                        {
+                            localLatencies.Add(new NameValue
+                            {
+                                Name = index + " ms",
+                                Value = index
+                            });
+                        }
                     }
-                    else
+                });
+
+                this.Latencies = localLatencies;
+
+                NameValue localSelectedLatency = null;
+                await Task.Run(() =>
+                {
+                    int savedLatency = this.GetSettingOrDefault<int>("Playback", "AudioLatency", 200);
+                    localSelectedLatency = localLatencies.Where((pa) => pa.Value == savedLatency).Select((pa) => pa).FirstOrDefault();
+
+                    if (localSelectedLatency == null)
                     {
-                        localLatencies.Add(new NameValue
-                        {
-                            Name = index + " ms",
-                            Value = index
-                        });
+                        localSelectedLatency = localLatencies.Where((pa) => pa.Value == 200).Select((pa) => pa).FirstOrDefault();
                     }
-                }
-            });
+                });
 
-            this.Latencies = localLatencies;
-
-            NameValue localSelectedLatency = null;
-            await Task.Run(() => localSelectedLatency = this.Latencies.Where((pa) => pa.Value == SettingsClient.Get<int>("Playback", "AudioLatency")).Select((pa) => pa).First());
-
-            this.selectedLatency = null;
-            RaisePropertyChanged(nameof(this.SelectedLatency));
-            this.selectedLatency = localSelectedLatency;
-            RaisePropertyChanged(nameof(this.SelectedLatency));
+                this.selectedLatency = null;
+                RaisePropertyChanged(nameof(this.SelectedLatency));
+                this.selectedLatency = localSelectedLatency;
+                RaisePropertyChanged(nameof(this.SelectedLatency));
+            }
+            catch (System.Exception ex)
+            {
+                this.LogPlaybackSettingsError(nameof(this.GetLatenciesAsync), ex);
+                this.Latencies = new ObservableCollection<NameValue>();
+                this.selectedLatency = null;
+                RaisePropertyChanged(nameof(this.SelectedLatency));
+            }
         }
 
         private async void GetNotificationPositionsAsync()
         {
-            var localNotificationPositions = new ObservableCollection<NameValue>();
-
-            await Task.Run(() =>
+            try
             {
-                localNotificationPositions.Add(new NameValue { Name = ResourceUtils.GetString("Language_Bottom_Left"), Value = (int)NotificationPosition.BottomLeft });
-                localNotificationPositions.Add(new NameValue { Name = ResourceUtils.GetString("Language_Top_Left"), Value = (int)NotificationPosition.TopLeft });
-                localNotificationPositions.Add(new NameValue { Name = ResourceUtils.GetString("Language_Top_Right"), Value = (int)NotificationPosition.TopRight });
-                localNotificationPositions.Add(new NameValue { Name = ResourceUtils.GetString("Language_Bottom_Right"), Value = (int)NotificationPosition.BottomRight });
-            });
+                var localNotificationPositions = new ObservableCollection<NameValue>();
+                string bottomLeftText = ResourceUtils.GetString("Language_Bottom_Left");
+                string topLeftText = ResourceUtils.GetString("Language_Top_Left");
+                string topRightText = ResourceUtils.GetString("Language_Top_Right");
+                string bottomRightText = ResourceUtils.GetString("Language_Bottom_Right");
 
-            this.NotificationPositions = localNotificationPositions;
+                await Task.Run(() =>
+                {
+                    localNotificationPositions.Add(new NameValue { Name = bottomLeftText, Value = (int)NotificationPosition.BottomLeft });
+                    localNotificationPositions.Add(new NameValue { Name = topLeftText, Value = (int)NotificationPosition.TopLeft });
+                    localNotificationPositions.Add(new NameValue { Name = topRightText, Value = (int)NotificationPosition.TopRight });
+                    localNotificationPositions.Add(new NameValue { Name = bottomRightText, Value = (int)NotificationPosition.BottomRight });
+                });
 
-            NameValue localSelectedNotificationPosition = null;
-            await Task.Run(() => localSelectedNotificationPosition = NotificationPositions.Where((np) => np.Value == SettingsClient.Get<int>("Behaviour", "NotificationPosition")).Select((np) => np).First());
+                this.NotificationPositions = localNotificationPositions;
 
-            this.selectedNotificationPosition = null;
-            RaisePropertyChanged(nameof(this.SelectedNotificationPosition));
-            this.selectedNotificationPosition = localSelectedNotificationPosition;
-            RaisePropertyChanged(nameof(this.SelectedNotificationPosition));
+                NameValue localSelectedNotificationPosition = null;
+                await Task.Run(() =>
+                {
+                    int savedNotificationPosition = this.GetSettingOrDefault<int>("Behaviour", "NotificationPosition", (int)NotificationPosition.TopRight);
+                    localSelectedNotificationPosition = localNotificationPositions.Where((np) => np.Value == savedNotificationPosition).Select((np) => np).FirstOrDefault();
+
+                    if (localSelectedNotificationPosition == null)
+                    {
+                        localSelectedNotificationPosition = localNotificationPositions.FirstOrDefault();
+                    }
+                });
+
+                this.selectedNotificationPosition = null;
+                RaisePropertyChanged(nameof(this.SelectedNotificationPosition));
+                this.selectedNotificationPosition = localSelectedNotificationPosition;
+                RaisePropertyChanged(nameof(this.SelectedNotificationPosition));
+            }
+            catch (System.Exception ex)
+            {
+                this.LogPlaybackSettingsError(nameof(this.GetNotificationPositionsAsync), ex);
+                this.NotificationPositions = new ObservableCollection<NameValue>();
+                this.selectedNotificationPosition = null;
+                RaisePropertyChanged(nameof(this.SelectedNotificationPosition));
+            }
         }
 
         private async void GetNotificationSecondsAsync()
         {
-            var localNotificationSeconds = new ObservableCollection<int>();
-
-            await Task.Run(() =>
+            try
             {
-                for (int index = 1; index <= 5; index++)
+                var localNotificationSeconds = new ObservableCollection<int>();
+
+                await Task.Run(() =>
                 {
-                    localNotificationSeconds.Add(index);
-                }
+                    for (int index = 1; index <= 5; index++)
+                    {
+                        localNotificationSeconds.Add(index);
+                    }
 
-            });
+                });
 
-            this.NotificationSeconds = localNotificationSeconds;
+                this.NotificationSeconds = localNotificationSeconds;
 
-            int localSelectedNotificationSecond = 0;
-            await Task.Run(() => localSelectedNotificationSecond = NotificationSeconds.Where((ns) => ns == SettingsClient.Get<int>("Behaviour", "NotificationAutoCloseSeconds")).Select((ns) => ns).First());
+                int localSelectedNotificationSecond = 0;
+                await Task.Run(() =>
+                {
+                    int savedNotificationSecond = this.GetSettingOrDefault<int>("Behaviour", "NotificationAutoCloseSeconds", 4);
+                    localSelectedNotificationSecond = localNotificationSeconds.Where((ns) => ns == savedNotificationSecond).Select((ns) => ns).FirstOrDefault();
 
-            this.SelectedNotificationSecond = localSelectedNotificationSecond;
+                    if (localSelectedNotificationSecond == 0)
+                    {
+                        localSelectedNotificationSecond = 4;
+                    }
+                });
+
+                this.SelectedNotificationSecond = localSelectedNotificationSecond;
+            }
+            catch (System.Exception ex)
+            {
+                this.LogPlaybackSettingsError(nameof(this.GetNotificationSecondsAsync), ex);
+                this.NotificationSeconds = new ObservableCollection<int>();
+                this.selectedNotificationSecond = 0;
+                RaisePropertyChanged(nameof(this.SelectedNotificationSecond));
+            }
         }
 
         private async void GetCheckBoxesAsync()
         {
-            await Task.Run(() =>
+            try
             {
-                this.checkBoxShowSpectrumAnalyzerChecked = SettingsClient.Get<bool>("Playback", "ShowSpectrumAnalyzer");
-                this.checkBoxUseAllAvailableChannelsChecked = SettingsClient.Get<bool>("Playback", "WasapiUseAllAvailableChannels");
-                this.checkBoxWasapiExclusiveModeChecked = SettingsClient.Get<bool>("Playback", "WasapiExclusiveMode");
-                this.checkBoxShowNotificationWhenPlayingChecked = this.notificationService.ShowNotificationWhenPlaying;
-                this.checkBoxShowNotificationWhenPausingChecked = this.notificationService.ShowNotificationWhenPausing;
-                this.checkBoxShowNotificationWhenResumingChecked = this.notificationService.ShowNotificationWhenResuming;
-                this.checkBoxShowNotificationControlsChecked = this.notificationService.ShowNotificationControls;
-                this.checkBoxShowProgressInTaskbarChecked = SettingsClient.Get<bool>("Playback", "ShowProgressInTaskbar");
-                this.checkBoxShowNotificationOnlyWhenPlayerNotVisibleChecked = SettingsClient.Get<bool>("Behaviour", "ShowNotificationOnlyWhenPlayerNotVisible");
-                this.checkBoxEnableExternalControlChecked = SettingsClient.Get<bool>("Playback", "EnableExternalControl");
-                this.checkBoxLoopWhenShuffleChecked = SettingsClient.Get<bool>("Playback", "LoopWhenShuffle");
-                this.checkBoxPreventSleepWhilePlaying = SettingsClient.Get<bool>("Playback", "PreventSleepWhilePlaying");
-                this.checkBoxEnablePlaybackFadeChecked = this.GetPlaybackFadeEnabled();
-                this.checkBoxEnableSystemNotificationChecked = this.notificationService.SystemNotificationIsEnabled;
-            });
+                await Task.Run(() =>
+                {
+                    this.checkBoxShowSpectrumAnalyzerChecked = this.GetSettingOrDefault<bool>("Playback", "ShowSpectrumAnalyzer", true);
+                    this.checkBoxUseAllAvailableChannelsChecked = this.GetSettingOrDefault<bool>("Playback", "WasapiUseAllAvailableChannels", false);
+                    this.checkBoxWasapiExclusiveModeChecked = this.GetSettingOrDefault<bool>("Playback", "WasapiExclusiveMode", false);
+                    this.checkBoxShowNotificationWhenPlayingChecked = this.notificationService.ShowNotificationWhenPlaying;
+                    this.checkBoxShowNotificationWhenPausingChecked = this.notificationService.ShowNotificationWhenPausing;
+                    this.checkBoxShowNotificationWhenResumingChecked = this.notificationService.ShowNotificationWhenResuming;
+                    this.checkBoxShowNotificationControlsChecked = this.notificationService.ShowNotificationControls;
+                    this.checkBoxShowProgressInTaskbarChecked = this.GetSettingOrDefault<bool>("Playback", "ShowProgressInTaskbar", true);
+                    this.checkBoxShowNotificationOnlyWhenPlayerNotVisibleChecked = this.GetSettingOrDefault<bool>("Behaviour", "ShowNotificationOnlyWhenPlayerNotVisible", true);
+                    this.checkBoxEnableExternalControlChecked = this.GetSettingOrDefault<bool>("Playback", "EnableExternalControl", false);
+                    this.checkBoxLoopWhenShuffleChecked = this.GetSettingOrDefault<bool>("Playback", "LoopWhenShuffle", true);
+                    this.checkBoxPreventSleepWhilePlaying = this.GetSettingOrDefault<bool>("Playback", "PreventSleepWhilePlaying", false);
+                    this.checkBoxEnablePlaybackFadeChecked = this.GetPlaybackFadeEnabled();
+                    this.checkBoxEnableSystemNotificationChecked = this.notificationService.SystemNotificationIsEnabled;
+                });
+            }
+            catch (System.Exception ex)
+            {
+                this.LogPlaybackSettingsError(nameof(this.GetCheckBoxesAsync), ex);
+            }
         }
 
         private bool GetPlaybackFadeEnabled()
@@ -482,32 +562,64 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
 
         private async void GetSpectrumStylesAsync()
         {
-            var localSpectrumStyles = new ObservableCollection<NameValue>();
-
-            await Task.Run(() =>
+            try
             {
-                localSpectrumStyles.Add(new NameValue { Name = ResourceUtils.GetString("Language_Spectrum_Flames"), Value = 1 });
-                localSpectrumStyles.Add(new NameValue { Name = ResourceUtils.GetString("Language_Spectrum_Lines"), Value = 2 });
-                localSpectrumStyles.Add(new NameValue { Name = ResourceUtils.GetString("Language_Spectrum_Bars"), Value = 3 });
-            });
+                var localSpectrumStyles = new ObservableCollection<NameValue>();
+                string spectrumFlamesText = ResourceUtils.GetString("Language_Spectrum_Flames");
+                string spectrumLinesText = ResourceUtils.GetString("Language_Spectrum_Lines");
+                string spectrumBarsText = ResourceUtils.GetString("Language_Spectrum_Bars");
 
-            this.SpectrumStyles = localSpectrumStyles;
-
-            NameValue localSelectedSpectrumStyle = null;
-            await Task.Run(() =>
-            {
-                localSelectedSpectrumStyle = this.SpectrumStyles.Where((s) => s.Value == SettingsClient.Get<int>("Playback", "SpectrumStyle")).Select((s) => s).FirstOrDefault();
-
-                if (localSelectedSpectrumStyle == null)
+                await Task.Run(() =>
                 {
-                    localSelectedSpectrumStyle = this.SpectrumStyles.First();
-                }
-            });
+                    localSpectrumStyles.Add(new NameValue { Name = spectrumFlamesText, Value = 1 });
+                    localSpectrumStyles.Add(new NameValue { Name = spectrumLinesText, Value = 2 });
+                    localSpectrumStyles.Add(new NameValue { Name = spectrumBarsText, Value = 3 });
+                });
 
-            this.selectedSpectrumStyle = null;
-            RaisePropertyChanged(nameof(this.SelectedSpectrumStyle));
-            this.selectedSpectrumStyle = localSelectedSpectrumStyle;
-            RaisePropertyChanged(nameof(this.SelectedSpectrumStyle));
+                this.SpectrumStyles = localSpectrumStyles;
+
+                NameValue localSelectedSpectrumStyle = null;
+                await Task.Run(() =>
+                {
+                    int savedSpectrumStyle = this.GetSettingOrDefault<int>("Playback", "SpectrumStyle", 1);
+                    localSelectedSpectrumStyle = localSpectrumStyles.Where((s) => s.Value == savedSpectrumStyle).Select((s) => s).FirstOrDefault();
+
+                    if (localSelectedSpectrumStyle == null)
+                    {
+                        localSelectedSpectrumStyle = localSpectrumStyles.FirstOrDefault();
+                    }
+                });
+
+                this.selectedSpectrumStyle = null;
+                RaisePropertyChanged(nameof(this.SelectedSpectrumStyle));
+                this.selectedSpectrumStyle = localSelectedSpectrumStyle;
+                RaisePropertyChanged(nameof(this.SelectedSpectrumStyle));
+            }
+            catch (System.Exception ex)
+            {
+                this.LogPlaybackSettingsError(nameof(this.GetSpectrumStylesAsync), ex);
+                this.SpectrumStyles = new ObservableCollection<NameValue>();
+                this.selectedSpectrumStyle = null;
+                RaisePropertyChanged(nameof(this.SelectedSpectrumStyle));
+            }
+        }
+
+        private T GetSettingOrDefault<T>(string settingsNamespace, string settingName, T defaultValue)
+        {
+            try
+            {
+                return SettingsClient.Get<T>(settingsNamespace, settingName);
+            }
+            catch (System.Exception ex)
+            {
+                this.LogPlaybackSettingsError($"Reading setting '{settingsNamespace}.{settingName}'", ex);
+                return defaultValue;
+            }
+        }
+
+        private void LogPlaybackSettingsError(string operation, System.Exception ex)
+        {
+            LogClient.Error("Playback settings initialization failed while {0}. Exception: {1}", operation, ex.Message);
         }
 
         private void ConfirmEnableExclusiveMode()
