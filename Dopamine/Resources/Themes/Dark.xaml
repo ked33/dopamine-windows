@@ -30,6 +30,11 @@
     <!-- Brushes -->
     <SolidColorBrush x:Key="Brush_PrimaryText" Color="{DynamicResource Color_SoftWhite}"/>
     <SolidColorBrush x:Key="Brush_SecondaryText" Color="{DynamicResource Color_DarkGrey8}"/>
+    <SolidColorBrush x:Key="Brush_ContextMenuSeparator" Color="{DynamicResource Color_DarkGrey6}"/>
+    <SolidColorBrush x:Key="Brush_ContextMenuButton" Color="{DynamicResource Color_DarkGrey6}"/>
+    <SolidColorBrush x:Key="Brush_ContextMenuBackground" Color="{DynamicResource Color_DarkGrey5}"/>
+    <SolidColorBrush x:Key="Brush_ContextMenuText" Color="{DynamicResource Color_SoftWhite}"/>
+    <SolidColorBrush x:Key="Brush_ContextMenuTextSelected" Color="{DynamicResource Color_White}"/>
     <SolidColorBrush x:Key="Brush_WindowHeaderBackground" Color="{StaticResource Color_DarkGrey1}"/>
     <SolidColorBrush x:Key="Brush_PaneBackground" Color="{DynamicResource Color_DarkGrey2}"/>
     <SolidColorBrush x:Key="Brush_MainWindowBackground" Color="{DynamicResource Color_DarkGrey3}"/>
