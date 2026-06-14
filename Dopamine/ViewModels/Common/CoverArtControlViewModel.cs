@@ -5,6 +5,7 @@ using Dopamine.ViewModels;
 using Dopamine.Services.Cache;
 using Dopamine.Services.Metadata;
 using Dopamine.Services.Playback;
+using Dopamine.Services.Shell;
 using Prism.Mvvm;
 using System;
 using System.Threading.Tasks;
@@ -19,6 +20,7 @@ namespace Dopamine.ViewModels.Common
         protected IPlaybackService playbackService;
         private ICacheService cacheService;
         private IMetadataService metadataService;
+        private IAppVisibilityService appVisibilityService;
         private SlideDirection slideDirection;
         private byte[] previousArtwork;
         private byte[] artwork;
@@ -41,19 +43,49 @@ namespace Dopamine.ViewModels.Common
             this.artwork = null;
         }
 
-        public CoverArtControlViewModel(IPlaybackService playbackService, ICacheService cacheService, IMetadataService metadataService)
+        public CoverArtControlViewModel(IPlaybackService playbackService, ICacheService cacheService, IMetadataService metadataService,
+            IAppVisibilityService appVisibilityService)
         {
             this.playbackService = playbackService;
             this.cacheService = cacheService;
             this.metadataService = metadataService;
+            this.appVisibilityService = appVisibilityService;
 
             this.playbackService.PlaybackSuccess += (_, e) =>
             {
+                if (!this.CanLoadArtwork)
+                {
+                    this.ClearArtwork();
+                    return;
+                }
+
                 this.SlideDirection = e.IsPlayingPreviousTrack ? SlideDirection.UpToDown : SlideDirection.DownToUp;
                 this.RefreshCoverArtAsync(this.playbackService.CurrentTrack);
             };
 
-            this.playbackService.PlayingTrackChanged += (_, __) => this.RefreshCoverArtAsync(this.playbackService.CurrentTrack);
+            this.playbackService.PlayingTrackChanged += (_, __) =>
+            {
+                if (this.CanLoadArtwork)
+                {
+                    this.RefreshCoverArtAsync(this.playbackService.CurrentTrack);
+                }
+                else
+                {
+                    this.ClearArtwork();
+                }
+            };
+
+            this.appVisibilityService.VisibilityChanged += (_, __) =>
+            {
+                if (this.CanLoadArtwork)
+                {
+                    this.RefreshCoverArtAsync(this.playbackService.CurrentTrack);
+                }
+                else
+                {
+                    this.ClearArtwork();
+                }
+            };
 
             // Defaults
             this.SlideDirection = SlideDirection.DownToUp;
@@ -69,8 +101,20 @@ namespace Dopamine.ViewModels.Common
         {
             await Task.Delay(250);
 
+            if (!this.CanLoadArtwork)
+            {
+                this.ClearArtwork();
+                return;
+            }
+
             await Task.Run(async () =>
             {
+                if (!this.CanLoadArtwork)
+                {
+                    this.ClearArtwork();
+                    return;
+                }
+
                 this.previousArtwork = this.artwork;
 
                 // No track selected: clear cover art.
@@ -106,6 +150,12 @@ namespace Dopamine.ViewModels.Common
 
                 if (artwork != null)
                 {
+                    if (!this.CanLoadArtwork)
+                    {
+                        this.ClearArtwork();
+                        return;
+                    }
+
                     try
                     {
                         this.CoverArtViewModel = new CoverArtViewModel { CoverArt = artwork };
@@ -124,6 +174,11 @@ namespace Dopamine.ViewModels.Common
                     return;
                 }
             });
+        }
+
+        private bool CanLoadArtwork
+        {
+            get { return !this.appVisibilityService.IsBackgroundPlaybackMode; }
         }
     }
 }
