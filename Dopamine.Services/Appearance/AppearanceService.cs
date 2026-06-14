@@ -8,6 +8,7 @@ using Dopamine.Core.IO;
 using Dopamine.Core.Utils;
 using Dopamine.Services.Metadata;
 using Dopamine.Services.Playback;
+using Dopamine.Services.Shell;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -26,6 +27,7 @@ namespace Dopamine.Services.Appearance
     {
         private IPlaybackService playbackService;
         private IMetadataService metadataService;
+        private IAppVisibilityService appVisibilityService;
         private const int WM_DWMCOLORIZATIONCOLORCHANGED = 0x320;
         private bool followAlbumCoverColor;
         private GentleFolderWatcher watcher;
@@ -55,14 +57,16 @@ namespace Dopamine.Services.Appearance
                                                         }
                                                     };
 
-        public AppearanceService(IPlaybackService playbackService, IMetadataService metadataService) : base()
+        public AppearanceService(IPlaybackService playbackService, IMetadataService metadataService, IAppVisibilityService appVisibilityService) : base()
         {
             // Services
             // --------
             this.playbackService = playbackService;
             this.metadataService = metadataService;
+            this.appVisibilityService = appVisibilityService;
 
             playbackService.PlaybackSuccess += PlaybackService_PlaybackSuccess;
+            this.appVisibilityService.VisibilityChanged += AppVisibilityService_VisibilityChanged;
 
             // Initialize the ColorSchemes directory
             // -------------------------------------
@@ -130,7 +134,19 @@ namespace Dopamine.Services.Appearance
 
         private void PlaybackService_PlaybackSuccess(object sender, PlaybackSuccessEventArgs e)
         {
-            if (!this.followAlbumCoverColor)
+            if (!this.followAlbumCoverColor || this.appVisibilityService.IsBackgroundPlaybackMode)
+            {
+                return;
+            }
+
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            this.ApplyColorSchemeAsync(string.Empty, this.followWindowsColor, this.followAlbumCoverColor);
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+        }
+
+        private void AppVisibilityService_VisibilityChanged(object sender, EventArgs e)
+        {
+            if (!this.followAlbumCoverColor || this.appVisibilityService.IsBackgroundPlaybackMode)
             {
                 return;
             }
@@ -331,15 +347,22 @@ namespace Dopamine.Services.Appearance
                 }
                 else if (followAlbumCoverColor)
                 {
-                    byte[] artwork = await this.metadataService.GetArtworkAsync(this.playbackService.CurrentTrack.Path);
-
-                    if (artwork?.Length > 0)
+                    if (this.appVisibilityService.IsBackgroundPlaybackMode)
                     {
-                        await Task.Run(() => accentColor = ImageUtils.GetDominantColor(artwork));
+                        applySelectedColorScheme = true;
                     }
                     else
                     {
-                        applySelectedColorScheme = true;
+                        byte[] artwork = await this.metadataService.GetArtworkAsync(this.playbackService.CurrentTrack.Path);
+
+                        if (artwork?.Length > 0)
+                        {
+                            await Task.Run(() => accentColor = ImageUtils.GetDominantColor(artwork));
+                        }
+                        else
+                        {
+                            applySelectedColorScheme = true;
+                        }
                     }
                 }
                 else
