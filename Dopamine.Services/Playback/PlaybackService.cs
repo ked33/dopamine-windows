@@ -1211,7 +1211,7 @@ namespace Dopamine.Services.Playback
             // Play the Track from its runtime path (current or temporary)
             this.player = this.playerFactory.Create(this.hasMediaFoundationSupport);
 
-            this.player.SetPlaybackSettings(this.Latency, this.EventMode, this.ExclusiveMode, this.activePreset.Bands, this.UseAllAvailableChannels);
+            this.player.SetPlaybackSettings(this.Latency, this.EventMode, this.ExclusiveMode, this.activePreset.Bands, this.isEqualizerEnabled, this.UseAllAvailableChannels);
             this.player.SetVolume(silent || this.Mute || this.ShouldUsePlaybackFade(silent) ? 0.0f : this.Volume);
 
             // We need to set PlayingTrack before trying to play the Track.

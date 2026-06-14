@@ -47,6 +47,7 @@ namespace Dopamine.Core.Audio
         // Equalizer
         private CSCore.Streams.Effects.Equalizer equalizer;
         private double[] filterValues;
+        private bool isEqualizerEnabled;
 
         // Flags
         private bool isPlaying;
@@ -148,12 +149,13 @@ namespace Dopamine.Core.Audio
             }
         }
 
-        public void SetPlaybackSettings(int latency, bool eventMode, bool exclusiveMode, double[] filterValues, bool useAllAvailableChannels)
+        public void SetPlaybackSettings(int latency, bool eventMode, bool exclusiveMode, double[] filterValues, bool isEqualizerEnabled, bool useAllAvailableChannels)
         {
             this.useAllAvailableChannels = useAllAvailableChannels;
             this.latency = latency;
             this.eventSync = eventMode;
             this.filterValues = filterValues;
+            this.isEqualizerEnabled = isEqualizerEnabled;
 
             if (exclusiveMode)
             {
@@ -323,10 +325,16 @@ namespace Dopamine.Core.Audio
             // The sample rate has to be bigger than 2 * frequency.
             if (waveSource.WaveFormat.SampleRate < 32000) waveSource = waveSource.ChangeSampleRate(32000);
 
-            return waveSource
-                .ToSampleSource()
-                .AppendSource(this.Create10BandEqualizer, out this.equalizer)
-                .ToWaveSource();
+            if (this.isEqualizerEnabled)
+            {
+                return waveSource
+                    .ToSampleSource()
+                    .AppendSource(this.Create10BandEqualizer, out this.equalizer)
+                    .ToWaveSource();
+            }
+
+            this.equalizer = null;
+            return waveSource;
         }
 
         public void SetVolume(float volume)
