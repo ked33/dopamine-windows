@@ -47,6 +47,7 @@ namespace Dopamine.Views
         private IEventAggregator eventAggregator;
         private System.Windows.Forms.NotifyIcon trayIcon;
         private ContextMenu trayIconContextMenu;
+        private System.Windows.Threading.DispatcherTimer trayLeftClickTimer;
         private TrayControls trayControls;
         private MiniPlayerPlaylist miniPlayerPlaylist;
         private bool isShuttingDown = false;
@@ -192,8 +193,12 @@ namespace Dopamine.Views
 
             this.SetTrayIcon();
 
+            this.trayLeftClickTimer = new System.Windows.Threading.DispatcherTimer();
+            this.trayLeftClickTimer.Interval = TimeSpan.FromMilliseconds(System.Windows.Forms.SystemInformation.DoubleClickTime);
+            this.trayLeftClickTimer.Tick += TrayLeftClickTimer_Tick;
+
             this.trayIcon.MouseClick += TrayIcon_MouseClick;
-            this.trayIcon.MouseDoubleClick += (_, __) => this.ShowWindowInForeground();
+            this.trayIcon.MouseDoubleClick += TrayIcon_MouseDoubleClick;
 
             this.trayIconContextMenu = (ContextMenu)this.FindResource("TrayIconContextMenu");
         }
@@ -300,13 +305,20 @@ namespace Dopamine.Views
         {
             if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
-                TrayControls controls = this.EnsureTrayControls();
-                controls.Topmost = true; // Make sure this appears above the Windows Tray pop-up
-                controls.Show();
+                this.trayLeftClickTimer.Stop();
+                this.trayLeftClickTimer.Start();
+            }
+
+            if (e.Button == System.Windows.Forms.MouseButtons.Middle)
+            {
+                this.trayLeftClickTimer.Stop();
+                this.ShowWindowInForeground();
             }
 
             if (e.Button == System.Windows.Forms.MouseButtons.Right)
             {
+                this.trayLeftClickTimer.Stop();
+
                 // Open the Notify icon context menu
                 this.trayIconContextMenu.IsOpen = true;
 
@@ -314,6 +326,28 @@ namespace Dopamine.Views
                 // See: http://copycodetheory.blogspot.be/2012/07/notify-icon-in-wpf-applications.html
                 this.Activate();
             }
+        }
+
+        private void TrayIcon_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
+        {
+            if (e.Button == System.Windows.Forms.MouseButtons.Left)
+            {
+                this.trayLeftClickTimer.Stop();
+                this.ShowWindowInForeground();
+            }
+        }
+
+        private void TrayLeftClickTimer_Tick(object sender, EventArgs e)
+        {
+            this.trayLeftClickTimer.Stop();
+            this.ShowTrayControls();
+        }
+
+        private void ShowTrayControls()
+        {
+            TrayControls controls = this.EnsureTrayControls();
+            controls.Topmost = true; // Make sure this appears above the Windows Tray pop-up
+            controls.Show();
         }
 
         private TrayControls EnsureTrayControls()

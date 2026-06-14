@@ -6,7 +6,6 @@
         mc:Ignorable="d"
         Title="TrayControls"
         xmlns:base="clr-namespace:Dopamine.Core.Base;assembly=Dopamine.Core"
-        xmlns:cp="clr-namespace:Dopamine.Core.Prism;assembly=Dopamine.Core" 
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:commonviews="clr-namespace:Dopamine.Views.Common"
         xmlns:pv="clr-namespace:Dopamine.Views"
@@ -47,7 +46,6 @@
                 <commonviews:ProgressControlsWithTime HorizontalAlignment="Stretch" Margin="19,0,0,20" SliderLength="120"/>
                 <!-- Playback controls -->
                 <pv:PlaybackControls UseLayoutRounding="True" SnapsToDevicePixels="True" HorizontalAlignment="Left" Margin="48,0,0,20"/>
-                <Button HorizontalAlignment="Center" Margin="0,0,0,10" Content="{DynamicResource Language_Show_Dopamine}" Style="{StaticResource TextButton}" Foreground="{DynamicResource Brush_Accent}" Command="{x:Static cp:ApplicationCommands.ShowMainWindowCommand}"/>
             </StackPanel>
         </DockPanel>
     </Grid>

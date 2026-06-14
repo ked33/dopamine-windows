@@ -101,7 +101,7 @@ namespace Dopamine.Core.Base
 
         // Tray controls
         public static readonly double TrayControlsWidth = 300;
-        public static readonly double TrayControlsHeight = 255;
+        public static readonly double TrayControlsHeight = 225;
 
         // ListBoxAlbums
         public static readonly double AlbumTileAlbumInfoHeight = 44;
