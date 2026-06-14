@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.Core.Utils;
 using DiscordRPC;
@@ -63,7 +64,7 @@ namespace Dopamine.Services.Discord
             }
             catch (Exception ex)
             {
-                LogClient.Error($"Could not register cliente. Exception: {ex.Message}");
+                AppLog.Error($"Could not register cliente. Exception: {ex.Message}");
             }
         }
 
@@ -85,7 +86,7 @@ namespace Dopamine.Services.Discord
             }
             catch (Exception ex)
             {
-                LogClient.Error($"Could not unregister client. Exception: {ex.Message}");
+                AppLog.Error($"Could not unregister client. Exception: {ex.Message}");
             }
         }
 
@@ -141,7 +142,7 @@ namespace Dopamine.Services.Discord
             }
             catch (Exception ex)
             {
-                LogClient.Error($"Could not show track details. Exception: {ex.Message}");
+                AppLog.Error($"Could not show track details. Exception: {ex.Message}");
             }
 
         }
@@ -167,7 +168,7 @@ namespace Dopamine.Services.Discord
             }
             catch (Exception ex)
             {
-                LogClient.Error($"Could not handle stop. Exception: {ex.Message}");
+                AppLog.Error($"Could not handle stop. Exception: {ex.Message}");
             }
         }
 

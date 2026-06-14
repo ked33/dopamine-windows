@@ -1,8 +1,10 @@
 ﻿using Digimezzo.Foundation.Core.IO;
 using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Dopamine.Core.Base;
 using Dopamine.Core.IO;
+using Dopamine.Core.Settings;
 using Dopamine.Services.Playback;
 using Prism.Commands;
 using Prism.Events;
@@ -18,6 +20,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
         private bool checkBoxCheckBoxShowWindowBorderChecked;
         private bool checkBoxEnableTransparencyChecked;
         private bool checkBoxEnableAnimationsChecked;
+        private bool checkBoxEnableLoggingChecked;
         private IEventAggregator eventAggregator;
 
         public DelegateCommand<string> OpenColorSchemesDirectoryCommand { get; set; }
@@ -31,7 +34,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             get { return this.checkBoxCheckBoxShowWindowBorderChecked; }
             set
             {
-                SettingsClient.Set<bool>("Appearance", "ShowWindowBorder", value, true);
+                SettingDefaults.SetSafe<bool>("Appearance", "ShowWindowBorder", value, true);
                 SetProperty<bool>(ref this.checkBoxCheckBoxShowWindowBorderChecked, value);
             }
         }
@@ -41,7 +44,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             get { return this.checkBoxEnableTransparencyChecked; }
             set
             {
-                SettingsClient.Set<bool>("Appearance", "EnableTransparency", value);
+                SettingDefaults.SetSafe<bool>("Appearance", "EnableTransparency", value);
                 SetProperty<bool>(ref this.checkBoxEnableTransparencyChecked, value);
             }
         }
@@ -51,8 +54,18 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             get { return this.checkBoxEnableAnimationsChecked; }
             set
             {
-                SettingsClient.Set<bool>("Appearance", "EnableAnimations", value, true);
+                UiAnimationSettings.SetAnimationsEnabled(value);
                 SetProperty<bool>(ref this.checkBoxEnableAnimationsChecked, value);
+            }
+        }
+
+        public bool CheckBoxEnableLoggingChecked
+        {
+            get { return this.checkBoxEnableLoggingChecked; }
+            set
+            {
+                LoggingSettings.SetEnabled(value);
+                SetProperty<bool>(ref this.checkBoxEnableLoggingChecked, value);
             }
         }
 
@@ -71,7 +84,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not open the ColorSchemes directory. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not open the ColorSchemes directory. Exception: {0}", ex.Message);
                 }
             });
 
@@ -81,19 +94,29 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
         public async void GetCheckBoxesAsync()
         {
             bool showWindowBorder = false;
-            bool enableTransparency = false;
+            bool enableTransparency = true;
             bool enableAnimations = true;
+            bool enableLogging = true;
 
-            await Task.Run(() =>
+            try
             {
-                showWindowBorder = SettingsClient.Get<bool>("Appearance", "ShowWindowBorder");
-                enableTransparency = SettingsClient.Get<bool>("Appearance", "EnableTransparency");
-                enableAnimations = SettingsClient.Get<bool>("Appearance", "EnableAnimations");
-            });
+                await Task.Run(() =>
+                {
+                    showWindowBorder = SettingDefaults.GetOrAdd<bool>("Appearance", "ShowWindowBorder", false, true);
+                    enableTransparency = SettingDefaults.GetOrAdd<bool>("Appearance", "EnableTransparency", true);
+                    enableAnimations = SettingDefaults.GetOrAdd<bool>("Appearance", "EnableAnimations", true, true);
+                    enableLogging = LoggingSettings.IsEnabled();
+                });
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error("Appearance settings initialization failed. Exception: {0}", ex.Message);
+            }
 
             SetProperty<bool>(ref this.checkBoxCheckBoxShowWindowBorderChecked, showWindowBorder);
             SetProperty<bool>(ref this.checkBoxEnableTransparencyChecked, enableTransparency);
             SetProperty<bool>(ref this.checkBoxEnableAnimationsChecked, enableAnimations);
+            SetProperty<bool>(ref this.checkBoxEnableLoggingChecked, enableLogging);
         }
     }
 }

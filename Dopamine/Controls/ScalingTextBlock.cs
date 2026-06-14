@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Dopamine.Core.Base;
 using System;
 using System.ComponentModel;
@@ -77,7 +78,7 @@ namespace Dopamine.Controls
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not set the font size. Setting minimum font size. Exception: {0}", ex.Message);
+                AppLog.Error("Could not set the font size. Setting minimum font size. Exception: {0}", ex.Message);
                 this.FontSize = this.MinFontSize;
             }
 
@@ -92,7 +93,7 @@ namespace Dopamine.Controls
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not find out if the text is too large. Exception: {0}", ex.Message);
+                AppLog.Error("Could not find out if the text is too large. Exception: {0}", ex.Message);
                 return true;
             }
 

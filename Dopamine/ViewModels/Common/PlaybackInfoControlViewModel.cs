@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.WPF.Controls;
 using Dopamine.Core.Utils;
@@ -251,7 +252,7 @@ namespace Dopamine.ViewModels.Common
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not show playback information for Track {0}. Exception: {1}", track.Path, ex.Message);
+                    AppLog.Error("Could not show playback information for Track {0}. Exception: {1}", track.Path, ex.Message);
                     this.ClearPlaybackInfo();
                 }
 

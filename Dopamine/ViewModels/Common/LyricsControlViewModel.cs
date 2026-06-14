@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Dopamine.Core.Api.Lyrics;
 using Dopamine.Core.Base;
@@ -335,7 +336,7 @@ namespace Dopamine.ViewModels.Common
                     }
                     catch (Exception ex)
                     {
-                        LogClient.Error("Could not get lyrics online {0}. Exception: {1}", track.Path, ex.Message);
+                        AppLog.Error("Could not get lyrics online {0}. Exception: {1}", track.Path, ex.Message);
                     }
 
                     this.IsDownloadingLyrics = false;
@@ -350,7 +351,7 @@ namespace Dopamine.ViewModels.Common
             catch (Exception ex)
             {
                 this.IsDownloadingLyrics = false;
-                LogClient.Error("Could not show lyrics for Track {0}. Exception: {1}", track.Path, ex.Message);
+                AppLog.Error("Could not show lyrics for Track {0}. Exception: {1}", track.Path, ex.Message);
                 this.ClearLyrics(track);
                 return;
             }
@@ -415,7 +416,7 @@ namespace Dopamine.ViewModels.Common
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not highlight the lyrics. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not highlight the lyrics. Exception: {0}", ex.Message);
                 }
 
             });

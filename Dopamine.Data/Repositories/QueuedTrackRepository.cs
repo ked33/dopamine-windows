@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Dopamine.Data.Entities;
 using System;
 using System.Collections.Generic;
@@ -32,13 +33,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get Queued tracks. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get Queued tracks. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -62,13 +63,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not save queued tracks. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not save queued tracks. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
         }
@@ -89,13 +90,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get the playing queued Track. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get the playing queued Track. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 

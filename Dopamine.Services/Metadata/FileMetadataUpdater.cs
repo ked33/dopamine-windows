@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Dopamine.Core.Extensions;
 using Dopamine.Data.Metadata;
 using Dopamine.Data.Repositories;
@@ -131,11 +132,11 @@ namespace Dopamine.Services.Metadata
                         }
                         catch (IOException ex)
                         {
-                            LogClient.Error("Unable to save metadata to the file for Track '{0}'. The file is probably playing. Trying again in {1} seconds. Exception: {2}", fmd.SafePath, this.updateMetadataLongTimeout / 1000, ex.Message);
+                            AppLog.Error("Unable to save metadata to the file for Track '{0}'. The file is probably playing. Trying again in {1} seconds. Exception: {2}", fmd.SafePath, this.updateMetadataLongTimeout / 1000, ex.Message);
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Unable to save metadata to the file for Track '{0}'. Not trying again. Exception: {1}", fmd.SafePath, ex.Message);
+                            AppLog.Error("Unable to save metadata to the file for Track '{0}'. Not trying again. Exception: {1}", fmd.SafePath, ex.Message);
                             this.fileMetadataToUpdate.Remove(fmd.SafePath);
                         }
                     }

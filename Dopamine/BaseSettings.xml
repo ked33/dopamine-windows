@@ -2,7 +2,7 @@
 <Settings>
   <Namespace Name="Configuration">
     <Setting Name="Version">
-      <Value>120</Value>
+      <Value>121</Value>
     </Setting>
     <Setting Name="IsPortable">
       <Value>False</Value>
@@ -90,6 +90,9 @@
       <Value>True</Value>
     </Setting>
     <Setting Name="EnableAnimations">
+      <Value>True</Value>
+    </Setting>
+    <Setting Name="EnableLogging">
       <Value>True</Value>
     </Setting>
   </Namespace>

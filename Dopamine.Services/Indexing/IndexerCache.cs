@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Dopamine.Data;
 using Dopamine.Data.Entities;
 using SQLite;
@@ -38,7 +39,7 @@ namespace Dopamine.Services.Indexing
             }
             catch (Exception ex)
             {
-                LogClient.Error("There was a problem checking if Track with path '{0}' exists in the cache. Exception: {1}", track.Path, ex.Message);
+                AppLog.Error("There was a problem checking if Track with path '{0}' exists in the cache. Exception: {1}", track.Path, ex.Message);
             }
 
             return hasCachedTrack;

@@ -1,5 +1,6 @@
 ﻿using Digimezzo.Foundation.Core.IO;
 using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Audio;
@@ -380,7 +381,7 @@ namespace Dopamine.ViewModels.Common
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("An error occurred while saving preset to file '{0}'. Exception: {1}", dlg.FileName, ex.Message);
+                            AppLog.Error("An error occurred while saving preset to file '{0}'. Exception: {1}", dlg.FileName, ex.Message);
 
                             this.dialogService.ShowNotification(
                                                 0xe711,
@@ -425,7 +426,7 @@ namespace Dopamine.ViewModels.Common
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("An error occurred while deleting preset '{0}'. Exception: {1}", this.SelectedPreset.Name, ex.Message);
+                    AppLog.Error("An error occurred while deleting preset '{0}'. Exception: {1}", this.SelectedPreset.Name, ex.Message);
 
                     this.dialogService.ShowNotification(
                                         0xe711,

@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Dopamine.Core.Extensions;
 using Dopamine.Data.Entities;
 using System;
@@ -31,13 +32,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not delete AlbumArtwork. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not delete AlbumArtwork. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
         }
@@ -59,13 +60,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not delete unused AlbumArtwork. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not delete unused AlbumArtwork. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -88,13 +89,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get album artwork. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get album artwork. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -117,13 +118,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get album artwork. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get album artwork. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -146,13 +147,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error($"Could not get album artwork for path '{path}'. Exception: {ex.Message}");
+                            AppLog.Error($"Could not get album artwork for path '{path}'. Exception: {ex.Message}");
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -175,13 +176,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get artwork id's. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get artwork id's. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -203,13 +204,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not update AlbumArtwork. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not update AlbumArtwork. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
         }

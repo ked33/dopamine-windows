@@ -1,5 +1,6 @@
 ﻿using Digimezzo.Foundation.Core.Utils;
 using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Dopamine.Core.Base;
 using Dopamine.Core.Extensions;
 using Dopamine.Data.Entities;
@@ -74,13 +75,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get the Tracks for Paths. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get the Tracks for Paths. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -103,13 +104,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get all the Tracks. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get all the Tracks. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -133,13 +134,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get all the Tracks. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get all the Tracks. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -164,13 +165,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get the Tracks for Artists. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get the Tracks for Artists. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -193,13 +194,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get the Tracks for Genres. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get the Tracks for Genres. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -222,13 +223,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get the Tracks for Albums. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get the Tracks for Albums. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -249,13 +250,13 @@ namespace Dopamine.Data.Repositories
                     }
                     catch (Exception ex)
                     {
-                        LogClient.Error("Could not get the Track with Path='{0}'. Exception: {1}", path, ex.Message);
+                        AppLog.Error("Could not get the Track with Path='{0}'. Exception: {1}", path, ex.Message);
                     }
                 }
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
             }
 
             return track;
@@ -306,13 +307,13 @@ namespace Dopamine.Data.Repositories
                     }
                     catch (Exception ex)
                     {
-                        LogClient.Error("Could remove tracks from the database. Exception: {0}", ex.Message);
+                        AppLog.Error("Could remove tracks from the database. Exception: {0}", ex.Message);
                         result = RemoveTracksResult.Error;
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                     result = RemoveTracksResult.Error;
                 }
             });
@@ -335,12 +336,12 @@ namespace Dopamine.Data.Repositories
                     }
                     catch (Exception ex)
                     {
-                        LogClient.Error("Could not clear removed tracks. Exception: {0}", ex.Message);
+                        AppLog.Error("Could not clear removed tracks. Exception: {0}", ex.Message);
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
         }
@@ -363,13 +364,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not update the Track with path='{0}'. Exception: {1}", track.Path, ex.Message);
+                            AppLog.Error("Could not update the Track with path='{0}'. Exception: {1}", track.Path, ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -402,13 +403,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not update file information for Track with Path='{0}'. Exception: {1}", path, ex.Message);
+                            AppLog.Error("Could not update file information for Track with Path='{0}'. Exception: {1}", path, ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -434,13 +435,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get all the genres. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get all the genres. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -466,13 +467,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get all the track artists. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get all the track artists. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -498,13 +499,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get all the album artists. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get all the album artists. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -547,13 +548,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get all the album values. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get all the album values. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -585,13 +586,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get all the album values. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get all the album values. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -616,13 +617,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get all the album values. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get all the album values. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -648,13 +649,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get the albumKeys to index. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get the albumKeys to index. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -677,13 +678,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get the last modified track for the given albumKey. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get the last modified track for the given albumKey. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -704,13 +705,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not disable NeedsAlbumArtworkIndexing for the given albumKey. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not disable NeedsAlbumArtworkIndexing for the given albumKey. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
         }
@@ -729,13 +730,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not disable NeedsAlbumArtworkIndexing for all tracks. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not disable NeedsAlbumArtworkIndexing for all tracks. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
         }
@@ -761,13 +762,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error($"Could not disable NeedsAlbumArtworkIndexing for all tracks. {nameof(onlyWhenHasNoCover)}={onlyWhenHasNoCover}. Exception: {ex.Message}");
+                            AppLog.Error($"Could not disable NeedsAlbumArtworkIndexing for all tracks. {nameof(onlyWhenHasNoCover)}={onlyWhenHasNoCover}. Exception: {ex.Message}");
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
         }
@@ -786,13 +787,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not update rating for path='{0}'. Exception: {1}", ex.Message);
+                            AppLog.Error("Could not update rating for path='{0}'. Exception: {1}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
         }
@@ -810,13 +811,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not update love for path='{0}'. Exception: {1}", path, ex.Message);
+                            AppLog.Error("Could not update love for path='{0}'. Exception: {1}", path, ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
         }
@@ -835,13 +836,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not update statistics for path='{0}'. Exception: {1}", counters.Path, ex.Message);
+                            AppLog.Error("Could not update statistics for path='{0}'. Exception: {1}", counters.Path, ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
         }
@@ -862,13 +863,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get PlaybackCounters for path='{0}'. Exception: {1}", path, ex.Message);
+                            AppLog.Error("Could not get PlaybackCounters for path='{0}'. Exception: {1}", path, ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -889,13 +890,13 @@ namespace Dopamine.Data.Repositories
                     }
                     catch (Exception ex)
                     {
-                        LogClient.Error("Could not get AlbumData for albumKey='{0}'. Exception: {1}", albumKey, ex.Message);
+                        AppLog.Error("Could not get AlbumData for albumKey='{0}'. Exception: {1}", albumKey, ex.Message);
                     }
                 }
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
             }
             throw new NotImplementedException();
         }

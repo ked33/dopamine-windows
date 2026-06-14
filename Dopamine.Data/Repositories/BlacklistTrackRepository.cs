@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Dopamine.Data.Entities;
 using System;
 using System.Collections.Generic;
@@ -32,13 +33,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not add blacklist tracks. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not add blacklist tracks. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
         }
@@ -55,17 +56,17 @@ namespace Dopamine.Data.Repositories
                         {
                             conn.Execute($"DELETE FROM BlacklistTrack WHERE BlacklistTrackID={blacklistTrackId};");
 
-                            LogClient.Info("Removed the track with BlacklistTrackID={0}", blacklistTrackId);
+                            AppLog.Info("Removed the track with BlacklistTrackID={0}", blacklistTrackId);
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not remove the track from blacklist with BlacklistTrackID={0}. Exception: {1}", blacklistTrackId, ex.Message);
+                            AppLog.Error("Could not remove the track from blacklist with BlacklistTrackID={0}. Exception: {1}", blacklistTrackId, ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
         }
@@ -84,13 +85,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not delete from blacklist. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not delete from blacklist. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
         }
@@ -110,13 +111,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get number of tracks in blacklist. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get number of tracks in blacklist. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -139,13 +140,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get all the blacklist tracks. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get all the blacklist tracks. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
 
             });

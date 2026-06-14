@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Dopamine.Services.Playback;
 using Dopamine.Services.Win32Input;
@@ -101,14 +102,14 @@ namespace Dopamine.Services.Win32Input
             {
                 if (SettingsClient.Get<bool>("MediaKeys", "UseAppCommandMediaKeys"))
                 {
-                    LogClient.Info("Using AppCommand media keys");
+                    AppLog.Info("Using AppCommand media keys");
                     this.appCommandManager.MediaKeyPlayPressed += MediaKeyPlayPressedHandler;
                     this.appCommandManager.MediaKeyPreviousPressed += MediaKeyPreviousPressedHandler;
                     this.appCommandManager.MediaKeyNextPressed += MediaKeyNextPressedHandler;
                 }
                 else
                 {
-                    LogClient.Info("Using LowLevel media keys");
+                    AppLog.Info("Using LowLevel media keys");
                     this.lowLevelManager.MediaKeyPlayPressed += MediaKeyPlayPressedHandler;
                     this.lowLevelManager.MediaKeyPreviousPressed += MediaKeyPreviousPressedHandler;
                     this.lowLevelManager.MediaKeyNextPressed += MediaKeyNextPressedHandler;

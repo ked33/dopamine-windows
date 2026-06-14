@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Input;
 using System;
 using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using System.Windows.Controls;
 using Digimezzo.Foundation.WPF.Controls;
 using System.Windows.Media;
@@ -79,7 +80,7 @@ namespace Dopamine.Views.FullPlayer.Collection
             }
             catch (Exception ex)
             {
-                LogClient.Error("Error while handling subfolder double click. Exception: {0}", ex.Message);
+                AppLog.Error("Error while handling subfolder double click. Exception: {0}", ex.Message);
             }
         }
     }

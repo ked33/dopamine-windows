@@ -1,5 +1,6 @@
 ﻿using Digimezzo.Foundation.Core.IO;
 using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Packaging;
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Base;
@@ -74,7 +75,7 @@ namespace Dopamine.ViewModels.FullPlayer.Information
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not open link {0}. Exception: {1}", url, ex.Message);
+                    AppLog.Error("Could not open link {0}. Exception: {1}", url, ex.Message);
                 }
             });
         }

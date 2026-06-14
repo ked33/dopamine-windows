@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Dopamine.Services.Win32Input;
 using System;
 using System.Diagnostics;
@@ -45,7 +46,7 @@ namespace Dopamine.Services.Win32Input
 
                 if (this.source == null)
                 {
-                    LogClient.Error("hWnd is NULL.");
+                    AppLog.Error("hWnd is NULL.");
                 }
 
                 this.source.AddHook(WndProc);
@@ -53,13 +54,13 @@ namespace Dopamine.Services.Win32Input
 
                 if (WM_SHELLHOOKMESSAGE == 0)
                 {
-                    LogClient.Error("RegisterWindowMessage 'SHELLHOOK' failed.");
+                    AppLog.Error("RegisterWindowMessage 'SHELLHOOK' failed.");
 
                 }
 
                 if (!RegisterShellHookWindow(this.hWnd))
                 {
-                    LogClient.Error("RegisterShellHookWindow failed.");
+                    AppLog.Error("RegisterShellHookWindow failed.");
                 }
             }
         }
@@ -74,7 +75,7 @@ namespace Dopamine.Services.Win32Input
                 {
                     if (!DeregisterShellHookWindow(this.hWnd))
                     {
-                        LogClient.Error("DeregisterShellHookWindow failed.");
+                        AppLog.Error("DeregisterShellHookWindow failed.");
                     }
                     this.source.Dispose();
                 }
@@ -93,17 +94,17 @@ namespace Dopamine.Services.Win32Input
                 switch (command)
                 {
                     case Command.APPCOMMAND_MEDIA_NEXTTRACK:
-                        LogClient.Info("AppCommand Key Next pressed");
+                        AppLog.Info("AppCommand Key Next pressed");
                         this.MediaKeyNextPressed(this, new EventArgs());
                         break;
                     case Command.APPCOMMAND_MEDIA_PAUSE:
                     case Command.APPCOMMAND_MEDIA_PLAY:
                     case Command.APPCOMMAND_MEDIA_PLAY_PAUSE:
-                        LogClient.Info("AppCommand Key Play pressed");
+                        AppLog.Info("AppCommand Key Play pressed");
                         this.MediaKeyPlayPressed(this, new EventArgs());
                         break;
                     case Command.APPCOMMAND_MEDIA_PREVIOUSTRACK:
-                        LogClient.Info("AppCommand Key Previous pressed");
+                        AppLog.Info("AppCommand Key Previous pressed");
                         this.MediaKeyPreviousPressed(this, new EventArgs());
                         break;
                     default:

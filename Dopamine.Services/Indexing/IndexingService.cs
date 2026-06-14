@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Dopamine.Core.Base;
 using Dopamine.Core.Extensions;
@@ -140,7 +141,7 @@ namespace Dopamine.Services.Indexing
                 return;
             }
 
-            LogClient.Info("+++ STARTED CHECKING COLLECTION +++");
+            AppLog.Info("+++ STARTED CHECKING COLLECTION +++");
 
             this.canIndexArtwork = false;
 
@@ -193,7 +194,7 @@ namespace Dopamine.Services.Indexing
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not check the collection. Exception: {0}", ex.Message);
+                AppLog.Error("Could not check the collection. Exception: {0}", ex.Message);
             }
             finally
             {
@@ -235,7 +236,7 @@ namespace Dopamine.Services.Indexing
             // -------------
             if (isTracksChanged || isArtworkCleanedUp)
             {
-                LogClient.Info("Sending event to refresh the lists because: isTracksChanged = {0}, isArtworkCleanedUp = {1}", isTracksChanged, isArtworkCleanedUp);
+                AppLog.Info("Sending event to refresh the lists because: isTracksChanged = {0}, isArtworkCleanedUp = {1}", isTracksChanged, isArtworkCleanedUp);
                 this.RefreshLists(this, new EventArgs());
             }
 
@@ -282,7 +283,7 @@ namespace Dopamine.Services.Indexing
 
         private async Task<long> IndexTracksAsync(bool ignoreRemovedFiles)
         {
-            LogClient.Info("+++ STARTED INDEXING COLLECTION +++");
+            AppLog.Info("+++ STARTED INDEXING COLLECTION +++");
 
             DateTime startTime = DateTime.Now;
 
@@ -298,7 +299,7 @@ namespace Dopamine.Services.Indexing
 
                 numberTracksRemoved = await this.RemoveTracksAsync();
 
-                LogClient.Info("Tracks removed: {0}. Time required: {1} ms +++", numberTracksRemoved, Convert.ToInt64(DateTime.Now.Subtract(removeTracksStartTime).TotalMilliseconds));
+                AppLog.Info("Tracks removed: {0}. Time required: {1} ms +++", numberTracksRemoved, Convert.ToInt64(DateTime.Now.Subtract(removeTracksStartTime).TotalMilliseconds));
 
                 await this.GetNewDiskPathsAsync(ignoreRemovedFiles); // Obsolete tracks are removed, now we can determine new files.
                 this.cache.Initialize(); // After obsolete tracks are removed, we can initialize the cache.
@@ -308,21 +309,21 @@ namespace Dopamine.Services.Indexing
                 DateTime updateTracksStartTime = DateTime.Now;
                 numberTracksUpdated = await this.UpdateTracksAsync();
 
-                LogClient.Info("Tracks updated: {0}. Time required: {1} ms +++", numberTracksUpdated, Convert.ToInt64(DateTime.Now.Subtract(updateTracksStartTime).TotalMilliseconds));
+                AppLog.Info("Tracks updated: {0}. Time required: {1} ms +++", numberTracksUpdated, Convert.ToInt64(DateTime.Now.Subtract(updateTracksStartTime).TotalMilliseconds));
 
                 // Step 3: add new Tracks
                 // ----------------------
                 DateTime addTracksStartTime = DateTime.Now;
                 numberTracksAdded = await this.AddTracksAsync();
 
-                LogClient.Info("Tracks added: {0}. Time required: {1} ms +++", numberTracksAdded, Convert.ToInt64(DateTime.Now.Subtract(addTracksStartTime).TotalMilliseconds));
+                AppLog.Info("Tracks added: {0}. Time required: {1} ms +++", numberTracksAdded, Convert.ToInt64(DateTime.Now.Subtract(addTracksStartTime).TotalMilliseconds));
             }
             catch (Exception ex)
             {
-                LogClient.Info("There was a problem while indexing the collection. Exception: {0}", ex.Message);
+                AppLog.Info("There was a problem while indexing the collection. Exception: {0}", ex.Message);
             }
 
-            LogClient.Info("+++ FINISHED INDEXING COLLECTION: Tracks removed: {0}. Tracks updated: {1}. Tracks added: {2}. Time required: {3} ms +++", numberTracksRemoved, numberTracksUpdated, numberTracksAdded, Convert.ToInt64(DateTime.Now.Subtract(startTime).TotalMilliseconds));
+            AppLog.Info("+++ FINISHED INDEXING COLLECTION: Tracks removed: {0}. Tracks updated: {1}. Tracks added: {2}. Time required: {3} ms +++", numberTracksRemoved, numberTracksUpdated, numberTracksAdded, Convert.ToInt64(DateTime.Now.Subtract(startTime).TotalMilliseconds));
 
             return numberTracksRemoved + numberTracksAdded + numberTracksUpdated;
         }
@@ -438,7 +439,7 @@ namespace Dopamine.Services.Indexing
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("There was a problem while removing Tracks. Exception: {0}", ex.Message);
+                    AppLog.Error("There was a problem while removing Tracks. Exception: {0}", ex.Message);
                 }
             });
 
@@ -482,7 +483,7 @@ namespace Dopamine.Services.Indexing
                             }
                             catch (Exception ex)
                             {
-                                LogClient.Error("There was a problem while updating Track with path='{0}'. Exception: {1}", dbTrack.Path, ex.Message);
+                                AppLog.Error("There was a problem while updating Track with path='{0}'. Exception: {1}", dbTrack.Path, ex.Message);
                             }
 
                             currentValue += 1;
@@ -506,7 +507,7 @@ namespace Dopamine.Services.Indexing
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("There was a problem while updating Tracks. Exception: {0}", ex.Message);
+                    AppLog.Error("There was a problem while updating Tracks. Exception: {0}", ex.Message);
                 }
             });
 
@@ -566,7 +567,7 @@ namespace Dopamine.Services.Indexing
                             }
                             catch (Exception ex)
                             {
-                                LogClient.Error("There was a problem while adding Track with path='{0}'. Exception: {1}", diskTrack.Path, ex.Message);
+                                AppLog.Error("There was a problem while adding Track with path='{0}'. Exception: {1}", diskTrack.Path, ex.Message);
                             }
 
                             currentValue += 1;
@@ -591,7 +592,7 @@ namespace Dopamine.Services.Indexing
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("There was a problem while adding Tracks. Exception: {0}", ex.Message);
+                    AppLog.Error("There was a problem while adding Tracks. Exception: {0}", ex.Message);
                 }
             });
 
@@ -615,7 +616,7 @@ namespace Dopamine.Services.Indexing
                 track.NeedsIndexing = 0; // Let's not keep trying to indexing this track
                 track.IndexingFailureReason = ex.Message;
 
-                LogClient.Error("Error while retrieving tag information for file {0}. Exception: {1}", track.Path, ex.Message);
+                AppLog.Error("Error while retrieving tag information for file {0}. Exception: {1}", track.Path, ex.Message);
             }
 
             return;
@@ -649,7 +650,7 @@ namespace Dopamine.Services.Indexing
                             }
                             catch (Exception ex)
                             {
-                                LogClient.Error("There was a problem while deleting cached artwork {0}. Exception: {1}", artworkFile, ex.Message);
+                                AppLog.Error("There was a problem while deleting cached artwork {0}. Exception: {1}", artworkFile, ex.Message);
                             }
                         }
                     }
@@ -661,7 +662,7 @@ namespace Dopamine.Services.Indexing
 
         private async Task<bool> CleanupArtworkAsync()
         {
-            LogClient.Info("+++ STARTED CLEANING UP ARTWORK +++");
+            AppLog.Info("+++ STARTED CLEANING UP ARTWORK +++");
 
             DateTime startTime = DateTime.Now;
             long numberDeletedFromDatabase = 0;
@@ -679,10 +680,10 @@ namespace Dopamine.Services.Indexing
             }
             catch (Exception ex)
             {
-                LogClient.Info("There was a problem while updating the artwork. Exception: {0}", ex.Message);
+                AppLog.Info("There was a problem while updating the artwork. Exception: {0}", ex.Message);
             }
 
-            LogClient.Info("+++ FINISHED CLEANING UP ARTWORK: Covers deleted from database: {0}. Covers deleted from disk: {1}. Time required: {3} ms +++", numberDeletedFromDatabase, numberDeletedFromDisk, Convert.ToInt64(DateTime.Now.Subtract(startTime).TotalMilliseconds));
+            AppLog.Info("+++ FINISHED CLEANING UP ARTWORK: Covers deleted from database: {0}. Covers deleted from disk: {1}. Time required: {3} ms +++", numberDeletedFromDatabase, numberDeletedFromDisk, Convert.ToInt64(DateTime.Now.Subtract(startTime).TotalMilliseconds));
 
             return numberDeletedFromDatabase + numberDeletedFromDisk > 0;
         }
@@ -717,7 +718,7 @@ namespace Dopamine.Services.Indexing
 
         private async Task AddArtworkInBackgroundAsync(int passNumber)
         {
-            LogClient.Info("+++ STARTED ADDING ARTWORK IN THE BACKGROUND +++");
+            AppLog.Info("+++ STARTED ADDING ARTWORK IN THE BACKGROUND +++");
             this.canIndexArtwork = true;
             this.isIndexingArtwork = true;
 
@@ -739,12 +740,12 @@ namespace Dopamine.Services.Indexing
                             {
                                 try
                                 {
-                                    LogClient.Info("+++ ABORTED ADDING ARTWORK IN THE BACKGROUND. Time required: {0} ms +++", Convert.ToInt64(DateTime.Now.Subtract(startTime).TotalMilliseconds));
+                                    AppLog.Info("+++ ABORTED ADDING ARTWORK IN THE BACKGROUND. Time required: {0} ms +++", Convert.ToInt64(DateTime.Now.Subtract(startTime).TotalMilliseconds));
                                     this.AlbumArtworkAdded(this, new AlbumArtworkAddedEventArgs() { AlbumKeys = albumKeysWithArtwork }); // Update UI
                                 }
                                 catch (Exception ex)
                                 {
-                                    LogClient.Error("Failed to commit changes while aborting adding artwork in background. Exception: {0}", ex.Message);
+                                    AppLog.Error("Failed to commit changes while aborting adding artwork in background. Exception: {0}", ex.Message);
                                 }
 
                                 this.isIndexingArtwork = false;
@@ -804,7 +805,7 @@ namespace Dopamine.Services.Indexing
                             }
                             catch (Exception ex)
                             {
-                                LogClient.Error("There was a problem while updating the cover art for Album {0}/{1}. Exception: {2}", albumDataToIndex.AlbumTitle, albumDataToIndex.AlbumArtists, ex.Message);
+                                AppLog.Error("There was a problem while updating the cover art for Album {0}/{1}. Exception: {2}", albumDataToIndex.AlbumTitle, albumDataToIndex.AlbumArtists, ex.Message);
                             }
                         }
 
@@ -814,18 +815,18 @@ namespace Dopamine.Services.Indexing
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Failed to commit changes while finishing adding artwork in background. Exception: {0}", ex.Message);
+                            AppLog.Error("Failed to commit changes while finishing adding artwork in background. Exception: {0}", ex.Message);
                         }
                     }
                     catch (Exception ex)
                     {
-                        LogClient.Error("Unexpected error occurred while updating artwork in the background. Exception: {0}", ex.Message);
+                        AppLog.Error("Unexpected error occurred while updating artwork in the background. Exception: {0}", ex.Message);
                     }
                 }
             });
 
             this.isIndexingArtwork = false;
-            LogClient.Error("+++ FINISHED ADDING ARTWORK IN THE BACKGROUND. Time required: {0} ms +++", Convert.ToInt64(DateTime.Now.Subtract(startTime).TotalMilliseconds));
+            AppLog.Error("+++ FINISHED ADDING ARTWORK IN THE BACKGROUND. Time required: {0} ms +++", Convert.ToInt64(DateTime.Now.Subtract(startTime).TotalMilliseconds));
         }
 
         public async void ReScanAlbumArtworkAsync(bool onlyWhenHasNoCover)
@@ -863,7 +864,7 @@ namespace Dopamine.Services.Indexing
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Error while recursively getting files/folders for directory={0}. Exception: {1}", fol.Path, ex.Message);
+                            AppLog.Error("Error while recursively getting files/folders for directory={0}. Exception: {1}", fol.Path, ex.Message);
                         }
                     }
                 }

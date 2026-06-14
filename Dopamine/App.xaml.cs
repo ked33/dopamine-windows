@@ -1,6 +1,7 @@
 ﻿using CommonServiceLocator;
 using Digimezzo.Foundation.Core.IO;
 using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.Core.Utils;
 using Digimezzo.Foundation.WPF.Controls;
@@ -86,7 +87,7 @@ namespace Dopamine
             else
             {
                 // HACK: because shutdown is too fast, some logging might be missing in the log file.
-                LogClient.Warning("{0} is already running. Shutting down.", ProductInformation.ApplicationName);
+                AppLog.Warning("{0} is already running. Shutting down.", ProductInformation.ApplicationName);
                 this.Shutdown();
             }
         }
@@ -116,7 +117,7 @@ namespace Dopamine
 
         protected override void InitializeShell(Window shell)
         {
-            LogClient.Info($"### STARTING {ProductInformation.ApplicationName}, version {ProcessExecutable.AssemblyVersion()}, IsPortable = {SettingsClient.BaseGet<bool>("Configuration", "IsPortable")}, Windows version = {EnvironmentUtils.GetFriendlyWindowsVersion()} ({EnvironmentUtils.GetInternalWindowsVersion()}), IsWindows10 = {Core.Base.Constants.IsWindows10} ###");
+            AppLog.Info($"### STARTING {ProductInformation.ApplicationName}, version {ProcessExecutable.AssemblyVersion()}, IsPortable = {SettingsClient.BaseGet<bool>("Configuration", "IsPortable")}, Windows version = {EnvironmentUtils.GetFriendlyWindowsVersion()} ({EnvironmentUtils.GetInternalWindowsVersion()}), IsWindows10 = {Core.Base.Constants.IsWindows10} ###");
 
             // Handler for unhandled AppDomain exceptions
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
@@ -139,7 +140,7 @@ namespace Dopamine
 
                 // Show the OOBE window. Don't tell the Indexer to start. 
                 // It will get a signal to start when the OOBE window closes.
-                LogClient.Info("Showing Oobe screen");
+                AppLog.Info("Showing Oobe screen");
 
                 // Disable shutdown when the dialogs close
                 Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -153,7 +154,7 @@ namespace Dopamine
             Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
 
             // Show the main window
-            LogClient.Info("Showing Main screen");
+            AppLog.Info("Showing Main screen");
             shell.Show();
 
             // We're not showing the OOBE screen, tell the IndexingService to start.
@@ -173,11 +174,11 @@ namespace Dopamine
             try
             {
                 commandServicehost.Open();
-                LogClient.Info("CommandService was started successfully");
+                AppLog.Info("CommandService was started successfully");
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not start CommandService. Exception: {0}", ex.Message);
+                AppLog.Error("Could not start CommandService. Exception: {0}", ex.Message);
             }
 
             // FileService
@@ -188,11 +189,11 @@ namespace Dopamine
             try
             {
                 fileServicehost.Open();
-                LogClient.Info("FileService was started successfully");
+                AppLog.Info("FileService was started successfully");
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not start FileService. Exception: {0}", ex.Message);
+                AppLog.Error("Could not start FileService. Exception: {0}", ex.Message);
             }
         }
 
@@ -276,7 +277,7 @@ namespace Dopamine
                     }
                     catch (Exception ex)
                     {
-                        LogClient.Error("Constructing NotificationService failed. Falling back to LegacyNotificationService. Exception: {0}", ex.Message);
+                        AppLog.Error("Constructing NotificationService failed. Falling back to LegacyNotificationService. Exception: {0}", ex.Message);
                         notificationService = new LegacyNotificationService(
                         Container.Resolve<IPlaybackService>(),
                         Container.Resolve<ICacheService>(),
@@ -376,12 +377,12 @@ namespace Dopamine
 
             if (args.Length > 1)
             {
-                LogClient.Info("Found command-line arguments.");
+                AppLog.Info("Found command-line arguments.");
 
                 switch (args[1])
                 {
                     case "/donate":
-                        LogClient.Info("Detected DonateCommand from JumpList.");
+                        AppLog.Info("Detected DonateCommand from JumpList.");
 
                         try
                         {
@@ -389,13 +390,13 @@ namespace Dopamine
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not open the link {0} in Internet Explorer. Exception: {1}", args[2], ex.Message);
+                            AppLog.Error("Could not open the link {0} in Internet Explorer. Exception: {1}", args[2], ex.Message);
                         }
                         this.Shutdown();
                         break;
                     default:
 
-                        LogClient.Info("Processing Non-JumpList command-line arguments.");
+                        AppLog.Info("Processing Non-JumpList command-line arguments.");
 
 
                         if (!isNewInstance)
@@ -426,17 +427,17 @@ namespace Dopamine
             {
                 var commandServiceProxy = commandServiceFactory.CreateChannel();
                 commandServiceProxy.ShowMainWindowCommand();
-                LogClient.Info("Trying to show the running instance");
+                AppLog.Info("Trying to show the running instance");
             }
             catch (Exception ex)
             {
-                LogClient.Error("A problem occurred while trying to show the running instance. Exception: {0}", ex.Message);
+                AppLog.Error("A problem occurred while trying to show the running instance. Exception: {0}", ex.Message);
             }
         }
 
         private void TrySendCommandlineArguments(string[] args)
         {
-            LogClient.Info("Trying to send {0} command-line arguments to the running instance", args.Count());
+            AppLog.Info("Trying to send {0} command-line arguments to the running instance", args.Count());
 
             var needsSending = true;
             var startTime = DateTime.Now;
@@ -451,7 +452,7 @@ namespace Dopamine
                     // Try to send the command-line arguments to the running instance
                     var fileServiceProxy = fileServiceFactory.CreateChannel();
                     fileServiceProxy.ProcessArguments(args);
-                    LogClient.Info("Sent {0} command-line arguments to the running instance", args.Count());
+                    AppLog.Info("Sent {0} command-line arguments to the running instance", args.Count());
 
                     needsSending = false;
                 }
@@ -470,7 +471,7 @@ namespace Dopamine
                     {
                         // Log any other Exception and stop trying to send the file to the running instance
                         needsSending = false;
-                        LogClient.Info("A problem occurred while trying to send {0} command-line arguments to the running instance. Exception: {1}", args.Count().ToString(), ex.Message);
+                        AppLog.Info("A problem occurred while trying to send {0} command-line arguments to the running instance. Exception: {1}", args.Count().ToString(), ex.Message);
                     }
                 }
 
@@ -525,7 +526,7 @@ namespace Dopamine
             {
                 if (this.CanLogUnhandledException())
                 {
-                    LogClient.Warning($"Ignored Unhandled Exception: {ex.Message}");
+                    AppLog.WarningAlways($"Ignored Unhandled Exception: {ex.Message}");
                 }
 
                 return;
@@ -538,7 +539,7 @@ namespace Dopamine
             {
                 if (this.CanLogUnhandledException())
                 {
-                    LogClient.Warning($"Ignored Unhandled Exception: {ex.Message}");
+                    AppLog.WarningAlways($"Ignored Unhandled Exception: {ex.Message}");
                 }
 
                 return;
@@ -552,21 +553,21 @@ namespace Dopamine
             {
                 if (this.CanLogUnhandledException())
                 {
-                    LogClient.Warning($"Ignored Unhandled Exception: {ex.Message}");
+                    AppLog.WarningAlways($"Ignored Unhandled Exception: {ex.Message}");
                 }
 
                 return;
             }
 
-            // LogClient.Warning($"Ignored Unhandled Exception: Message=<<<<{ex.Message}>>>>");
-            // LogClient.Warning($"Ignored Unhandled Exception: Type=<<<<{ex.GetType().ToString()}>>>>");
-            // LogClient.Warning($"Ignored Unhandled Exception: Source=<<<<{ex.Source.ToString()}>>>>");
+            // AppLog.WarningAlways($"Ignored Unhandled Exception: Message=<<<<{ex.Message}>>>>");
+            // AppLog.WarningAlways($"Ignored Unhandled Exception: Type=<<<<{ex.GetType().ToString()}>>>>");
+            // AppLog.WarningAlways($"Ignored Unhandled Exception: Source=<<<<{ex.Source.ToString()}>>>>");
             // return;
 
-            LogClient.Error("Unhandled Exception. {0}", LogClient.GetAllExceptions(ex));
+            AppLog.ErrorAlways("Unhandled Exception. {0}", LogClient.GetAllExceptions(ex));
 
             // Close the application to prevent further problems
-            LogClient.Info("### FORCED STOP of {0}, version {1} ###", ProductInformation.ApplicationName, ProcessExecutable.AssemblyVersion());
+            AppLog.InfoAlways("### FORCED STOP of {0}, version {1} ###", ProductInformation.ApplicationName, ProcessExecutable.AssemblyVersion());
 
             // Stop playing (This avoids remaining processes in Task Manager)
             var playbackService = ServiceLocator.Current.GetInstance<IPlaybackService>();

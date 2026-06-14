@@ -214,6 +214,8 @@
   <Text Key="Enable_Transparency">Maak bepaalde elementen doorzichtig</Text>
   <Text Key="Animation">Animation</Text>
   <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
+  <Text Key="Logging">Logging</Text>
+  <Text Key="Enable_Log_File">Enable log file</Text>
   <Text Key="Close_To_Tray">Sluiten naar systeemvak</Text>
   <Text Key="Edit">Aanpassen</Text>
   <Text Key="Edit_Song">Nummer aanpassen</Text>

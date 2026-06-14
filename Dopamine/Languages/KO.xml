@@ -214,6 +214,8 @@
   <Text Key="Enable_Transparency">일부 요소 투명하게 만들기</Text>
   <Text Key="Animation">Animation</Text>
   <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
+  <Text Key="Logging">Logging</Text>
+  <Text Key="Enable_Log_File">Enable log file</Text>
   <Text Key="Close_To_Tray">알림 영역으로 닫기</Text>
   <Text Key="Edit">편집</Text>
   <Text Key="Edit_Song">노래 편집</Text>

@@ -1,5 +1,6 @@
 ﻿using Digimezzo.Foundation.Core.IO;
 using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Packaging;
 using Digimezzo.Foundation.Core.Settings;
 using Dopamine.Core.Base;
@@ -75,7 +76,7 @@ namespace Dopamine.Services.Update
             }
             catch (Exception ex)
             {
-                LogClient.Error("Update check: could not retrieve online version information. Exception: {0}",
+                AppLog.Error("Update check: could not retrieve online version information. Exception: {0}",
                     ex.Message);
             }
 
@@ -89,12 +90,12 @@ namespace Dopamine.Services.Update
                 return;
             }
 
-            LogClient.Info("Checking for updates");
+            AppLog.Info("Checking for updates");
             this.canCheck = true;
 
             // Get the current version
             var currentVersion = this.CreateDummyPackage(ProcessExecutable.AssemblyVersion());
-            LogClient.Info("Update check: current version = {0}", currentVersion.Version);
+            AppLog.Info("Update check: current version = {0}", currentVersion.Version);
 
             // Get a new version online
             if (!this.canCheck)
@@ -103,7 +104,7 @@ namespace Dopamine.Services.Update
             }
 
             Package newOnlineVersion = await this.GetNewVersionAsync(currentVersion);
-            LogClient.Info("Update check: new online version = {0}.{1}.{2}.{3}", newOnlineVersion.UnformattedVersion);
+            AppLog.Info("Update check: new online version = {0}.{1}.{2}.{3}", newOnlineVersion.UnformattedVersion);
 
             // Check if the online version is valid
             if (newOnlineVersion.Version.CompareTo(currentVersion.Version) > 0)
@@ -120,7 +121,7 @@ namespace Dopamine.Services.Update
             else
             {
                 this.NoNewVersionAvailable(this, new EventArgs());
-                LogClient.Info("No new version was found");
+                AppLog.Info("No new version was found");
             }
 
             if (SettingsClient.Get<bool>("Updates", "CheckPeriodically"))
@@ -131,7 +132,7 @@ namespace Dopamine.Services.Update
 
         private void EnablePeriodicCheck()
         {
-            LogClient.Info("Enabling periodic update check");
+            AppLog.Info("Enabling periodic update check");
             this.checkTimer.Stop();
             this.checkTimer.Interval = TimeSpan.FromMinutes(SettingsClient.Get<int>("Updates", "CheckIntervalMinutes"))
                 .TotalMilliseconds;
@@ -140,14 +141,14 @@ namespace Dopamine.Services.Update
 
         private void DisablePeriodicCheck()
         {
-            LogClient.Info("Disabling periodic update check");
+            AppLog.Info("Disabling periodic update check");
             this.canCheck = false;
             this.checkTimer.Stop();
         }
 
         public void Reset()
         {
-            LogClient.Info("Resetting update check");
+            AppLog.Info("Resetting update check");
 
             this.DisablePeriodicCheck();
 

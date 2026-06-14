@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Base;
 using Dopamine.Data.Entities;
@@ -50,7 +51,7 @@ namespace Dopamine.Services.Indexing
             }
             catch (Exception ex)
             {
-                LogClient.Error("There was a problem while getting artwork data for Track with path='{0}'. Exception: {1}", fileMetadata.Path, ex.Message);
+                AppLog.Error("There was a problem while getting artwork data for Track with path='{0}'. Exception: {1}", fileMetadata.Path, ex.Message);
             }
 
             return artworkData;
@@ -71,7 +72,7 @@ namespace Dopamine.Services.Indexing
             }
             catch (Exception ex)
             {
-                LogClient.Error("There was a problem while getting external artwork for Track with path='{0}'. Exception: {1}", path, ex.Message);
+                AppLog.Error("There was a problem while getting external artwork for Track with path='{0}'. Exception: {1}", path, ex.Message);
             }
 
             return artworkData;
@@ -98,7 +99,7 @@ namespace Dopamine.Services.Indexing
             }
             catch (Exception ex)
             {
-                LogClient.Error($"Could not get artwork for Album with AlbumKey='{albumKey}'. Exception: {ex.Message}");
+                AppLog.Error($"Could not get artwork for Album with AlbumKey='{albumKey}'. Exception: {ex.Message}");
             }
 
             return artworkData;

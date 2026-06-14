@@ -3,6 +3,7 @@ using System.Drawing.Imaging;
 using System.Linq;
 using System.Threading.Tasks;
 using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Utils;
 
 namespace Dopamine.Utils
@@ -52,7 +53,7 @@ namespace Dopamine.Utils
                     }
                     catch (Exception ex)
                     {
-                        LogClient.Error("An error occurred while saving the byte[] to a file. Exception: {0}", ex.Message);
+                        AppLog.Error("An error occurred while saving the byte[] to a file. Exception: {0}", ex.Message);
                         isSaveSuccess = false;
                     }
                 });

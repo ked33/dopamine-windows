@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Base;
 using Dopamine.Core.Extensions;
@@ -157,7 +158,7 @@ namespace Dopamine.Services.File
             {
                 // Make sure the file can be opened by creating a Track with some default values
                 returnTrack = container.ResolveTrackViewModel(Track.CreateDefault(path));
-                LogClient.Error("Error while creating Track from file '{0}'. Creating default track. Exception: {1}", path, ex.Message);
+                AppLog.Error("Error while creating Track from file '{0}'. Creating default track. Exception: {1}", path, ex.Message);
             }
 
             return returnTrack;
@@ -172,7 +173,7 @@ namespace Dopamine.Services.File
 
                 await Task.Run(() =>
                 {
-                    LogClient.Info("Received commandline arguments.");
+                    AppLog.Info("Received commandline arguments.");
 
                     // Don't process index=0, as this contains the name of the executable.
                     for (int index = 1; index <= args.Length - 1; index++)
@@ -180,7 +181,7 @@ namespace Dopamine.Services.File
                         lock (this.lockObject)
                         {
                             this.files.Add(args[index]);
-                            LogClient.Info("Added file '{0}'", args[index]);
+                            AppLog.Info("Added file '{0}'", args[index]);
                         }
                     }
                 });
@@ -205,7 +206,7 @@ namespace Dopamine.Services.File
             {
                 lock (this.lockObject)
                 {
-                    LogClient.Info("Finished adding files. Number of files added = {0}", this.files.Count.ToString());
+                    AppLog.Info("Finished adding files. Number of files added = {0}", this.files.Count.ToString());
                 }
 
                 await Application.Current.Dispatcher.BeginInvoke(new Action(async () => await this.ImportFilesAsync()));
@@ -236,17 +237,17 @@ namespace Dopamine.Services.File
                 IList<TrackViewModel> tracks = await this.ProcessFilesAsync(tempFiles, true);
                 TrackViewModel selectedTrack = tracks.First();
 
-                LogClient.Info("Number of tracks to play = {0}", tracks.Count.ToString());
+                AppLog.Info("Number of tracks to play = {0}", tracks.Count.ToString());
 
                 if (tracks.Count > 0)
                 {
-                    LogClient.Info("Enqueuing {0} tracks.", tracks.Count.ToString());
+                    AppLog.Info("Enqueuing {0} tracks.", tracks.Count.ToString());
                     this.TracksImported(tracks, selectedTrack);
                 }
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not enqueue tracks. Exception: {0}", ex.Message);
+                AppLog.Error("Could not enqueue tracks. Exception: {0}", ex.Message);
             }
         }
 
@@ -257,7 +258,7 @@ namespace Dopamine.Services.File
 
             if (!decodeResult.DecodeResult.Result)
             {
-                LogClient.Error("Error while decoding playlist file. Exception: {0}", decodeResult.DecodeResult.GetMessages());
+                AppLog.Error("Error while decoding playlist file. Exception: {0}", decodeResult.DecodeResult.GetMessages());
             }
 
             return decodeResult.Paths;
@@ -273,7 +274,7 @@ namespace Dopamine.Services.File
             }
             catch (Exception ex)
             {
-                LogClient.Error("Error while recursively getting files/folders for directory={0}. Exception: {1}", directoryPath, ex.Message);
+                AppLog.Error("Error while recursively getting files/folders for directory={0}. Exception: {1}", directoryPath, ex.Message);
             }
 
             // Sort the files in a natural way
@@ -295,7 +296,7 @@ namespace Dopamine.Services.File
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("There was a problem while fetching file artwork. Exception: {0}", ex.Message);
+                    AppLog.Error("There was a problem while fetching file artwork. Exception: {0}", ex.Message);
                 }
 
                 if (artworkFiles != null && artworkFiles.Count() > 0)
@@ -313,7 +314,7 @@ namespace Dopamine.Services.File
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("There was a problem while deleting cached file artwork {0}. Exception: {1}", artworkFile, ex.Message);
+                            AppLog.Error("There was a problem while deleting cached file artwork {0}. Exception: {1}", artworkFile, ex.Message);
                         }
                     }
                 }

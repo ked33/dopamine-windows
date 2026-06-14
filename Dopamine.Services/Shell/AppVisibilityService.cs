@@ -1,4 +1,5 @@
 using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using System;
 
 namespace Dopamine.Services.Shell
@@ -57,7 +58,7 @@ namespace Dopamine.Services.Shell
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("An app visibility change handler failed. Exception: {0}", ex.Message);
+                    AppLog.Error("An app visibility change handler failed. Exception: {0}", ex.Message);
                 }
             }
         }

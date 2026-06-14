@@ -1,5 +1,6 @@
 ﻿using Digimezzo.Foundation.Core.Helpers;
 using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Dopamine.Core.Base;
 using System;
 using System.Collections.Generic;
@@ -223,7 +224,7 @@ namespace Dopamine.Core.IO
             }
             catch (Exception ex)
             {
-                LogClient.Error($"Could not decode smart playlist '{fileName}'. Exception: {ex.Message}");
+                AppLog.Error($"Could not decode smart playlist '{fileName}'. Exception: {ex.Message}");
                 decodeResult.Result = false;
             }
 

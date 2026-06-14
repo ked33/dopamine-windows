@@ -1,5 +1,6 @@
 ﻿using Digimezzo.Foundation.Core.IO;
 using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Utils;
 using Digimezzo.Foundation.WPF.Controls;
 using System;
@@ -46,7 +47,7 @@ namespace Dopamine.Services.Dialog
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not view the log file {0} in explorer. Exception: {1}", LogClient.Logfile(), ex.Message);
+                AppLog.Error("Could not view the log file {0} in explorer. Exception: {1}", LogClient.Logfile(), ex.Message);
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Audio;
@@ -247,7 +248,7 @@ namespace Dopamine.Services.Playback
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Failed to get current time. Returning 00:00. Exception: {0}", ex.Message);
+                    AppLog.Error("Failed to get current time. Returning 00:00. Exception: {0}", ex.Message);
                     return new TimeSpan(0);
                 }
 
@@ -283,7 +284,7 @@ namespace Dopamine.Services.Playback
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Failed to get total time. Returning 00:00. Exception: {0}", ex.Message);
+                    AppLog.Error("Failed to get total time. Returning 00:00. Exception: {0}", ex.Message);
                     return new TimeSpan(0);
                 }
 
@@ -333,9 +334,9 @@ namespace Dopamine.Services.Playback
         {
             this.canGetSavedQueuedTracks = false;
 
-            LogClient.Info("Start enqueuing {0} track(s) from files", tracks.Count);
+            AppLog.Info("Start enqueuing {0} track(s) from files", tracks.Count);
             await this.EnqueueAsync(tracks, track);
-            LogClient.Info("Finished enqueuing {0} track(s) from files", tracks.Count);
+            AppLog.Info("Finished enqueuing {0} track(s) from files", tracks.Count);
         }
 
         public event PlaybackSuccessEventHandler PlaybackSuccess = delegate { };
@@ -369,7 +370,7 @@ namespace Dopamine.Services.Playback
 
             if (savedDevice == null)
             {
-                LogClient.Warning($"Audio device with deviceId={savedAudioDeviceId} could not be found. Using default device instead.");
+                AppLog.Warning($"Audio device with deviceId={savedAudioDeviceId} could not be found. Using default device instead.");
                 savedDevice = this.CreateDefaultAudioDevice();
             }
 
@@ -531,12 +532,12 @@ namespace Dopamine.Services.Playback
 
                 await this.queuedTrackRepository.SaveQueuedTracksAsync(queuedTracks);
 
-                LogClient.Info("Saved {0} queued tracks", queuedTracks.Count.ToString());
+                AppLog.Info("Saved {0} queued tracks", queuedTracks.Count.ToString());
                 this.RememberSavedPlaybackPosition();
             }
             catch (Exception ex)
             {
-                LogClient.Info("Could not save queued tracks. Exception: {0}", ex.Message);
+                AppLog.Info("Could not save queued tracks. Exception: {0}", ex.Message);
             }
 
             this.isSavingQueuedTracks = false;
@@ -569,7 +570,7 @@ namespace Dopamine.Services.Playback
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not write settings. Exception: {0}", ex.Message);
+                AppLog.Error("Could not write settings. Exception: {0}", ex.Message);
             }
         }
 
@@ -622,7 +623,7 @@ namespace Dopamine.Services.Playback
 
             this.PlaybackCountersChanged(localCounters);
 
-            LogClient.Info("Saved track statistics");
+            AppLog.Info("Saved track statistics");
 
             this.isSavingPLaybackCounters = false;
 
@@ -732,7 +733,7 @@ namespace Dopamine.Services.Playback
 
         public async Task PlayNextAsync()
         {
-            LogClient.Info("Request to play the next track.");
+            AppLog.Info("Request to play the next track.");
 
             if (this.HasCurrentTrack)
             {
@@ -755,7 +756,7 @@ namespace Dopamine.Services.Playback
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not get time information for Track with path='{0}'. Exception: {1}", this.CurrentTrack.Path, ex.Message);
+                    AppLog.Error("Could not get time information for Track with path='{0}'. Exception: {1}", this.CurrentTrack.Path, ex.Message);
                 }
             }
 
@@ -784,7 +785,7 @@ namespace Dopamine.Services.Playback
 
         public async Task PlayPreviousAsync()
         {
-            LogClient.Info("Request to play the previous track.");
+            AppLog.Info("Request to play the previous track.");
 
             // We don't want interruptions when trying to play the previous Track. 
             // If the previous Track cannot be played, keep skipping to the
@@ -1070,7 +1071,7 @@ namespace Dopamine.Services.Playback
                     }
                     catch (Exception ex)
                     {
-                        LogClient.Error("Could not update track statistics for track with path='{0}'. Exception: {1}", path, ex.Message);
+                        AppLog.Error("Could not update track statistics for track with path='{0}'. Exception: {1}", path, ex.Message);
                     }
                 }
             });
@@ -1171,7 +1172,7 @@ namespace Dopamine.Services.Playback
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not pause track with path='{0}'. Exception: {1}", this.CurrentTrack.Path, ex.Message);
+                AppLog.Error("Could not pause track with path='{0}'. Exception: {1}", this.CurrentTrack.Path, ex.Message);
             }
         }
 
@@ -1224,7 +1225,7 @@ namespace Dopamine.Services.Playback
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not resume track with path='{0}'. Exception: {1}", this.CurrentTrack.Path, ex.Message);
+                AppLog.Error("Could not resume track with path='{0}'. Exception: {1}", this.CurrentTrack.Path, ex.Message);
             }
         }
 
@@ -1344,7 +1345,7 @@ namespace Dopamine.Services.Playback
                 // Set this to false again after raising the event. It is important to have a correct slide 
                 // direction for cover art when the next Track is a file from double click in Windows.
                 this.isPlayingPreviousTrack = false;
-                LogClient.Info("Playing the file {0}. EventMode={1}, ExclusiveMode={2}, LoopMode={3}, Shuffle={4}", track.Path, this.EventMode, this.ExclusiveMode, this.LoopMode, this.shuffle);
+                AppLog.Info("Playing the file {0}. EventMode={1}, ExclusiveMode={2}, LoopMode={3}, Shuffle={4}", track.Path, this.EventMode, this.ExclusiveMode, this.LoopMode, this.shuffle);
 
                 if (!isSilent)
                 {
@@ -1375,10 +1376,10 @@ namespace Dopamine.Services.Playback
                 }
                 catch (Exception)
                 {
-                    LogClient.Error("Could not stop the Player");
+                    AppLog.Error("Could not stop the Player");
                 }
 
-                LogClient.Error("Could not play the file {0}. EventMode={1}, ExclusiveMode={2}, LoopMode={3}, Shuffle={4}. Exception: {5}. StackTrace: {6}", track.Path, this.EventMode, this.ExclusiveMode, this.LoopMode, this.shuffle, playbackFailedEventArgs.Message, playbackFailedEventArgs.StackTrace);
+                AppLog.Error("Could not play the file {0}. EventMode={1}, ExclusiveMode={2}, LoopMode={3}, Shuffle={4}. Exception: {5}. StackTrace: {6}", track.Path, this.EventMode, this.ExclusiveMode, this.LoopMode, this.shuffle, playbackFailedEventArgs.Message, playbackFailedEventArgs.StackTrace);
 
                 this.PlaybackFailed(this, playbackFailedEventArgs);
             }
@@ -1493,7 +1494,7 @@ namespace Dopamine.Services.Playback
             // Use our context to trigger the work, because this event is fired on the Player's Playback thread.
             this.context.Post(new SendOrPostCallback((state) =>
             {
-                LogClient.Info("Track interrupted: {0}", this.CurrentTrack.Path);
+                AppLog.Info("Track interrupted: {0}", this.CurrentTrack.Path);
                 this.Stop();
             }), null);
         }
@@ -1504,7 +1505,7 @@ namespace Dopamine.Services.Playback
             // Use our context to trigger the work, because this event is fired on the Player's Playback thread.
             this.context.Post(new SendOrPostCallback(async (state) =>
             {
-                LogClient.Info("Track finished: {0}", this.CurrentTrack.Path);
+                AppLog.Info("Track finished: {0}", this.CurrentTrack.Path);
                 await this.UpdatePlaybackCountersAsync(this.CurrentTrack.Path, true, false); // Increase PlayCount
                 await this.TryPlayNextAsync(false);
             }), null);
@@ -1564,13 +1565,13 @@ namespace Dopamine.Services.Playback
         {
             if (!this.canGetSavedQueuedTracks)
             {
-                LogClient.Info("Aborting getting of saved queued tracks");
+                AppLog.Info("Aborting getting of saved queued tracks");
                 return;
             }
 
             try
             {
-                LogClient.Info("Getting saved queued tracks");
+                AppLog.Info("Getting saved queued tracks");
                 IList<QueuedTrack> savedQueuedTracks = await this.queuedTrackRepository.GetSavedQueuedTracksAsync();
                 IList<RestoredQueuedTrack> restoredQueuedTracks = await this.ConvertQueuedTracksToTrackViewModels(savedQueuedTracks);
                 RestoredQueuedTrack playingRestoredQueuedTrack = restoredQueuedTracks.Where(x => x.QueuedTrack.IsPlaying == 1).FirstOrDefault();
@@ -1586,7 +1587,7 @@ namespace Dopamine.Services.Playback
 
                 if (!this.canGetSavedQueuedTracks)
                 {
-                    LogClient.Info("Aborting getting of saved queued tracks");
+                    AppLog.Info("Aborting getting of saved queued tracks");
                     return;
                 }
 
@@ -1606,18 +1607,18 @@ namespace Dopamine.Services.Playback
 
                 try
                 {
-                    LogClient.Info("Starting track {0} paused", playingTrackViewModel.Path);
+                    AppLog.Info("Starting track {0} paused", playingTrackViewModel.Path);
                     await this.StartTrackPausedAsync(playingTrackViewModel, progressSeconds);
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not set the playing track. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not set the playing track. Exception: {0}", ex.Message);
                     this.Stop(); // Should not be required, but just in case.
                 }
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not get saved queued tracks. Exception: {0}", ex.Message);
+                AppLog.Error("Could not get saved queued tracks. Exception: {0}", ex.Message);
             }
         }
 

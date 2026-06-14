@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Dopamine.Core.Extensions;
 using Dopamine.Data.Entities;
 using System;
@@ -32,24 +33,24 @@ namespace Dopamine.Data.Repositories
                             if (!conn.Table<Folder>().Select((f) => f).ToList().Select((f) => f.SafePath).Contains(path.ToSafePath()))
                             {
                                 conn.Insert(new Folder { Path = path, SafePath = path.ToSafePath(), ShowInCollection = 1 });
-                                LogClient.Info("Added the Folder {0}", path);
+                                AppLog.Info("Added the Folder {0}", path);
                             }
                             else
                             {
-                                LogClient.Info("Didn't add the Folder {0} because it is already in the database", path);
+                                AppLog.Info("Didn't add the Folder {0} because it is already in the database", path);
                                 result = AddFolderResult.Duplicate;
                             }
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not add the Folder {0}. Exception: {1}", path, ex.Message);
+                            AppLog.Error("Could not add the Folder {0}. Exception: {1}", path, ex.Message);
                             result = AddFolderResult.Error;
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -71,18 +72,18 @@ namespace Dopamine.Data.Repositories
                             conn.Execute($"DELETE FROM Folder WHERE FolderID={folderId};");
                             conn.Execute($"DELETE FROM FolderTrack WHERE FolderID={folderId};");
 
-                            LogClient.Info("Removed the Folder with FolderID={0}", folderId);
+                            AppLog.Info("Removed the Folder with FolderID={0}", folderId);
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not remove the Folder with FolderID={0}. Exception: {1}", folderId, ex.Message);
+                            AppLog.Error("Could not remove the Folder with FolderID={0}. Exception: {1}", folderId, ex.Message);
                             result = RemoveFolderResult.Error;
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
 
@@ -105,13 +106,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not get all the Folders. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not get all the Folders. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
 
             });
@@ -142,13 +143,13 @@ namespace Dopamine.Data.Repositories
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not update the Folders. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not update the Folders. Exception: {0}", ex.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
                 }
             });
         }

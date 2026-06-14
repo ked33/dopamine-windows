@@ -1,5 +1,6 @@
 ﻿using Digimezzo.Foundation.Core.Utils;
 using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -22,12 +23,12 @@ namespace Dopamine.Core.IO
 
                 foreach (Exception ex in exceptions)
                 {
-                    LogClient.Error("Error occurred while getting files recursively. Exception: {0}", ex.Message);
+                    AppLog.Error("Error occurred while getting files recursively. Exception: {0}", ex.Message);
                 }
             }
             catch (Exception ex)
             {
-                LogClient.Error("Unexpected error occurred while getting folder paths. Exception: {0}", ex.Message);
+                AppLog.Error("Unexpected error occurred while getting folder paths. Exception: {0}", ex.Message);
             }
 
             return folderPaths;

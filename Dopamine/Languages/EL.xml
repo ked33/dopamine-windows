@@ -214,6 +214,8 @@
   <Text Key="Enable_Transparency">Ενεργοποιεί τη διαφάνεια κάποιων στοιχείων</Text>
   <Text Key="Animation">Animation</Text>
   <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
+  <Text Key="Logging">Logging</Text>
+  <Text Key="Enable_Log_File">Enable log file</Text>
   <Text Key="Close_To_Tray">Σμίκρυνση στην περιοχή ειδοποιήσεων</Text>
   <Text Key="Edit">Επεξεργασία</Text>
   <Text Key="Edit_Song">Επεξεργασία τραγουδιού</Text>

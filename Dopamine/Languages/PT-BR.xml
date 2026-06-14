@@ -214,6 +214,8 @@
   <Text Key="Enable_Transparency">Tornar alguns elementos transparentes</Text>
   <Text Key="Animation">Animation</Text>
   <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
+  <Text Key="Logging">Logging</Text>
+  <Text Key="Enable_Log_File">Enable log file</Text>
   <Text Key="Close_To_Tray">Fechar para a área de notificação</Text>
   <Text Key="Edit">Editar</Text>
   <Text Key="Edit_Song">Editar música</Text>

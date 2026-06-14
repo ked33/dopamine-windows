@@ -27,6 +27,12 @@ namespace Dopamine.Core.Settings
 
         public PopupAnimation SlidePopupAnimation => this.AnimationsEnabled ? PopupAnimation.Slide : PopupAnimation.None;
 
+        public static void SetAnimationsEnabled(bool isEnabled)
+        {
+            SettingDefaults.SetSafe(SettingsNamespace, SettingName, isEnabled, true);
+            Instance.NotifyAnimationPropertiesChanged();
+        }
+
         private UiAnimationSettings()
         {
             SettingsClient.SettingChanged += (_, e) =>
@@ -107,14 +113,7 @@ namespace Dopamine.Core.Settings
 
         private static bool GetAnimationsEnabled()
         {
-            try
-            {
-                return SettingsClient.Get<bool>(SettingsNamespace, SettingName);
-            }
-            catch (Exception)
-            {
-                return true;
-            }
+            return SettingDefaults.GetOrAdd(SettingsNamespace, SettingName, true, true);
         }
 
         private static void BeginAnimation(DependencyObject target, DependencyProperty property, AnimationTimeline animation)

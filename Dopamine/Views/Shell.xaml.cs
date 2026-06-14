@@ -1,5 +1,6 @@
 ﻿using Digimezzo.Foundation.Core.IO;
 using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.Core.Utils;
 using Digimezzo.Foundation.WPF.Controls;
@@ -120,12 +121,12 @@ namespace Dopamine.Views
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not hide main window from ALT-TAB menu. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not hide main window from ALT-TAB menu. Exception: {0}", ex.Message);
                 }
             }
             else
             {
-                LogClient.Info("### STOPPING {0}, version {1} ###", ProductInformation.ApplicationName, ProcessExecutable.AssemblyVersion().ToString());
+                AppLog.Info("### STOPPING {0}, version {1} ###", ProductInformation.ApplicationName, ProcessExecutable.AssemblyVersion().ToString());
 
                 if (this.lifetimeService.MustPerformClosingTasks)
                 {
@@ -163,7 +164,7 @@ namespace Dopamine.Views
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not show main window in ALT-TAB menu. Exception: {0}", ex.Message);
+                AppLog.Error("Could not show main window in ALT-TAB menu. Exception: {0}", ex.Message);
             }
 
             // By default, the window appears in the background when showing
@@ -409,7 +410,7 @@ namespace Dopamine.Views
             // OnLastWindowClose. This was happening here because of the Mini Player Playlist.
             Application.Current.Shutdown();
 
-            LogClient.Info("### STOPPED {0}, version {1} ###", ProductInformation.ApplicationName, ProcessExecutable.AssemblyVersion().ToString());
+            AppLog.Info("### STOPPED {0}, version {1} ###", ProductInformation.ApplicationName, ProcessExecutable.AssemblyVersion().ToString());
 
         }
 
@@ -473,7 +474,7 @@ namespace Dopamine.Views
                     }
                     catch (Exception ex)
                     {
-                        LogClient.Error("Could not hide main window from ALT-TAB menu. Exception: {0}", ex.Message);
+                        AppLog.Error("Could not hide main window from ALT-TAB menu. Exception: {0}", ex.Message);
                     }
                 }
             }
@@ -489,7 +490,7 @@ namespace Dopamine.Views
                     }
                     catch (Exception ex)
                     {
-                        LogClient.Error("Could not remove window caption. Exception: {0}", ex.Message);
+                        AppLog.Error("Could not remove window caption. Exception: {0}", ex.Message);
                     }
                 }
 
@@ -502,7 +503,7 @@ namespace Dopamine.Views
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not show main window in ALT-TAB menu. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not show main window in ALT-TAB menu. Exception: {0}", ex.Message);
                 }
             }
 
@@ -525,7 +526,7 @@ namespace Dopamine.Views
                     }
                     catch (Exception ex)
                     {
-                        LogClient.Error("Could not view the log file {0} in explorer. Exception: {1}", LogClient.Logfile(), ex.Message);
+                        AppLog.Error("Could not view the log file {0} in explorer. Exception: {1}", LogClient.Logfile(), ex.Message);
                     }
                 }
                 else if (e.Key == Key.F)

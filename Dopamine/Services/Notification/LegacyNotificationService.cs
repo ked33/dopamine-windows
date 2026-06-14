@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.WPF.Controls;
 using Dopamine.Core.Base;
@@ -190,7 +191,7 @@ namespace Dopamine.Services.Notification
             }
             catch (Exception ex)
             {
-                LogClient.Error("Error while trying to disable the notification. Exception: {0}", ex.Message);
+                AppLog.Error("Error while trying to disable the notification. Exception: {0}", ex.Message);
             }
 
             try
@@ -219,7 +220,7 @@ namespace Dopamine.Services.Notification
             }
             catch (Exception ex)
             {
-                LogClient.Error("Error while trying to show the notification. Exception: {0}", ex.Message);
+                AppLog.Error("Error while trying to show the notification. Exception: {0}", ex.Message);
             }
         }
 

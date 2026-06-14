@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Base;
@@ -56,7 +57,7 @@ namespace Dopamine.Services.Cache
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not delete the temporary cache folder. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not delete the temporary cache folder. Exception: {0}", ex.Message);
                 }
             }
 
@@ -92,7 +93,7 @@ namespace Dopamine.Services.Cache
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not cache byte[] artwork. Exception: {0}", ex.Message);
+                AppLog.Error("Could not cache byte[] artwork. Exception: {0}", ex.Message);
                 artworkID = string.Empty;
             }
 
@@ -118,7 +119,7 @@ namespace Dopamine.Services.Cache
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not cache Uri artwork. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not cache Uri artwork. Exception: {0}", ex.Message);
                     artworkID = string.Empty;
                 }
             }
@@ -162,7 +163,7 @@ namespace Dopamine.Services.Cache
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not download file to temporary cache. Exception: {0}", ex.Message);
+                AppLog.Error("Could not download file to temporary cache. Exception: {0}", ex.Message);
                 return string.Empty;
             }
         }
@@ -183,13 +184,13 @@ namespace Dopamine.Services.Cache
                     }
                     catch (Exception ex)
                     {
-                        LogClient.Error("Could not delete the file '{0}' from temporary cache. Exception: {1}", file.FullName, ex.Message);
+                        AppLog.Error("Could not delete the file '{0}' from temporary cache. Exception: {1}", file.FullName, ex.Message);
                     }
                 }
             }
             catch (Exception ex)
             {
-                LogClient.Error("Error while cleaning up to temporary cache. Exception: {0}", ex.Message);
+                AppLog.Error("Error while cleaning up to temporary cache. Exception: {0}", ex.Message);
             }
 
             temporaryCacheCleanupTimer.Start();

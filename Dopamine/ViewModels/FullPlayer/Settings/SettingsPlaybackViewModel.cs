@@ -1,5 +1,6 @@
 ﻿using Digimezzo.Foundation.Core.Helpers;
 using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Audio;
@@ -619,7 +620,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
 
         private void LogPlaybackSettingsError(string operation, System.Exception ex)
         {
-            LogClient.Error("Playback settings initialization failed while {0}. Exception: {1}", operation, ex.Message);
+            AppLog.Error("Playback settings initialization failed while {0}. Exception: {1}", operation, ex.Message);
         }
 
         private void ConfirmEnableExclusiveMode()

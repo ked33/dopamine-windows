@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 
 namespace Dopamine.Core.Helpers
 {
@@ -14,7 +15,7 @@ namespace Dopamine.Core.Helpers
                 {
                     if (canLog)
                     {
-                        LogClient.Error("Windows Media Foundation was found!");
+                        AppLog.Error("Windows Media Foundation was found!");
                     }
 
                     return true;
@@ -24,13 +25,13 @@ namespace Dopamine.Core.Helpers
             {
                 if (canLog)
                 {
-                    LogClient.Error($"An error occurred while trying to find Windows Media Foundation. Exception: {ex.Message}");
+                    AppLog.Error($"An error occurred while trying to find Windows Media Foundation. Exception: {ex.Message}");
                 }
             }
 
             if (canLog)
             {
-                LogClient.Error("Windows Media Foundation could not be found!");
+                AppLog.Error("Windows Media Foundation could not be found!");
             }
 
             return false;

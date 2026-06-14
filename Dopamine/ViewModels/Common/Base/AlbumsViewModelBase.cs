@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Base;
 using Dopamine.Core.Extensions;
@@ -214,7 +215,7 @@ namespace Dopamine.ViewModels.Common.Base
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Error while refreshing artwork for Album {0}/{1}. Exception: {2}", alb.AlbumTitle, alb.AlbumArtist, ex.Message);
+                            AppLog.Error("Error while refreshing artwork for Album {0}/{1}. Exception: {2}", alb.AlbumTitle, alb.AlbumArtist, ex.Message);
                         }
                     }
                 });
@@ -346,7 +347,7 @@ namespace Dopamine.ViewModels.Common.Base
             }
             catch (Exception ex)
             {
-                LogClient.Error("An error occurred while getting Albums. Exception: {0}", ex.Message);
+                AppLog.Error("An error occurred while getting Albums. Exception: {0}", ex.Message);
 
                 // Failed getting Albums. Create empty ObservableCollection.
                 Application.Current.Dispatcher.Invoke(() =>

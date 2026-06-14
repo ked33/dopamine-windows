@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Base;
@@ -280,7 +281,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             }
             catch (Exception ex)
             {
-                LogClient.Error("An error occurred while getting Artists. Exception: {0}", ex.Message);
+                AppLog.Error("An error occurred while getting Artists. Exception: {0}", ex.Message);
 
                 // Failed getting Artists. Create empty ObservableCollection.
                 this.Artists = new ObservableCollection<ISemanticZoomable>();

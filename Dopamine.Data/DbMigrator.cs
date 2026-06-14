@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using System;
 using System.IO;
 using System.Reflection;
@@ -1152,7 +1153,7 @@ namespace Dopamine.Data
                 if (!this.IsDatabaseValid())
                 {
                     // Create the database if it doesn't exist
-                    LogClient.Info("Creating a new database");
+                    AppLog.Info("Creating a new database");
                     this.CreateDatabase();
                 }
                 else
@@ -1160,16 +1161,16 @@ namespace Dopamine.Data
                     // Upgrade the database if it is not the latest version
                     if (this.IsMigrationNeeded())
                     {
-                        LogClient.Info("Creating a backup of the database");
+                        AppLog.Info("Creating a backup of the database");
                         this.BackupDatabase();
-                        LogClient.Info("Upgrading database");
+                        AppLog.Info("Upgrading database");
                         this.MigrateDatabase();
                     }
                 }
             }
             catch (Exception ex)
             {
-                LogClient.Error("There was a problem initializing the database. Exception: {0}", ex.Message);
+                AppLog.Error("There was a problem initializing the database. Exception: {0}", ex.Message);
             }
         }
   
@@ -1223,7 +1224,7 @@ namespace Dopamine.Data
             this.CreateConfiguration();
             this.CreateTablesAndIndexes();
 
-            LogClient.Info("New database created at {0}", this.factory.DatabaseFile);
+            AppLog.Info("New database created at {0}", this.factory.DatabaseFile);
         }
 
         private void MigrateDatabase()
@@ -1239,7 +1240,7 @@ namespace Dopamine.Data
                 conn.Execute("UPDATE Configuration SET Value = ? WHERE Key = 'DatabaseVersion'", CURRENT_VERSION);
             }
 
-            LogClient.Info("Upgraded from database version {0} to {1}", this.userDatabaseVersion.ToString(), CURRENT_VERSION.ToString());
+            AppLog.Info("Upgraded from database version {0} to {1}", this.userDatabaseVersion.ToString(), CURRENT_VERSION.ToString());
         }
       
         private void BackupDatabase()
@@ -1253,7 +1254,7 @@ namespace Dopamine.Data
             }
             catch (Exception ex)
             {
-                LogClient.Info("Could not create a copy of the database file. Exception: {0}", ex.Message);
+                AppLog.Info("Could not create a copy of the database file. Exception: {0}", ex.Message);
             }
         }
     }

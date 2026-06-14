@@ -1,6 +1,7 @@
 ﻿using Digimezzo.Foundation.Core.Helpers;
 using Digimezzo.Foundation.Core.IO;
 using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Base;
@@ -231,7 +232,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not open the Last.fm web page. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not open the Last.fm web page. Exception: {0}", ex.Message);
                 }
             });
 
@@ -361,7 +362,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not add/remove lyrics download providers. Add = '{0}'. Exception: {1}", add.ToString(), ex.Message);
+                AppLog.Error("Could not add/remove lyrics download providers. Add = '{0}'. Exception: {1}", add.ToString(), ex.Message);
             }
         }
 

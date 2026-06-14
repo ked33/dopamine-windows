@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Dopamine.Data;
 using System;
@@ -38,13 +39,13 @@ namespace Dopamine
             {
                 if (SettingsClient.IsMigrationNeeded())
                 {
-                    LogClient.Info("Migrating settings");
+                    AppLog.Info("Migrating settings");
                     await Task.Run(() => SettingsClient.Migrate());
                 }
             }
             catch (Exception ex)
             {
-                LogClient.Error("There was a problem migrating the settings. Exception: {0}", ex.Message);
+                AppLog.Error("There was a problem migrating the settings. Exception: {0}", ex.Message);
             }
         }
 
@@ -54,13 +55,13 @@ namespace Dopamine
             {
                 if (this.migrator.IsMigrationNeeded())
                 {
-                    LogClient.Info("Migrating database");
+                    AppLog.Info("Migrating database");
                     await Task.Run(() => migrator.Migrate());
                 }
             }
             catch (Exception ex)
             {
-                LogClient.Error("There was a problem migrating the database. Exception: {0}", ex.Message);
+                AppLog.Error("There was a problem migrating the database. Exception: {0}", ex.Message);
             }
         }
     }

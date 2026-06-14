@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Dopamine.Core.Extensions;
 using Dopamine.Data;
@@ -49,7 +50,7 @@ namespace Dopamine.Services.Folders
             }
             catch (Exception ex)
             {
-                LogClient.Error("Error updating folders. Exception: {0}", ex.Message);
+                AppLog.Error("Error updating folders. Exception: {0}", ex.Message);
             }
 
             if (isCollectionChanged)
@@ -79,7 +80,7 @@ namespace Dopamine.Services.Folders
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Error toggling folder with path='{0}'. Exception: {1}", folderViewModel.Path, ex.Message);
+                    AppLog.Error("Error toggling folder with path='{0}'. Exception: {1}", folderViewModel.Path, ex.Message);
                 }
             });
         }
@@ -103,7 +104,7 @@ namespace Dopamine.Services.Folders
             }
             catch (Exception ex)
             {
-                LogClient.Error("Error while getting folders. Exception: {0}", ex.Message);
+                AppLog.Error("Error while getting folders. Exception: {0}", ex.Message);
             }
 
             return folderViewModels;
@@ -168,7 +169,7 @@ namespace Dopamine.Services.Folders
                     }
                     catch (Exception ex)
                     {
-                        LogClient.Error($"Could not get directories for root folder. Exception: {ex.Message}");
+                        AppLog.Error($"Could not get directories for root folder. Exception: {ex.Message}");
                     }
                 }
                 else
@@ -196,7 +197,7 @@ namespace Dopamine.Services.Folders
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error($"Could not get directories for sub folder. Exception: {ex.Message}");
+                            AppLog.Error($"Could not get directories for sub folder. Exception: {ex.Message}");
                         }
                     }
                 }
@@ -255,7 +256,7 @@ namespace Dopamine.Services.Folders
             }
             catch (Exception ex)
             {
-                LogClient.Error($"Could not set the playing subfolder. Exception: {ex.Message}");
+                AppLog.Error($"Could not set the playing subfolder. Exception: {ex.Message}");
             }
         }
 

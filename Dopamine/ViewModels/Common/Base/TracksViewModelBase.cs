@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Base;
@@ -246,7 +247,7 @@ namespace Dopamine.ViewModels.Common.Base
             }
             catch (Exception ex)
             {
-                LogClient.Error("An error occurred while getting Tracks. Exception: {0}", ex.Message);
+                AppLog.Error("An error occurred while getting Tracks. Exception: {0}", ex.Message);
 
                 // Failed getting Tracks. Create empty ObservableCollection.
                 this.Tracks = new ObservableCollection<TrackViewModel>();
@@ -360,7 +361,7 @@ namespace Dopamine.ViewModels.Common.Base
                     }
                     catch (Exception ex)
                     {
-                        LogClient.Error("An error occurred while setting size information. Exception: {0}", ex.Message);
+                        AppLog.Error("An error occurred while setting size information. Exception: {0}", ex.Message);
                     }
 
                 });
@@ -523,7 +524,7 @@ namespace Dopamine.ViewModels.Common.Base
             }
             catch (Exception ex)
             {
-                LogClient.Error("An error occurred while adding tracks to blacklist. Exception: {0}", ex.Message);
+                AppLog.Error("An error occurred while adding tracks to blacklist. Exception: {0}", ex.Message);
                 this.dialogService.ShowNotification(0xe711, 16, ResourceUtils.GetString("Language_Error"), ResourceUtils.GetString("Language_Error_Adding_To_Blacklist"), ResourceUtils.GetString("Language_Ok"), true, ResourceUtils.GetString("Language_Log_File"));
             }
         }

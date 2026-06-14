@@ -1,5 +1,6 @@
 ﻿using Digimezzo.Foundation.Core.IO;
 using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Dopamine.Core.Enums;
 using Dopamine.Services.Dialog;
 using Prism.Commands;
@@ -85,7 +86,7 @@ namespace Dopamine.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not open link {0}. Exception: {1}", url, ex.Message);
+                    AppLog.Error("Could not open link {0}. Exception: {1}", url, ex.Message);
                 }
             });
         }

@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Dopamine.Services.Playback;
 using Microsoft.Win32;
@@ -96,7 +97,7 @@ namespace Dopamine.Services.WindowsIntegration
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not get tablet mode from registry. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not get tablet mode from registry. Exception: {0}", ex.Message);
                 }
 
                 return registryTabletMode == 1 ? true : false;
@@ -115,7 +116,7 @@ namespace Dopamine.Services.WindowsIntegration
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not get system uses light theme from registry. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not get system uses light theme from registry. Exception: {0}", ex.Message);
                 }
 
                 return registrySystemUsesLightTheme == 1 ? true : false;
@@ -148,7 +149,7 @@ namespace Dopamine.Services.WindowsIntegration
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not start monitoring tablet mode. Exception: {0}", ex.Message);
+                AppLog.Error("Could not start monitoring tablet mode. Exception: {0}", ex.Message);
             }
         }
 
@@ -164,7 +165,7 @@ namespace Dopamine.Services.WindowsIntegration
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not stop monitoring tablet mode. Exception: {0}", ex.Message);
+                AppLog.Error("Could not stop monitoring tablet mode. Exception: {0}", ex.Message);
             }
         }
 
@@ -183,7 +184,7 @@ namespace Dopamine.Services.WindowsIntegration
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not start monitoring system uses light theme. Exception: {0}", ex.Message);
+                AppLog.Error("Could not start monitoring system uses light theme. Exception: {0}", ex.Message);
             }
         }
 
@@ -199,7 +200,7 @@ namespace Dopamine.Services.WindowsIntegration
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not stop monitoring system uses light theme. Exception: {0}", ex.Message);
+                AppLog.Error("Could not stop monitoring system uses light theme. Exception: {0}", ex.Message);
             }
         }
 
@@ -224,7 +225,7 @@ namespace Dopamine.Services.WindowsIntegration
             }
             catch (Exception ex)
             {
-                LogClient.Error("Failed to disable sleep. Exception: {0}", ex.Message);
+                AppLog.Error("Failed to disable sleep. Exception: {0}", ex.Message);
             }
            
         }
@@ -239,7 +240,7 @@ namespace Dopamine.Services.WindowsIntegration
             }
             catch (Exception ex)
             {
-                LogClient.Error("Failed to restore sleep. Exception: {0}", ex.Message);
+                AppLog.Error("Failed to restore sleep. Exception: {0}", ex.Message);
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Base;
@@ -237,7 +238,7 @@ namespace Dopamine.Services.Metadata
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Unable to update database metadata for Track '{0}'. Exception: {1}", fileMetadata.SafePath, ex.Message);
+                    AppLog.Error("Unable to update database metadata for Track '{0}'. Exception: {1}", fileMetadata.SafePath, ex.Message);
                 }
             }
         }

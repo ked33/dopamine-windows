@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Dopamine.Core.Api.Lastfm;
 using Dopamine.Data;
@@ -108,16 +109,16 @@ namespace Dopamine.Services.Scrobbling
 
                         if (isSuccess)
                         {
-                            LogClient.Info("Successfully updated Now Playing for track '{0} - {1}'", artist, trackTitle);
+                            AppLog.Info("Successfully updated Now Playing for track '{0} - {1}'", artist, trackTitle);
                         }
                         else
                         {
-                            LogClient.Error("Could not update Now Playing for track '{0} - {1}'", artist, trackTitle);
+                            AppLog.Error("Could not update Now Playing for track '{0} - {1}'", artist, trackTitle);
                         }
                     }
                     catch (Exception ex)
                     {
-                        LogClient.Error("Could not update Now Playing for track '{0} - {1}'. Exception: {2}", artist, trackTitle, ex.Message);
+                        AppLog.Error("Could not update Now Playing for track '{0} - {1}'. Exception: {2}", artist, trackTitle, ex.Message);
                     }
                 }
             }
@@ -151,16 +152,16 @@ namespace Dopamine.Services.Scrobbling
 
                                 if (isSuccess)
                                 {
-                                    LogClient.Info("Successfully Scrobbled track '{0} - {1}'", artist, trackTitle);
+                                    AppLog.Info("Successfully Scrobbled track '{0} - {1}'", artist, trackTitle);
                                 }
                                 else
                                 {
-                                    LogClient.Error("Could not Scrobble track '{0} - {1}'", artist, trackTitle);
+                                    AppLog.Error("Could not Scrobble track '{0} - {1}'", artist, trackTitle);
                                 }
                             }
                             catch (Exception ex)
                             {
-                                LogClient.Error("Could not Scrobble track '{0} - {1}'. Exception: {2}", artist, trackTitle, ex.Message);
+                                AppLog.Error("Could not Scrobble track '{0} - {1}'. Exception: {2}", artist, trackTitle, ex.Message);
                             }
                         }
                     }
@@ -179,18 +180,18 @@ namespace Dopamine.Services.Scrobbling
                     SettingsClient.Set<string>("Lastfm", "Username", this.username);
                     SettingsClient.Set<string>("Lastfm", "Password", this.password);
                     SettingsClient.Set<string>("Lastfm", "Key", this.sessionKey);
-                    LogClient.Info("User '{0}' successfully signed in to Last.fm.", this.username);
+                    AppLog.Info("User '{0}' successfully signed in to Last.fm.", this.username);
                     this.SignInState = SignInState.SignedIn;
                 }
                 else
                 {
-                    LogClient.Error("User '{0}' could not sign in to Last.fm.", this.username);
+                    AppLog.Error("User '{0}' could not sign in to Last.fm.", this.username);
                     this.SignInState = SignInState.Error;
                 }
             }
             catch (Exception ex)
             {
-                LogClient.Error("User '{0}' could not sign in to Last.fm. Exception: {1}", this.username, ex.Message);
+                AppLog.Error("User '{0}' could not sign in to Last.fm. Exception: {1}", this.username, ex.Message);
                 this.SignInState = SignInState.Error;
             }
 
@@ -202,7 +203,7 @@ namespace Dopamine.Services.Scrobbling
             this.sessionKey = string.Empty;
             SettingsClient.Set<string>("Lastfm", "Key", string.Empty);
 
-            LogClient.Info("User '{0}' signed out of Last.fm.", this.username);
+            AppLog.Info("User '{0}' signed out of Last.fm.", this.username);
             this.SignInState = SignInState.SignedOut;
 
             this.SignInStateChanged(this.SignInState);
@@ -228,7 +229,7 @@ namespace Dopamine.Services.Scrobbling
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not send track.love to Last.fm. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not send track.love to Last.fm. Exception: {0}", ex.Message);
                         }
 
                     }
@@ -240,7 +241,7 @@ namespace Dopamine.Services.Scrobbling
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Error("Could not send track.unlove to Last.fm. Exception: {0}", ex.Message);
+                            AppLog.Error("Could not send track.unlove to Last.fm. Exception: {0}", ex.Message);
                         }
                     }
                 }

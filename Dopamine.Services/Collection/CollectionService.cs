@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Utils;
 using Dopamine.Data;
@@ -69,7 +70,7 @@ namespace Dopamine.Services.Collection
                     }
                     catch (Exception ex)
                     {
-                        LogClient.Error($"Error while removing track '{track.TrackTitle}' from disk. Exception: {ex.Message}");
+                        AppLog.Error($"Error while removing track '{track.TrackTitle}' from disk. Exception: {ex.Message}");
                         sendToRecycleBinResult = RemoveTracksResult.Error;
                     }
                 }

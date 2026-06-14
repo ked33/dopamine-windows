@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Dopamine.Core.Base;
 using Dopamine.Core.Utils;
 using Dopamine.Services.Entities;
@@ -45,7 +46,7 @@ namespace Dopamine.Services.Utils
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Error while setting the availability of the semantic zoom selectors.", ex.Message);
+                    AppLog.Error("Error while setting the availability of the semantic zoom selectors.", ex.Message);
                 }
             });
 

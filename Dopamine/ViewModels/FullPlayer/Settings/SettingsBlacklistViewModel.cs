@@ -1,5 +1,6 @@
 ﻿using Digimezzo.Foundation.Core.IO;
 using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Base;
@@ -84,7 +85,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             }
             catch (Exception ex)
             {
-                LogClient.Error("Exception: {0}", ex.Message);
+                AppLog.Error("Exception: {0}", ex.Message);
 
                 this.dialogService.ShowNotification(0xe711, 16, ResourceUtils.GetString("Language_Error"), ResourceUtils.GetString("Language_Error_Removing_Track_From_Blacklist"), ResourceUtils.GetString("Language_Ok"), true, ResourceUtils.GetString("Language_Log_File"));
             }
@@ -106,7 +107,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             }
             catch (Exception ex)
             {
-                LogClient.Error("Exception: {0}", ex.Message);
+                AppLog.Error("Exception: {0}", ex.Message);
 
                 this.dialogService.ShowNotification(0xe711, 16, ResourceUtils.GetString("Language_Error"), ResourceUtils.GetString("Language_Error_Clearing_Blacklist"), ResourceUtils.GetString("Language_Ok"), true, ResourceUtils.GetString("Language_Log_File"));
             }

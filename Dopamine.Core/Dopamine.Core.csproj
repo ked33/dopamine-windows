@@ -138,6 +138,7 @@
     <Compile Include="IO\PlaylistDecoder.cs" />
     <Compile Include="IO\SmartPlaylistDecoder.cs" />
     <Compile Include="IO\StrongNetNamedPipeBinding.cs" />
+    <Compile Include="Logging\AppLog.cs" />
     <Compile Include="Prism\ApplicationCommands.cs" />
     <Compile Include="Prism\Events.cs" />
     <Compile Include="Prism\RegionNames.cs" />
@@ -154,7 +155,9 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="Settings\LoggingSettings.cs" />
     <Compile Include="Settings\PlaybackFadeSettings.cs" />
+    <Compile Include="Settings\SettingDefaults.cs" />
     <Compile Include="Settings\UiAnimationSettings.cs" />
     <Compile Include="Utils\ArrayUtils.cs" />
     <Compile Include="Utils\ColorUtils.cs" />

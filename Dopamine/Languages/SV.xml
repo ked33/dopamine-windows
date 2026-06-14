@@ -214,6 +214,8 @@
   <Text Key="Enable_Transparency">Gör vissa element transparenta</Text>
   <Text Key="Animation">Animation</Text>
   <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
+  <Text Key="Logging">Logging</Text>
+  <Text Key="Enable_Log_File">Enable log file</Text>
   <Text Key="Close_To_Tray">Stäng till meddelandefältet</Text>
   <Text Key="Edit">Redigera</Text>
   <Text Key="Edit_Song">Redigera låt</Text>

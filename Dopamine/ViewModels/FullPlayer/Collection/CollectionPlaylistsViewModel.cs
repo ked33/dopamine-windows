@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Base;
@@ -258,7 +259,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             }
             catch (Exception ex)
             {
-                LogClient.Error("An error occurred while selecting the playlist. Exception: {0}", ex.Message);
+                AppLog.Error("An error occurred while selecting the playlist. Exception: {0}", ex.Message);
             }
         }
 
@@ -324,7 +325,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             }
             catch (Exception ex)
             {
-                LogClient.Error($"Error while constructing Smart playlist editor View or ViewModel. Exception: {ex.Message}");
+                AppLog.Error($"Error while constructing Smart playlist editor View or ViewModel. Exception: {ex.Message}");
 
                 this.dialogService.ShowNotification(
                             0xe711,
@@ -499,7 +500,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             }
             catch (Exception ex)
             {
-                LogClient.Error("An error occurred while getting Playlists. Exception: {0}", ex.Message);
+                AppLog.Error("An error occurred while getting Playlists. Exception: {0}", ex.Message);
 
                 // If loading from the database failed, create and empty Collection.
                 this.Playlists = new ObservableCollection<PlaylistViewModel>();
@@ -587,7 +588,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not get the dropped tracks. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not get the dropped tracks. Exception: {0}", ex.Message);
                 }
             });
 
@@ -636,7 +637,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not add dropped tracks to hovered playlist. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not add dropped tracks to hovered playlist. Exception: {0}", ex.Message);
                 }
             }
         }
@@ -651,7 +652,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not add dropped files to selected playlist. Exception: {0}", ex.Message);
+                AppLog.Error("Could not add dropped files to selected playlist. Exception: {0}", ex.Message);
             }
         }
 
@@ -673,7 +674,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not add dropped files to hovered playlist. Exception: {0}", ex.Message);
+                AppLog.Error("Could not add dropped files to hovered playlist. Exception: {0}", ex.Message);
             }
         }
 
@@ -704,7 +705,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not add dropped files to hovered playlist. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not add dropped files to hovered playlist. Exception: {0}", ex.Message);
                 }
             }
             else if (dropInfo.TargetItem == null)
@@ -750,7 +751,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             catch (Exception ex)
             {
                 dropInfo.NotHandled = false;
-                LogClient.Error("Could not drag tracks. Exception: {0}", ex.Message);
+                AppLog.Error("Could not drag tracks. Exception: {0}", ex.Message);
             }
         }
 
@@ -788,7 +789,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not perform drop. Exception: {0}", ex.Message);
+                AppLog.Error("Could not perform drop. Exception: {0}", ex.Message);
             }
         }
     }

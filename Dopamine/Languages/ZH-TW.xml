@@ -214,6 +214,8 @@
   <Text Key="Enable_Transparency">讓部分元素透明</Text>
   <Text Key="Animation">動畫</Text>
   <Text Key="Enable_Visual_Animations">啟用介面視覺動畫</Text>
+  <Text Key="Logging">記錄</Text>
+  <Text Key="Enable_Log_File">啟用記錄檔</Text>
   <Text Key="Close_To_Tray">關閉時隱藏到通知區域</Text>
   <Text Key="Edit">編輯</Text>
   <Text Key="Edit_Song">編輯音樂</Text>

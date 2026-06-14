@@ -1,5 +1,6 @@
 ﻿using Digimezzo.Foundation.Core.IO;
 using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.Core.Utils;
 using Digimezzo.Foundation.WPF.Controls;
@@ -66,7 +67,7 @@ namespace Dopamine.ViewModels.Common
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not open link {0}. Exception: {1}", url, ex.Message);
+                    AppLog.Error("Could not open link {0}. Exception: {1}", url, ex.Message);
                 }
             });
 
@@ -175,7 +176,7 @@ namespace Dopamine.ViewModels.Common
                         }
                         catch (Exception ex)
                         {
-                            LogClient.Warning($"Could not get artist image from Fanart for artist {track.ArtistName}. Exception: {ex}");
+                            AppLog.Warning($"Could not get artist image from Fanart for artist {track.ArtistName}. Exception: {ex}");
                         }
 
                         ArtistInfoViewModel localArtistInfoViewModel = this.container.Resolve<ArtistInfoViewModel>();
@@ -198,7 +199,7 @@ namespace Dopamine.ViewModels.Common
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not show artist information for Track {0}. Exception: {1}", track.Path, ex.Message);
+                AppLog.Error("Could not show artist information for Track {0}. Exception: {1}", track.Path, ex.Message);
 
                 if (this.CanApplyArtistInfo(currentRefreshVersion))
                 {

@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Dopamine.Core.Prism;
 using Dopamine.Services.Utils;
 using Dopamine.Views.Common.Base;
@@ -33,7 +34,7 @@ namespace Dopamine.Views.FullPlayer.Collection
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not perform semantic zoom on Artists. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not perform semantic zoom on Artists. Exception: {0}", ex.Message);
                 }
             });
         }

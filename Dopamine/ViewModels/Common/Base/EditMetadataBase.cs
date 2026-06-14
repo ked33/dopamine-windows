@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Base;
 using Dopamine.Core.Utils;
@@ -129,7 +130,7 @@ namespace Dopamine.ViewModels.Common.Base
             }
             catch (Exception ex)
             {
-                LogClient.Error("An error occurred while downloading artwork. Exception: {0}", ex.Message);
+                AppLog.Error("An error occurred while downloading artwork. Exception: {0}", ex.Message);
             }
 
             this.IsBusy = false;

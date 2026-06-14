@@ -214,6 +214,8 @@
   <Text Key="Enable_Transparency">使某些元素透明</Text>
   <Text Key="Animation">动画</Text>
   <Text Key="Enable_Visual_Animations">启用界面视觉动画</Text>
+  <Text Key="Logging">日志</Text>
+  <Text Key="Enable_Log_File">启用日志文件</Text>
   <Text Key="Close_To_Tray">关闭到系统托盘</Text>
   <Text Key="Edit">编辑</Text>
   <Text Key="Edit_Song">编辑歌曲</Text>

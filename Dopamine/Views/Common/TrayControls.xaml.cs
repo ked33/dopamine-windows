@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.Core.Utils;
 using Digimezzo.Foundation.Core.Win32;
@@ -26,7 +27,7 @@ namespace Dopamine.Views.Common
 
         public void Show()
         {
-            LogClient.Info("Showing tray controls");
+            AppLog.Info("Showing tray controls");
             this.notificationService.HideNotification(); // If a notification is shown, hide it.
 
             base.Show();
@@ -93,7 +94,7 @@ namespace Dopamine.Views.Common
                 this.Top = desktopWorkingArea.Bottom - Constants.TrayControlsHeight - 5;
             }
 
-            LogClient.Info("Tray controls position: Taskbar position = {0}, Left = {1}px, Top = {2}px", taskbar.Position.ToString(), this.Left.ToString(), this.Top.ToString());
+            AppLog.Info("Tray controls position: Taskbar position = {0}, Left = {1}px, Top = {2}px", taskbar.Position.ToString(), this.Left.ToString(), this.Top.ToString());
         }
     }
 }

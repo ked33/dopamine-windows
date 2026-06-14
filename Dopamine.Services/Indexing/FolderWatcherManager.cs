@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Dopamine.Core.Helpers;
 using Dopamine.Data.Entities;
 using Dopamine.Data.Repositories;
@@ -50,7 +51,7 @@ namespace Dopamine.Services.Indexing
                     }
                     catch (Exception ex)
                     {
-                        LogClient.Error($"Could not watch folder '{fol.Path}', even though it exists. Please check folder permissions. Exception: {ex.Message}");
+                        AppLog.Error($"Could not watch folder '{fol.Path}', even though it exists. Please check folder permissions. Exception: {ex.Message}");
                     }
                 }
             }

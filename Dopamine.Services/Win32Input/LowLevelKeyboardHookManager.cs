@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Dopamine.Services.Win32Input;
 using System;
 using System.Diagnostics;
@@ -64,17 +65,17 @@ namespace Dopamine.Services.Win32Input
 
                 if (vkCode == (int)MediaKey.Next)
                 {
-                    LogClient.Info("LowLevel Key Next pressed");
+                    AppLog.Info("LowLevel Key Next pressed");
                     this.MediaKeyNextPressed(this, new EventArgs());
                 }
                 else if (vkCode == (int)MediaKey.Previous)
                 {
-                    LogClient.Info("LowLevel Key Previous pressed");
+                    AppLog.Info("LowLevel Key Previous pressed");
                     this.MediaKeyPreviousPressed(this, new EventArgs());
                 }
                 else if (vkCode == (int)MediaKey.Play)
                 {
-                    LogClient.Info("LowLevel Key Play pressed");
+                    AppLog.Info("LowLevel Key Play pressed");
                     this.MediaKeyPlayPressed(this, new EventArgs());
                 }
             }

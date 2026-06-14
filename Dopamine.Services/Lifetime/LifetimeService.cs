@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
 using Dopamine.Services.Metadata;
 using Dopamine.Services.Playback;
@@ -22,12 +23,12 @@ namespace Dopamine.Services.Lifetime
 
         public async Task PerformClosingTasksAsync()
         {
-            LogClient.Info("Performing closing tasks");
+            AppLog.Info("Performing closing tasks");
 
             // Write settings
             DateTime startTime = DateTime.Now;
             SettingsClient.Write();
-            LogClient.Info($"Write settings. Time required: {Convert.ToInt64(DateTime.Now.Subtract(startTime).TotalMilliseconds)} ms");
+            AppLog.Info($"Write settings. Time required: {Convert.ToInt64(DateTime.Now.Subtract(startTime).TotalMilliseconds)} ms");
 
             // Save queued tracks
             startTime = DateTime.Now;
@@ -44,17 +45,17 @@ namespace Dopamine.Services.Lifetime
                 await this.playbackService.SaveQueuedTracksAsync();
             }
 
-            LogClient.Info($"Save queued tracks. Time required: {Convert.ToInt64(DateTime.Now.Subtract(startTime).TotalMilliseconds)} ms");
+            AppLog.Info($"Save queued tracks. Time required: {Convert.ToInt64(DateTime.Now.Subtract(startTime).TotalMilliseconds)} ms");
 
             // Stop playing
             startTime = DateTime.Now;
             this.playbackService.Stop();
-            LogClient.Info($"Stop playback. Time required: {Convert.ToInt64(DateTime.Now.Subtract(startTime).TotalMilliseconds)} ms");
+            AppLog.Info($"Stop playback. Time required: {Convert.ToInt64(DateTime.Now.Subtract(startTime).TotalMilliseconds)} ms");
 
             // Update file metadata
             startTime = DateTime.Now;
             await this.metadataService.ForceSaveFileMetadataAsync();
-            LogClient.Info($"Update file metadata. Time required: {Convert.ToInt64(DateTime.Now.Subtract(startTime).TotalMilliseconds)} ms");
+            AppLog.Info($"Update file metadata. Time required: {Convert.ToInt64(DateTime.Now.Subtract(startTime).TotalMilliseconds)} ms");
 
 
             // Save playback counters
@@ -72,7 +73,7 @@ namespace Dopamine.Services.Lifetime
                 await this.playbackService.SavePlaybackCountersAsync();
             }
 
-            LogClient.Info($"Save playback counters. Time required: {Convert.ToInt64(DateTime.Now.Subtract(startTime).TotalMilliseconds)} ms");
+            AppLog.Info($"Save playback counters. Time required: {Convert.ToInt64(DateTime.Now.Subtract(startTime).TotalMilliseconds)} ms");
 
             this.MustPerformClosingTasks = false;
         }

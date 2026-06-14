@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Dopamine.Core.Helpers;
 using System;
 using System.Collections.Generic;
@@ -40,7 +41,7 @@ namespace Dopamine.Core.Api.Lyrics
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Error while getting lyrics from '{0}'. Exception: {1}", api.SourceName, ex.Message);
+                    AppLog.Error("Error while getting lyrics from '{0}'. Exception: {1}", api.SourceName, ex.Message);
                 }
 
                 api = this.GetRandomApi();

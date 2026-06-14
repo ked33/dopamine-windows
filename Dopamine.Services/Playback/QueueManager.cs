@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Dopamine.Core.Base;
 using Dopamine.Core.Extensions;
 using Dopamine.Data.Entities;
@@ -205,7 +206,7 @@ namespace Dopamine.Services.Playback
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not get current track. Exception: {0}", ex.Message);
+                AppLog.Error("Could not get current track. Exception: {0}", ex.Message);
             }
 
             return null;
@@ -224,7 +225,7 @@ namespace Dopamine.Services.Playback
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not get first track. Exception: {0}", ex.Message);
+                AppLog.Error("Could not get first track. Exception: {0}", ex.Message);
             }
 
             return firstTrack;
@@ -267,7 +268,7 @@ namespace Dopamine.Services.Playback
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not get previous track. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not get previous track. Exception: {0}", ex.Message);
                 }
             });
 
@@ -325,7 +326,7 @@ namespace Dopamine.Services.Playback
                 }
                 catch (Exception ex)
                 {
-                    LogClient.Error("Could not get next track. Exception: {0}", ex.Message);
+                    AppLog.Error("Could not get next track. Exception: {0}", ex.Message);
                 }
             });
 
@@ -381,7 +382,7 @@ namespace Dopamine.Services.Playback
             catch (Exception ex)
             {
                 result.IsSuccess = false;
-                LogClient.Error("Error while enqueuing tracks. Exception: {0}", ex.Message);
+                AppLog.Error("Error while enqueuing tracks. Exception: {0}", ex.Message);
             }
 
             return result;
@@ -424,7 +425,7 @@ namespace Dopamine.Services.Playback
             catch (Exception ex)
             {
                 result.IsSuccess = false;
-                LogClient.Error("Error while restoring queued tracks. Exception: {0}", ex.Message);
+                AppLog.Error("Error while restoring queued tracks. Exception: {0}", ex.Message);
             }
 
             return result;
@@ -478,7 +479,7 @@ namespace Dopamine.Services.Playback
             catch (Exception ex)
             {
                 result.IsSuccess = false;
-                LogClient.Error("Error while enqueuing tracks next. Exception: {0}", ex.Message);
+                AppLog.Error("Error while enqueuing tracks next. Exception: {0}", ex.Message);
             }
 
 
@@ -503,7 +504,7 @@ namespace Dopamine.Services.Playback
                 catch (Exception ex)
                 {
                     isSuccess = false;
-                    LogClient.Error("Error while clearing queue. Exception: {0}", ex.Message);
+                    AppLog.Error("Error while clearing queue. Exception: {0}", ex.Message);
                 }
             });
 
@@ -573,7 +574,7 @@ namespace Dopamine.Services.Playback
                             }
                             catch (Exception ex)
                             {
-                                LogClient.Error($"Error while removing track with path='{trackToDequeue?.Path}' from the queue. Exception: {ex.Message}");
+                                AppLog.Error($"Error while removing track with path='{trackToDequeue?.Path}' from the queue. Exception: {ex.Message}");
                                 throw;
                             }
 
@@ -581,7 +582,7 @@ namespace Dopamine.Services.Playback
                     }
                     catch (Exception ex)
                     {
-                        LogClient.Error($"Error while removing tracks from the queue. Queue will be cleared. Exception: {ex.Message}");
+                        AppLog.Error($"Error while removing tracks from the queue. Queue will be cleared. Exception: {ex.Message}");
                         isSuccess = false;
                     }
                 }
@@ -589,7 +590,7 @@ namespace Dopamine.Services.Playback
 
             if (!isSuccess)
             {
-                LogClient.Warning($"Removing tracks from queue failed. Clearing queue.");
+                AppLog.Warning($"Removing tracks from queue failed. Clearing queue.");
                 await this.ClearQueueAsync();
                 dequeuedTracks = new List<TrackViewModel>(tracks);
             }
@@ -685,7 +686,7 @@ namespace Dopamine.Services.Playback
             catch (Exception ex)
             {
                 isSuccess = false;
-                LogClient.Error("Could update queue order. Exception: {0}", ex.Message);
+                AppLog.Error("Could update queue order. Exception: {0}", ex.Message);
             }
 
             return isSuccess;

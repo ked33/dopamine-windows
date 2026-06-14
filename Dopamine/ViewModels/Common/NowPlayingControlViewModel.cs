@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Base;
 using Dopamine.Core.Extensions;
@@ -93,7 +94,7 @@ namespace Dopamine.ViewModels.Common
             catch (Exception ex)
             {
                 dropInfo.NotHandled = false;
-                LogClient.Error("Could not drag tracks. Exception: {0}", ex.Message);
+                AppLog.Error("Could not drag tracks. Exception: {0}", ex.Message);
             }
         }
 
@@ -133,7 +134,7 @@ namespace Dopamine.ViewModels.Common
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not perform drop. Exception: {0}", ex.Message);
+                AppLog.Error("Could not perform drop. Exception: {0}", ex.Message);
             }
         }
 
@@ -147,7 +148,7 @@ namespace Dopamine.ViewModels.Common
             }
             catch (Exception ex)
             {
-                LogClient.Error("Could not add dropped files to playback queue. Exception: {0}", ex.Message);
+                AppLog.Error("Could not add dropped files to playback queue. Exception: {0}", ex.Message);
             }
         }
 
