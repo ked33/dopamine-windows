@@ -10,6 +10,7 @@ using Dopamine.Data.Metadata;
 using Dopamine.Services.I18n;
 using Dopamine.Services.Metadata;
 using Dopamine.Services.Playback;
+using Dopamine.Services.Shell;
 using Dopamine.ViewModels.Common.Base;
 using Prism.Commands;
 using Prism.Events;
@@ -29,6 +30,7 @@ namespace Dopamine.ViewModels.Common
         private ILocalizationInfo info;
         private IMetadataService metadataService;
         private IPlaybackService playbackService;
+        private IAppVisibilityService appVisibilityService;
         private II18nService i18NService;
         private LyricsViewModel lyricsViewModel;
         private TrackViewModel previousTrack;
@@ -77,6 +79,7 @@ namespace Dopamine.ViewModels.Common
             this.info = container.Resolve<ILocalizationInfo>();
             this.metadataService = container.Resolve<IMetadataService>();
             this.playbackService = container.Resolve<IPlaybackService>();
+            this.appVisibilityService = container.Resolve<IAppVisibilityService>();
             this.eventAggregator = container.Resolve<IEventAggregator>();
             this.i18NService = container.Resolve<II18nService>();
 
@@ -89,8 +92,9 @@ namespace Dopamine.ViewModels.Common
             this.refreshTimer.Interval = this.refreshTimerIntervalMilliseconds;
             this.refreshTimer.Elapsed += RefreshTimer_Elapsed;
 
-            this.playbackService.PlaybackPaused += (_, __) => this.highlightTimer.Stop();
-            this.playbackService.PlaybackResumed += (_, __) => this.highlightTimer.Start();
+            this.playbackService.PlaybackPaused += (_, __) => this.StopHighlighting();
+            this.playbackService.PlaybackResumed += (_, __) => this.StartHighlightingIfAllowed();
+            this.appVisibilityService.VisibilityChanged += (_, __) => this.HandleVisibilityChanged();
 
             this.metadataService.MetadataChanged += (_) => this.RestartRefreshTimer();
 
@@ -158,8 +162,19 @@ namespace Dopamine.ViewModels.Common
         private async void HighlightTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             this.highlightTimer.Stop();
+
+            if (!this.CanHighlightNow)
+            {
+                this.StopHighlighting();
+                return;
+            }
+
             await HighlightLyricsLineAsync();
-            this.highlightTimer.Start();
+
+            if (this.CanHighlightNow)
+            {
+                this.highlightTimer.Start();
+            }
         }
 
         private void RestartRefreshTimer()
@@ -174,10 +189,61 @@ namespace Dopamine.ViewModels.Common
             this.canHighlight = true;
         }
 
+        private void StartHighlightingIfAllowed()
+        {
+            if (!this.CanHighlightNow)
+            {
+                this.StopHighlighting();
+                return;
+            }
+
+            this.StartHighlighting();
+        }
+
         private void StopHighlighting()
         {
             this.canHighlight = false;
             this.highlightTimer.Stop();
+        }
+
+        private bool CanRefreshLyricsNow
+        {
+            get
+            {
+                return this.isNowPlayingPageActive &&
+                    this.isNowPlayingLyricsPageActive &&
+                    !this.appVisibilityService.IsBackgroundPlaybackMode;
+            }
+        }
+
+        private bool CanHighlightNow
+        {
+            get
+            {
+                return this.CanRefreshLyricsNow &&
+                    this.playbackService.IsPlaying;
+            }
+        }
+
+        private async void HandleVisibilityChanged()
+        {
+            if (!this.CanRefreshLyricsNow)
+            {
+                this.StopHighlighting();
+                return;
+            }
+
+            this.RestartRefreshTimer();
+
+            if (this.CanHighlightNow)
+            {
+                await HighlightLyricsLineAsync();
+                this.StartHighlighting();
+            }
+            else
+            {
+                this.StopHighlighting();
+            }
         }
 
         private void ClearLyrics(TrackViewModel track)
@@ -188,6 +254,7 @@ namespace Dopamine.ViewModels.Common
         private async void RefreshLyricsAsync(TrackViewModel track)
         {
             if (!this.isNowPlayingPageActive || !this.isNowPlayingLyricsPageActive) return;
+            if (this.appVisibilityService.IsBackgroundPlaybackMode) return;
             if (track == null) return;
 
             this.previousTrack = track;
@@ -288,7 +355,7 @@ namespace Dopamine.ViewModels.Common
                 return;
             }
 
-            this.StartHighlighting();
+            this.StartHighlightingIfAllowed();
         }
 
         private async Task HighlightLyricsLineAsync()

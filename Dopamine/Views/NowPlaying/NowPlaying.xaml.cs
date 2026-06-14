@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CommonServiceLocator;
+using Dopamine.Services.Shell;
+using System;
 using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
@@ -8,6 +10,7 @@ namespace Dopamine.Views.NowPlaying
     public partial class NowPlaying : UserControl
     {
         private Timer hideControlsTimer = new Timer();
+        private IAppVisibilityService appVisibilityService;
 
         public bool CanShowControls
         {
@@ -22,20 +25,50 @@ namespace Dopamine.Views.NowPlaying
         {
             InitializeComponent();
 
+            this.appVisibilityService = ServiceLocator.Current.GetInstance<IAppVisibilityService>();
+            this.appVisibilityService.VisibilityChanged += (_, __) => this.HandleVisibilityChanged();
+
             this.hideControlsTimer.Interval = 2000;
             this.hideControlsTimer.Elapsed += new ElapsedEventHandler(this.CleanupNowPlayingHandler);
             this.ShowControls();
+        }
+
+        private bool CanRunHideControlsTimer
+        {
+            get { return !this.appVisibilityService.IsBackgroundPlaybackMode; }
         }
 
         private void ShowControls()
         {
             this.hideControlsTimer.Stop();
             this.CanShowControls = true;
-            this.hideControlsTimer.Start();
+
+            if (this.CanRunHideControlsTimer)
+            {
+                this.hideControlsTimer.Start();
+            }
+        }
+
+        private void HandleVisibilityChanged()
+        {
+            if (this.CanRunHideControlsTimer)
+            {
+                this.ShowControls();
+            }
+            else
+            {
+                this.hideControlsTimer.Stop();
+            }
         }
 
         public void CleanupNowPlayingHandler(object sender, ElapsedEventArgs e)
         {
+            if (!this.CanRunHideControlsTimer)
+            {
+                this.hideControlsTimer.Stop();
+                return;
+            }
+
             this.Dispatcher.BeginInvoke(new Action(() =>
             {
                 if (!this.BackButton.IsMouseOver)
@@ -47,6 +80,11 @@ namespace Dopamine.Views.NowPlaying
 
         private void NowPlaying_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
+            if (!this.CanRunHideControlsTimer)
+            {
+                return;
+            }
+
             this.ShowControls();
         }
 
