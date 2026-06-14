@@ -271,7 +271,8 @@ namespace Dopamine
                         notificationService = new NotificationService(
                         Container.Resolve<IPlaybackService>(),
                         Container.Resolve<ICacheService>(),
-                        Container.Resolve<IMetadataService>());
+                        Container.Resolve<IMetadataService>(),
+                        Container.Resolve<IAppVisibilityService>());
                     }
                     catch (Exception ex)
                     {
@@ -279,7 +280,8 @@ namespace Dopamine
                         notificationService = new LegacyNotificationService(
                         Container.Resolve<IPlaybackService>(),
                         Container.Resolve<ICacheService>(),
-                        Container.Resolve<IMetadataService>());
+                        Container.Resolve<IMetadataService>(),
+                        Container.Resolve<IAppVisibilityService>());
                     }
                 }
                 else
@@ -287,7 +289,8 @@ namespace Dopamine
                     notificationService = new LegacyNotificationService(
                         Container.Resolve<IPlaybackService>(),
                         Container.Resolve<ICacheService>(),
-                        Container.Resolve<IMetadataService>());
+                        Container.Resolve<IMetadataService>(),
+                        Container.Resolve<IAppVisibilityService>());
                 }
 
                 containerRegistry.RegisterInstance(notificationService);

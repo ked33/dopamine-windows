@@ -3,6 +3,7 @@ using Dopamine.Core.Base;
 using Dopamine.Services.Cache;
 using Dopamine.Services.Metadata;
 using Dopamine.Services.Playback;
+using Dopamine.Services.Shell;
 using System;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
@@ -34,7 +35,8 @@ namespace Dopamine.Services.Notification
             }
         }
 
-        public NotificationService(IPlaybackService playbackService, ICacheService cacheService, IMetadataService metadataService) : base(playbackService, cacheService, metadataService)
+        public NotificationService(IPlaybackService playbackService, ICacheService cacheService, IMetadataService metadataService,
+            IAppVisibilityService appVisibilityService) : base(playbackService, cacheService, metadataService, appVisibilityService)
         {
             // Pay attention to UPPERCASE property
             this.SystemNotificationIsEnabled = SettingsClient.Get<bool>("Behaviour", "EnableSystemNotification");
@@ -141,7 +143,7 @@ namespace Dopamine.Services.Notification
             musicProperties.Title = track.TrackTitle;
             uint.TryParse(track.TrackNumber, out var trackNumber);
             musicProperties.TrackNumber = trackNumber;
-            await SetArtworkThumbnailAsync(await this.MetadataService.GetArtworkAsync(track.Path));
+            await SetArtworkThumbnailAsync(this.IsBackgroundPlaybackMode ? null : await this.MetadataService.GetArtworkAsync(track.Path));
             displayUpdater.Update();
         }
 

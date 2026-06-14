@@ -5,6 +5,7 @@ using Dopamine.Core.Base;
 using Dopamine.Services.Cache;
 using Dopamine.Services.Metadata;
 using Dopamine.Services.Playback;
+using Dopamine.Services.Shell;
 using System;
 using System.Threading.Tasks;
 using System.Windows;
@@ -18,6 +19,7 @@ namespace Dopamine.Services.Notification
         private IPlaybackService playbackService;
         private ICacheService cacheService;
         private IMetadataService metadataService;
+        private IAppVisibilityService appVisibilityService;
         private Windows10BorderlessWindow mainWindow;
         private Windows10BorderlessWindow playlistWindow;
         private Window trayControlsWindow;
@@ -79,11 +81,18 @@ namespace Dopamine.Services.Notification
             }
         }
 
-        public LegacyNotificationService(IPlaybackService playbackService, ICacheService cacheService, IMetadataService metadataService)
+        protected bool IsBackgroundPlaybackMode
+        {
+            get { return this.appVisibilityService.IsBackgroundPlaybackMode; }
+        }
+
+        public LegacyNotificationService(IPlaybackService playbackService, ICacheService cacheService, IMetadataService metadataService,
+            IAppVisibilityService appVisibilityService)
         {
             this.playbackService = playbackService;
             this.cacheService = cacheService;
             this.metadataService = metadataService;
+            this.appVisibilityService = appVisibilityService;
 
             this.showNotificationControls = SettingsClient.Get<bool>("Behaviour", "ShowNotificationControls");
             this.showNotificationWhenResuming = SettingsClient.Get<bool>("Behaviour", "ShowNotificationWhenResuming");
@@ -188,7 +197,7 @@ namespace Dopamine.Services.Notification
             {
                 byte[] artworkData = null;
 
-                if (this.playbackService.HasCurrentTrack)
+                if (this.playbackService.HasCurrentTrack && !this.IsBackgroundPlaybackMode)
                 {
                     artworkData = await this.metadataService.GetArtworkAsync(this.playbackService.CurrentTrack.Path);
                 }
