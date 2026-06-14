@@ -3,7 +3,6 @@ using System;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls.Primitives;
-using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 
@@ -27,6 +26,8 @@ namespace Dopamine.Core.Settings
         public PopupAnimation FadePopupAnimation => this.AnimationsEnabled ? PopupAnimation.Fade : PopupAnimation.None;
 
         public PopupAnimation SlidePopupAnimation => this.AnimationsEnabled ? PopupAnimation.Slide : PopupAnimation.None;
+
+        public double StoryboardSpeedRatio => this.AnimationsEnabled ? 1.0 : 10000.0;
 
         private UiAnimationSettings()
         {
@@ -224,6 +225,7 @@ namespace Dopamine.Core.Settings
             this.OnPropertyChanged(nameof(this.AnimationsEnabled));
             this.OnPropertyChanged(nameof(this.FadePopupAnimation));
             this.OnPropertyChanged(nameof(this.SlidePopupAnimation));
+            this.OnPropertyChanged(nameof(this.StoryboardSpeedRatio));
         }
 
         private void OnPropertyChanged(string propertyName)
@@ -232,14 +234,4 @@ namespace Dopamine.Core.Settings
         }
     }
 
-    [ContentProperty(nameof(Storyboard))]
-    public class ConditionalBeginStoryboard : TriggerAction
-    {
-        public Storyboard Storyboard { get; set; }
-
-        protected override void Invoke(DependencyObject parameter)
-        {
-            UiAnimationSettings.BeginStoryboard(this.Storyboard, parameter as FrameworkElement);
-        }
-    }
 }

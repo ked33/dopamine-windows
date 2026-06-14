@@ -18,23 +18,23 @@
 
     <baseviews:MiniPlayerViewBase.Resources>
         <CollectionViewSource x:Key="PlaylistsDataSource" Source="{Binding DataContext.ContextMenuPlaylists, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}"/>
-        <Storyboard x:Key="FadeIn">
-            <Storyboard>
+        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="FadeIn">
+            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                 <DoubleAnimation Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="0.5" To="1" Duration="0:0:0.15" />
             </Storyboard>
         </Storyboard>
-        <Storyboard x:Key="FadeOut">
-            <Storyboard>
+        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="FadeOut">
+            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                 <DoubleAnimation Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="1" To="0.5" Duration="0:0:0.15" />
             </Storyboard>
         </Storyboard>
-        <Storyboard x:Key="ShowCoverControls">
-            <Storyboard>
+        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="ShowCoverControls">
+            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                 <DoubleAnimation Storyboard.TargetName="CoverControls" Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="0" To="1" Duration="0:0:0.15" />
             </Storyboard>
         </Storyboard>
-        <Storyboard x:Key="HideCoverControls">
-            <Storyboard>
+        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="HideCoverControls">
+            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                 <DoubleAnimation Storyboard.TargetName="CoverControls" Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="1" To="0" Duration="0:0:0.15" />
             </Storyboard>
         </Storyboard>
@@ -102,10 +102,10 @@
             <Grid x:Name="CoverGrid" DockPanel.Dock="Right" Width="135" Height="135" Cursor="Hand" MouseLeftButtonDown="CoverGrid_MouseLeftButtonDown">
                 <Grid.Triggers>
                     <EventTrigger RoutedEvent="Grid.MouseEnter">
-                        <animation:ConditionalBeginStoryboard Storyboard="{StaticResource ShowCoverControls}"/>
+                        <BeginStoryboard Storyboard="{StaticResource ShowCoverControls}"/>
                     </EventTrigger>
                     <EventTrigger RoutedEvent="Grid.MouseLeave">
-                        <animation:ConditionalBeginStoryboard Storyboard="{StaticResource HideCoverControls}"/>
+                        <BeginStoryboard Storyboard="{StaticResource HideCoverControls}"/>
                     </EventTrigger>
                 </Grid.Triggers>
                 <!-- Cover art -->

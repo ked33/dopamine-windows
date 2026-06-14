@@ -69,18 +69,18 @@
                         </Border.Background>
                         <Border.Triggers>
                             <EventTrigger RoutedEvent="MouseEnter">
-                                <animation:ConditionalBeginStoryboard>
-                                    <Storyboard TargetProperty="Background.Opacity">
+                                <BeginStoryboard>
+                                    <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" TargetProperty="Background.Opacity">
                                         <DoubleAnimation To="0.05" Duration="{x:Static base:Constants.MouseEnterDuration}"/>
                                     </Storyboard>
-                                </animation:ConditionalBeginStoryboard>
+                                </BeginStoryboard>
                             </EventTrigger>
                             <EventTrigger RoutedEvent="MouseLeave">
-                                <animation:ConditionalBeginStoryboard>
-                                    <Storyboard TargetProperty="Background.Opacity">
+                                <BeginStoryboard>
+                                    <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" TargetProperty="Background.Opacity">
                                         <DoubleAnimation To="0" Duration="{x:Static base:Constants.MouseLeaveDuration}"/>
                                     </Storyboard>
-                                </animation:ConditionalBeginStoryboard>
+                                </BeginStoryboard>
                             </EventTrigger>
                         </Border.Triggers>
                     </Border>

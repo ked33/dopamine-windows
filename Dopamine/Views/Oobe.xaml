@@ -33,14 +33,14 @@
     <!-- Triggers -->
     <dc:Windows10BorderlessWindow.Triggers>
         <EventTrigger RoutedEvent="Window.Loaded">
-            <animation:ConditionalBeginStoryboard>
-                <Storyboard>
+            <BeginStoryboard>
+                <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                     <!-- PART_Border -->
                     <DoubleAnimation Storyboard.TargetName="WindowBorder" 
                        Storyboard.TargetProperty="Opacity" From="0" To="1" 
                        Duration="0:0:0.25" BeginTime="0:0:0"/>
                 </Storyboard>
-            </animation:ConditionalBeginStoryboard>
+            </BeginStoryboard>
         </EventTrigger>
     </dc:Windows10BorderlessWindow.Triggers>
 

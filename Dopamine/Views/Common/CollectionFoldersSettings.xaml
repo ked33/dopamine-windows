@@ -13,13 +13,13 @@
              prismMvvm:ViewModelLocator.AutoWireViewModel="True">
 
     <UserControl.Resources>
-        <Storyboard x:Key="FadeIn">
-            <Storyboard>
+        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="FadeIn">
+            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                 <DoubleAnimation Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="0.5" To="1" Duration="0:0:0.15" />
             </Storyboard>
         </Storyboard>
-        <Storyboard x:Key="FadeOut">
-            <Storyboard>
+        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="FadeOut">
+            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                 <DoubleAnimation Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="1" To="0.5" Duration="0:0:0.15" />
             </Storyboard>
         </Storyboard>
@@ -42,10 +42,10 @@
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsBusy}" Value="True">
                                 <DataTrigger.EnterActions>
-                                    <animation:ConditionalBeginStoryboard Storyboard ="{StaticResource FadeOut}"/>
+                                    <BeginStoryboard Storyboard ="{StaticResource FadeOut}"/>
                                 </DataTrigger.EnterActions>
                                 <DataTrigger.ExitActions>
-                                    <animation:ConditionalBeginStoryboard Storyboard ="{StaticResource FadeIn}"/>
+                                    <BeginStoryboard Storyboard ="{StaticResource FadeIn}"/>
                                 </DataTrigger.ExitActions>
                             </DataTrigger>
                         </Style.Triggers>

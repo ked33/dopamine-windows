@@ -17,23 +17,23 @@
 
     <baseviews:MiniPlayerViewBase.Resources>
         <CollectionViewSource x:Key="PlaylistsDataSource" Source="{Binding DataContext.ContextMenuPlaylists, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}}"/>
-        <Storyboard x:Key="FadeIn">
-            <Storyboard>
+        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="FadeIn">
+            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                 <DoubleAnimation Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="0.5" To="1" Duration="0:0:0.15" />
             </Storyboard>
         </Storyboard>
-        <Storyboard x:Key="FadeOut">
-            <Storyboard>
+        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="FadeOut">
+            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                 <DoubleAnimation Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="1" To="0.5" Duration="0:0:0.15" />
             </Storyboard>
         </Storyboard>
-        <Storyboard x:Key="ShowPlaybackInfoControls">
-            <Storyboard>
+        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="ShowPlaybackInfoControls">
+            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                 <DoubleAnimation Storyboard.TargetName="PlaybackInfoControls" Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="0" To="1" Duration="0:0:0.15" />
             </Storyboard>
         </Storyboard>
-        <Storyboard x:Key="HidePlaybackInfoControls">
-            <Storyboard>
+        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="HidePlaybackInfoControls">
+            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                 <DoubleAnimation Storyboard.TargetName="PlaybackInfoControls" Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="1" To="0" Duration="0:0:0.15" />
             </Storyboard>
         </Storyboard>
@@ -112,10 +112,10 @@
                 <commonviews:PlaybackInfoControlNano Panel.ZIndex="0" Width="220" Margin="15,0,15,0" HorizontalAlignment="Left"/>
                 <Grid.Triggers>
                     <EventTrigger RoutedEvent="Grid.MouseEnter">
-                        <animation:ConditionalBeginStoryboard Storyboard="{StaticResource ShowPlaybackInfoControls}"/>
+                        <BeginStoryboard Storyboard="{StaticResource ShowPlaybackInfoControls}"/>
                     </EventTrigger>
                     <EventTrigger RoutedEvent="Grid.MouseLeave">
-                        <animation:ConditionalBeginStoryboard Storyboard="{StaticResource HidePlaybackInfoControls}"/>
+                        <BeginStoryboard Storyboard="{StaticResource HidePlaybackInfoControls}"/>
                     </EventTrigger>
                 </Grid.Triggers>
             </Grid>

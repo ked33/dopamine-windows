@@ -41,20 +41,20 @@
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding HasText, RelativeSource={RelativeSource TemplatedParent}}" Value="true">
                                                     <DataTrigger.EnterActions>
-                                                        <animation:ConditionalBeginStoryboard>
-                                                            <Storyboard>
+                                                        <BeginStoryboard>
+                                                            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                                                 <DoubleAnimation Storyboard.TargetProperty="FontSize" To="1" Duration="0:0:0.25"/>
                                                                 <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.25"/>
                                                             </Storyboard>
-                                                        </animation:ConditionalBeginStoryboard>
+                                                        </BeginStoryboard>
                                                     </DataTrigger.EnterActions>
                                                     <DataTrigger.ExitActions>
-                                                        <animation:ConditionalBeginStoryboard>
-                                                            <Storyboard>
+                                                        <BeginStoryboard>
+                                                            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                                                 <DoubleAnimation Storyboard.TargetProperty="FontSize" To="16" Duration="0:0:0.25"/>
                                                                 <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.25"/>
                                                             </Storyboard>
-                                                        </animation:ConditionalBeginStoryboard>
+                                                        </BeginStoryboard>
                                                     </DataTrigger.ExitActions>
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -74,20 +74,20 @@
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding HasText, RelativeSource={RelativeSource TemplatedParent}}" Value="true">
                                                     <DataTrigger.EnterActions>
-                                                        <animation:ConditionalBeginStoryboard>
-                                                            <Storyboard>
+                                                        <BeginStoryboard>
+                                                            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                                                 <DoubleAnimation Storyboard.TargetProperty="FontSize" To="12" Duration="0:0:0.25"/>
                                                                 <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.25"/>
                                                             </Storyboard>
-                                                        </animation:ConditionalBeginStoryboard>
+                                                        </BeginStoryboard>
                                                     </DataTrigger.EnterActions>
                                                     <DataTrigger.ExitActions>
-                                                        <animation:ConditionalBeginStoryboard>
-                                                            <Storyboard>
+                                                        <BeginStoryboard>
+                                                            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                                                 <DoubleAnimation Storyboard.TargetProperty="FontSize" To="1" Duration="0:0:0.25"/>
                                                                 <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.25"/>
                                                             </Storyboard>
-                                                        </animation:ConditionalBeginStoryboard>
+                                                        </BeginStoryboard>
                                                     </DataTrigger.ExitActions>
                                                 </DataTrigger>
                                             </Style.Triggers>

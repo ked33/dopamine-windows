@@ -23,14 +23,14 @@
     </i:Interaction.Triggers>
 
     <baseviews:TracksViewBase.Resources>
-        <Storyboard x:Key="ShowSemanticZoom">
-            <Storyboard>
+        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="ShowSemanticZoom">
+            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                 <DoubleAnimation Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="0" To="1" Duration="0:0:0.25" />
                 <ThicknessAnimation Storyboard.TargetProperty="Margin" BeginTime="0:0:0" From="-50" To="0" Duration="0:0:0.15" />
             </Storyboard>
         </Storyboard>
-        <Storyboard x:Key="HideSemanticZoom">
-            <Storyboard>
+        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="HideSemanticZoom">
+            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                 <DoubleAnimation Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="1" To="0" Duration="0:0:0" />
                 <ThicknessAnimation Storyboard.TargetProperty="Margin" BeginTime="0:0:0" From="0" To="-50" Duration="0:0:0" />
             </Storyboard>
@@ -107,10 +107,10 @@
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsArtistsZoomVisible}" Value="True">
                                                 <DataTrigger.EnterActions>
-                                                    <animation:ConditionalBeginStoryboard Storyboard ="{StaticResource ShowSemanticZoom}"/>
+                                                    <BeginStoryboard Storyboard ="{StaticResource ShowSemanticZoom}"/>
                                                 </DataTrigger.EnterActions>
                                                 <DataTrigger.ExitActions>
-                                                    <animation:ConditionalBeginStoryboard Storyboard ="{StaticResource HideSemanticZoom}"/>
+                                                    <BeginStoryboard Storyboard ="{StaticResource HideSemanticZoom}"/>
                                                 </DataTrigger.ExitActions>
                                             </DataTrigger>
                                         </Style.Triggers>

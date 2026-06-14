@@ -11,10 +11,10 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ListBoxItem}">
                     <ControlTemplate.Resources>
-                        <Storyboard x:Key="SelectStoryboard">
+                        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="SelectStoryboard">
                             <DoubleAnimation Storyboard.TargetName="ColorSchemeSelector" Storyboard.TargetProperty="Opacity" To="1.0" Duration="0:0:0.05" />
                         </Storyboard>
-                        <Storyboard x:Key="DeselectStoryboard">
+                        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="DeselectStoryboard">
                             <DoubleAnimation Storyboard.TargetName="ColorSchemeSelector" Storyboard.TargetProperty="Opacity" To="0.0" Duration="0:0:0.05" />
                         </Storyboard>
                     </ControlTemplate.Resources>
@@ -37,10 +37,10 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="true">
                             <Trigger.EnterActions>
-                                <animation:ConditionalBeginStoryboard Storyboard="{StaticResource SelectStoryboard}" />
+                                <BeginStoryboard Storyboard="{StaticResource SelectStoryboard}" />
                             </Trigger.EnterActions>
                             <Trigger.ExitActions>
-                                <animation:ConditionalBeginStoryboard Storyboard="{StaticResource DeselectStoryboard}" />
+                                <BeginStoryboard Storyboard="{StaticResource DeselectStoryboard}" />
                             </Trigger.ExitActions>
                         </Trigger>
                     </ControlTemplate.Triggers>

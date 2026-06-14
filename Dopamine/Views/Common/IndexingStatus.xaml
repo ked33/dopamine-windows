@@ -22,20 +22,20 @@
                 <Style.Triggers>
                     <DataTrigger Binding="{Binding Path=IsIndexing}" Value="True">
                         <DataTrigger.EnterActions>
-                            <animation:ConditionalBeginStoryboard>
-                                <Storyboard>
+                            <BeginStoryboard>
+                                <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                     <DoubleAnimation Duration="0:0:0.15" Storyboard.TargetProperty="Height" To="30" />
                                     <DoubleAnimation Duration="0:0:0.25" Storyboard.TargetProperty="Opacity" To="1" />
                                 </Storyboard>
-                            </animation:ConditionalBeginStoryboard>
+                            </BeginStoryboard>
                         </DataTrigger.EnterActions>
                         <DataTrigger.ExitActions>
-                            <animation:ConditionalBeginStoryboard>
-                                <Storyboard>
+                            <BeginStoryboard>
+                                <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                     <DoubleAnimation Duration="0:0:0.25" Storyboard.TargetProperty="Height" To="0" />
                                     <DoubleAnimation Duration="0:0:0.15" Storyboard.TargetProperty="Opacity" To="0" />
                                 </Storyboard>
-                            </animation:ConditionalBeginStoryboard>
+                            </BeginStoryboard>
                         </DataTrigger.ExitActions>
                     </DataTrigger>
                 </Style.Triggers>

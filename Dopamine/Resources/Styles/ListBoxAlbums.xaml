@@ -134,11 +134,11 @@
                                         </pc:SourceChangedImage.Source>
                                         <pc:SourceChangedImage.Triggers>
                                             <EventTrigger RoutedEvent="pc:SourceChangedImage.SourceChanged">
-                                                <animation:ConditionalBeginStoryboard>
-                                                    <Storyboard>
+                                                <BeginStoryboard>
+                                                    <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                                         <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="{x:Static base:Constants.SourceChangedImageChangedDuration}" />
                                                     </Storyboard>
-                                                </animation:ConditionalBeginStoryboard>
+                                                </BeginStoryboard>
                                             </EventTrigger>
                                         </pc:SourceChangedImage.Triggers>
                                     </pc:SourceChangedImage>
@@ -172,18 +172,18 @@
                             <Setter Property="Background" TargetName="SelectionBorder" Value="{DynamicResource Brush_Accent}"/>
                         </Trigger>
                         <EventTrigger RoutedEvent="MouseEnter">
-                            <animation:ConditionalBeginStoryboard>
-                                <Storyboard Storyboard.TargetName="MouseHoverHelper" TargetProperty="Opacity">
+                            <BeginStoryboard>
+                                <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" Storyboard.TargetName="MouseHoverHelper" TargetProperty="Opacity">
                                     <DoubleAnimation To="1" Duration="{x:Static base:Constants.MouseEnterDuration}"/>
                                 </Storyboard>
-                            </animation:ConditionalBeginStoryboard>
+                            </BeginStoryboard>
                         </EventTrigger>
                         <EventTrigger RoutedEvent="MouseLeave">
-                            <animation:ConditionalBeginStoryboard>
-                                <Storyboard Storyboard.TargetName="MouseHoverHelper" TargetProperty="Opacity">
+                            <BeginStoryboard>
+                                <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" Storyboard.TargetName="MouseHoverHelper" TargetProperty="Opacity">
                                     <DoubleAnimation To="0" Duration="{x:Static base:Constants.MouseLeaveDuration}"/>
                                 </Storyboard>
-                            </animation:ConditionalBeginStoryboard>
+                            </BeginStoryboard>
                         </EventTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

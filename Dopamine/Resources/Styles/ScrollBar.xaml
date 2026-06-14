@@ -75,18 +75,18 @@
                             <Setter TargetName="Border" Property="Opacity" Value="1.0" />
                         </Trigger>-->
                         <EventTrigger RoutedEvent="UIElement.MouseEnter">
-                            <animation:ConditionalBeginStoryboard>
-                                <Storyboard>
+                            <BeginStoryboard>
+                                <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                     <DoubleAnimation Duration="0:0:0.15" To="0.7" Storyboard.TargetProperty="Opacity" />
                                 </Storyboard>
-                            </animation:ConditionalBeginStoryboard>
+                            </BeginStoryboard>
                         </EventTrigger>
                         <EventTrigger RoutedEvent="UIElement.MouseLeave">
-                            <animation:ConditionalBeginStoryboard>
-                                <Storyboard>
+                            <BeginStoryboard>
+                                <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                     <DoubleAnimation Duration="0:0:0.15" To="1" Storyboard.TargetProperty="Opacity" />
                                 </Storyboard>
-                            </animation:ConditionalBeginStoryboard>
+                            </BeginStoryboard>
                         </EventTrigger>
                         <Trigger Property="IsDragging" Value="true">
                             <Setter TargetName="Border" Property="Opacity" Value="0.7" />
@@ -251,20 +251,20 @@
                     </Grid>
                     <ControlTemplate.Triggers>
                         <EventTrigger RoutedEvent="UIElement.MouseEnter">
-                            <animation:ConditionalBeginStoryboard>
-                                <Storyboard>
+                            <BeginStoryboard>
+                                <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                     <DoubleAnimation Duration="{x:Static base:Constants.MouseEnterDuration}" Storyboard.TargetName="PART_VerticalScrollBar" To="1" Storyboard.TargetProperty="Opacity" />
                                     <DoubleAnimation Duration="{x:Static base:Constants.MouseEnterDuration}" Storyboard.TargetName="PART_HorizontalScrollBar" To="1" Storyboard.TargetProperty="Opacity" />
                                 </Storyboard>
-                            </animation:ConditionalBeginStoryboard>
+                            </BeginStoryboard>
                         </EventTrigger>
                         <EventTrigger RoutedEvent="UIElement.MouseLeave">
-                            <animation:ConditionalBeginStoryboard>
-                                <Storyboard>
+                            <BeginStoryboard>
+                                <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                     <DoubleAnimation Duration="{x:Static base:Constants.MouseLeaveDuration}" Storyboard.TargetName="PART_VerticalScrollBar" To="0" Storyboard.TargetProperty="Opacity" />
                                     <DoubleAnimation Duration="{x:Static base:Constants.MouseLeaveDuration}" Storyboard.TargetName="PART_HorizontalScrollBar" To="0" Storyboard.TargetProperty="Opacity" />
                                 </Storyboard>
-                            </animation:ConditionalBeginStoryboard>
+                            </BeginStoryboard>
                         </EventTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -298,20 +298,20 @@
         </Grid>
         <ControlTemplate.Triggers>
             <EventTrigger RoutedEvent="UIElement.MouseEnter">
-                <animation:ConditionalBeginStoryboard>
-                    <Storyboard>
+                <BeginStoryboard>
+                    <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                         <DoubleAnimation Duration="0:0:0.15" Storyboard.TargetName="PART_VerticalScrollBar" To="1" Storyboard.TargetProperty="Opacity" />
                         <DoubleAnimation Duration="0:0:0.15" Storyboard.TargetName="PART_HorizontalScrollBar" To="1" Storyboard.TargetProperty="Opacity" />
                     </Storyboard>
-                </animation:ConditionalBeginStoryboard>
+                </BeginStoryboard>
             </EventTrigger>
             <EventTrigger RoutedEvent="UIElement.MouseLeave">
-                <animation:ConditionalBeginStoryboard>
-                    <Storyboard>
+                <BeginStoryboard>
+                    <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                         <DoubleAnimation Duration="0:0:0.15" Storyboard.TargetName="PART_VerticalScrollBar" To="0" Storyboard.TargetProperty="Opacity" />
                         <DoubleAnimation Duration="0:0:0.15" Storyboard.TargetName="PART_HorizontalScrollBar" To="0" Storyboard.TargetProperty="Opacity" />
                     </Storyboard>
-                </animation:ConditionalBeginStoryboard>
+                </BeginStoryboard>
             </EventTrigger>
         </ControlTemplate.Triggers>
     </ControlTemplate>

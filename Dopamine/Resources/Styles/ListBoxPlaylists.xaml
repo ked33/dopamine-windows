@@ -94,24 +94,24 @@
                             </Border>
                             <Grid.Triggers>
                                 <EventTrigger RoutedEvent="Button.DragEnter">
-                                    <animation:ConditionalBeginStoryboard>
-                                        <Storyboard>
+                                    <BeginStoryboard>
+                                        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                             <DoubleAnimation
                                                    Storyboard.TargetName="DragBorder"
                                                    Storyboard.TargetProperty="Opacity"
                                                    Duration="0:0:0.01" From="0" To="1"/>
                                         </Storyboard>
-                                    </animation:ConditionalBeginStoryboard>
+                                    </BeginStoryboard>
                                 </EventTrigger>
                                 <EventTrigger RoutedEvent="Button.DragLeave">
-                                    <animation:ConditionalBeginStoryboard>
-                                        <Storyboard>
+                                    <BeginStoryboard>
+                                        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                             <DoubleAnimation
                                                    Storyboard.TargetName="DragBorder"
                                                    Storyboard.TargetProperty="Opacity"
                                                    Duration="0:0:0.01" From="1" To="0"/>
                                         </Storyboard>
-                                    </animation:ConditionalBeginStoryboard>
+                                    </BeginStoryboard>
                                 </EventTrigger>
                             </Grid.Triggers>
                         </Grid>
@@ -124,18 +124,18 @@
                             <Setter Property="Background" Value="{DynamicResource Brush_ItemSelected}"/>
                         </Trigger>
                         <EventTrigger RoutedEvent="MouseEnter">
-                            <animation:ConditionalBeginStoryboard>
-                                <Storyboard Storyboard.TargetName="MouseHoverHelper" TargetProperty="Opacity">
+                            <BeginStoryboard>
+                                <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" Storyboard.TargetName="MouseHoverHelper" TargetProperty="Opacity">
                                     <DoubleAnimation To="1" Duration="{x:Static base:Constants.MouseEnterDuration}"/>
                                 </Storyboard>
-                            </animation:ConditionalBeginStoryboard>
+                            </BeginStoryboard>
                         </EventTrigger>
                         <EventTrigger RoutedEvent="MouseLeave">
-                            <animation:ConditionalBeginStoryboard>
-                                <Storyboard Storyboard.TargetName="MouseHoverHelper" TargetProperty="Opacity">
+                            <BeginStoryboard>
+                                <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" Storyboard.TargetName="MouseHoverHelper" TargetProperty="Opacity">
                                     <DoubleAnimation To="0" Duration="{x:Static base:Constants.MouseLeaveDuration}"/>
                                 </Storyboard>
-                            </animation:ConditionalBeginStoryboard>
+                            </BeginStoryboard>
                         </EventTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

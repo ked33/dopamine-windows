@@ -24,18 +24,18 @@
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding ShowAddedTracksToPlaylistText}" Value="True">
                             <DataTrigger.EnterActions>
-                                <animation:ConditionalBeginStoryboard>
-                                    <Storyboard>
+                                <BeginStoryboard>
+                                    <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                         <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0" Duration="0:0:0.15"/>
                                     </Storyboard>
-                                </animation:ConditionalBeginStoryboard>
+                                </BeginStoryboard>
                             </DataTrigger.EnterActions>
                             <DataTrigger.ExitActions>
-                                <animation:ConditionalBeginStoryboard>
-                                    <Storyboard>
+                                <BeginStoryboard>
+                                    <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                         <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" BeginTime="0:0:0.20" Duration="0:0:0.15"/>
                                     </Storyboard>
-                                </animation:ConditionalBeginStoryboard>
+                                </BeginStoryboard>
                             </DataTrigger.ExitActions>
                         </DataTrigger>
                     </Style.Triggers>
@@ -59,21 +59,21 @@
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding ShowAddedTracksToPlaylistText}" Value="True">
                             <DataTrigger.EnterActions>
-                                <animation:ConditionalBeginStoryboard>
-                                    <Storyboard>
+                                <BeginStoryboard>
+                                    <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                         <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" BeginTime="0:0:0.10" Duration="0:0:0.25"/>
                                         <ThicknessAnimation Storyboard.TargetProperty="Margin" From="0,0,0,-30" To="0,0,0,0" BeginTime="0:0:0.10" Duration="0:0:0.15"/>
                                     </Storyboard>
-                                </animation:ConditionalBeginStoryboard>
+                                </BeginStoryboard>
                             </DataTrigger.EnterActions>
                             <DataTrigger.ExitActions>
-                                <animation:ConditionalBeginStoryboard>
-                                    <Storyboard>
+                                <BeginStoryboard>
+                                    <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                         <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0" Duration="0:0:0.15"/>
                                         <ThicknessAnimation Storyboard.TargetProperty="Margin" From="0,0,0,0" To="0,-30,0,0" Duration="0:0:0.25"/>
                                         <ThicknessAnimation Storyboard.TargetProperty="Margin" From="0,-30,0,0" To="0,0,0,-30" BeginTime="0:0:0.25" Duration="0:0:0"/>
                                     </Storyboard>
-                                </animation:ConditionalBeginStoryboard>
+                                </BeginStoryboard>
                             </DataTrigger.ExitActions>
                         </DataTrigger>
                     </Style.Triggers>

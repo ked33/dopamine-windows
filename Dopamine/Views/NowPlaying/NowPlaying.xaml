@@ -57,22 +57,22 @@
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding Path=CanShowControls,ElementName=This}" Value="True">
                                 <DataTrigger.EnterActions>
-                                    <animation:ConditionalBeginStoryboard>
-                                        <Storyboard>
+                                    <BeginStoryboard>
+                                        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                             <DoubleAnimationUsingKeyFrames BeginTime="0:0:0" Storyboard.TargetProperty="Opacity">
                                                 <SplineDoubleKeyFrame KeyTime="0:0:0.3" Value="1"/>
                                             </DoubleAnimationUsingKeyFrames>
                                         </Storyboard>
-                                    </animation:ConditionalBeginStoryboard>
+                                    </BeginStoryboard>
                                 </DataTrigger.EnterActions>
                                 <DataTrigger.ExitActions>
-                                    <animation:ConditionalBeginStoryboard>
-                                        <Storyboard>
+                                    <BeginStoryboard>
+                                        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                             <DoubleAnimationUsingKeyFrames BeginTime="0:0:0.5" Storyboard.TargetProperty="Opacity">
                                                 <SplineDoubleKeyFrame KeyTime="0:0:0.3" Value="0"/>
                                             </DoubleAnimationUsingKeyFrames>
                                         </Storyboard>
-                                    </animation:ConditionalBeginStoryboard>
+                                    </BeginStoryboard>
                                 </DataTrigger.ExitActions>
                             </DataTrigger>
                         </Style.Triggers>
@@ -89,22 +89,22 @@
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Path=CanShowControls,ElementName=This}" Value="True">
                                     <DataTrigger.EnterActions>
-                                        <animation:ConditionalBeginStoryboard>
-                                            <Storyboard>
+                                        <BeginStoryboard>
+                                            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                                 <DoubleAnimationUsingKeyFrames BeginTime="0:0:0" Storyboard.TargetProperty="Opacity">
                                                     <SplineDoubleKeyFrame KeyTime="0:0:0.3" Value="1"/>
                                                 </DoubleAnimationUsingKeyFrames>
                                             </Storyboard>
-                                        </animation:ConditionalBeginStoryboard>
+                                        </BeginStoryboard>
                                     </DataTrigger.EnterActions>
                                     <DataTrigger.ExitActions>
-                                        <animation:ConditionalBeginStoryboard>
-                                            <Storyboard>
+                                        <BeginStoryboard>
+                                            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                                 <DoubleAnimationUsingKeyFrames BeginTime="0:0:0.5" Storyboard.TargetProperty="Opacity">
                                                     <SplineDoubleKeyFrame KeyTime="0:0:0.3" Value="0"/>
                                                 </DoubleAnimationUsingKeyFrames>
                                             </Storyboard>
-                                        </animation:ConditionalBeginStoryboard>
+                                        </BeginStoryboard>
                                     </DataTrigger.ExitActions>
                                 </DataTrigger>
                             </Style.Triggers>
@@ -120,22 +120,22 @@
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Path=CanShowControls,ElementName=This}" Value="True">
                                         <DataTrigger.EnterActions>
-                                            <animation:ConditionalBeginStoryboard>
-                                                <Storyboard>
+                                            <BeginStoryboard>
+                                                <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                                     <DoubleAnimationUsingKeyFrames BeginTime="0:0:0" Storyboard.TargetProperty="Opacity">
                                                         <SplineDoubleKeyFrame KeyTime="0:0:0.3" Value="1"/>
                                                     </DoubleAnimationUsingKeyFrames>
                                                 </Storyboard>
-                                            </animation:ConditionalBeginStoryboard>
+                                            </BeginStoryboard>
                                         </DataTrigger.EnterActions>
                                         <DataTrigger.ExitActions>
-                                            <animation:ConditionalBeginStoryboard>
-                                                <Storyboard>
+                                            <BeginStoryboard>
+                                                <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                                     <DoubleAnimationUsingKeyFrames BeginTime="0:0:0.75" Storyboard.TargetProperty="Opacity">
                                                         <SplineDoubleKeyFrame KeyTime="0:0:0.3" Value="0"/>
                                                     </DoubleAnimationUsingKeyFrames>
                                                 </Storyboard>
-                                            </animation:ConditionalBeginStoryboard>
+                                            </BeginStoryboard>
                                         </DataTrigger.ExitActions>
                                     </DataTrigger>
                                 </Style.Triggers>

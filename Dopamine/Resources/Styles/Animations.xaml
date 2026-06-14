@@ -6,8 +6,8 @@
         <Style.Triggers>
             <Trigger Property="Visibility" Value="Visible">
                 <Trigger.EnterActions>
-                    <animation:ConditionalBeginStoryboard>
-                        <Storyboard>
+                    <BeginStoryboard>
+                        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                             <ThicknessAnimation  
                                 Storyboard.TargetProperty="Margin"
                                 From="-10,0,0,0" To="0,0,0,0" Duration="0:0:0.5" />
@@ -15,7 +15,7 @@
                                 Storyboard.TargetProperty="Opacity"
                                 From="0.0" To="1.0" Duration="0:0:1" />
                         </Storyboard>
-                    </animation:ConditionalBeginStoryboard>
+                    </BeginStoryboard>
                 </Trigger.EnterActions>
             </Trigger>
         </Style.Triggers>

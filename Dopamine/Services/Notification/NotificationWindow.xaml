@@ -22,13 +22,13 @@
 
     <!-- Resources -->
     <Window.Resources>
-        <Storyboard x:Key="ShowCoverControls">
-            <Storyboard>
+        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="ShowCoverControls">
+            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                 <DoubleAnimation Storyboard.TargetName="CoverControls" Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="0" To="1" Duration="0:0:0.15" />
             </Storyboard>
         </Storyboard>
-        <Storyboard x:Key="HideCoverControls">
-            <Storyboard>
+        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="HideCoverControls">
+            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                 <DoubleAnimation Storyboard.TargetName="CoverControls" Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="1" To="0" Duration="0:0:0.15" />
             </Storyboard>
         </Storyboard>
@@ -44,10 +44,10 @@
                 <Grid DockPanel.Dock="Right">
                     <Grid.Triggers>
                         <EventTrigger RoutedEvent="Grid.MouseEnter">
-                            <animation:ConditionalBeginStoryboard Storyboard="{StaticResource ShowCoverControls}"/>
+                            <BeginStoryboard Storyboard="{StaticResource ShowCoverControls}"/>
                         </EventTrigger>
                         <EventTrigger RoutedEvent="Grid.MouseLeave">
-                            <animation:ConditionalBeginStoryboard Storyboard="{StaticResource HideCoverControls}"/>
+                            <BeginStoryboard Storyboard="{StaticResource HideCoverControls}"/>
                         </EventTrigger>
                     </Grid.Triggers>
                     <controls:Tile x:Name="CoverTile" 
@@ -100,22 +100,22 @@
                 <Style.Triggers>
                     <DataTrigger Binding="{Binding Path=IsEnabled,ElementName=Me}" Value="True">
                         <DataTrigger.EnterActions>
-                            <animation:ConditionalBeginStoryboard>
-                                <Storyboard>
+                            <BeginStoryboard>
+                                <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                     <DoubleAnimationUsingKeyFrames BeginTime="0:0:0.1" Storyboard.TargetProperty="(UIElement.Opacity)">
                                         <SplineDoubleKeyFrame KeyTime="0:0:0.25" Value="1"/>
                                     </DoubleAnimationUsingKeyFrames>
                                 </Storyboard>
-                            </animation:ConditionalBeginStoryboard>
+                            </BeginStoryboard>
                         </DataTrigger.EnterActions>
                         <DataTrigger.ExitActions>
-                            <animation:ConditionalBeginStoryboard>
-                                <Storyboard>
+                            <BeginStoryboard>
+                                <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
                                     <DoubleAnimationUsingKeyFrames BeginTime="0:0:0.26" Storyboard.TargetProperty="(UIElement.Opacity)">
                                         <SplineDoubleKeyFrame KeyTime="0:0:0.25" Value="0"/>
                                     </DoubleAnimationUsingKeyFrames>
                                 </Storyboard>
-                            </animation:ConditionalBeginStoryboard>
+                            </BeginStoryboard>
                         </DataTrigger.ExitActions>
                     </DataTrigger>
                 </Style.Triggers>
