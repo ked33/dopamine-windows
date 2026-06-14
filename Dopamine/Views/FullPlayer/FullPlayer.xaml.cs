@@ -1,4 +1,5 @@
 ﻿using Digimezzo.Foundation.WPF.Controls;
+using Dopamine.Core.Settings;
 using Prism.Regions;
 using System;
 using System.Windows.Controls;
@@ -16,7 +17,7 @@ namespace Dopamine.Views.FullPlayer
         private void AnimateBackIcon(int newSize, TimeSpan duration)
         {
             DoubleAnimation sizeAnimation = new DoubleAnimation(newSize, duration);
-            this.BackIcon.BeginAnimation(SegoeIcon.FontSizeProperty, sizeAnimation);
+            UiAnimationSettings.BeginAnimationOrSet(this.BackIcon, SegoeIcon.FontSizeProperty, sizeAnimation, Convert.ToDouble(newSize));
         }
 
         private void Grid_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)

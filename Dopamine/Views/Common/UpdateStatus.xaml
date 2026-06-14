@@ -2,6 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:animation="clr-namespace:Dopamine.Core.Settings;assembly=Dopamine.Core"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:prismMvvm="clr-namespace:Prism.Mvvm;assembly=Prism.Wpf"
              xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
@@ -43,20 +44,20 @@
                 <Style.Triggers>
                     <DataTrigger Binding="{Binding Path=IsUpdateAvailable}" Value="True">
                         <DataTrigger.EnterActions>
-                            <BeginStoryboard>
+                            <animation:ConditionalBeginStoryboard>
                                 <Storyboard>
                                     <DoubleAnimation Duration="0:0:0.15" Storyboard.TargetProperty="Height" To="30" />
                                     <DoubleAnimation Duration="0:0:0.25" Storyboard.TargetProperty="Opacity" To="1" />
                                 </Storyboard>
-                            </BeginStoryboard>
+                            </animation:ConditionalBeginStoryboard>
                         </DataTrigger.EnterActions>
                         <DataTrigger.ExitActions>
-                            <BeginStoryboard>
+                            <animation:ConditionalBeginStoryboard>
                                 <Storyboard>
                                     <DoubleAnimation Duration="0:0:0.25" Storyboard.TargetProperty="Height" To="0" />
                                     <DoubleAnimation Duration="0:0:0.15" Storyboard.TargetProperty="Opacity" To="0" />
                                 </Storyboard>
-                            </BeginStoryboard>
+                            </animation:ConditionalBeginStoryboard>
                         </DataTrigger.ExitActions>
                     </DataTrigger>
                 </Style.Triggers>

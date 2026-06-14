@@ -2,6 +2,7 @@
                               xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                               xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:animation="clr-namespace:Dopamine.Core.Settings;assembly=Dopamine.Core"
                               xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                               xmlns:corebase="clr-namespace:Dopamine.Core.Base;assembly=Dopamine.Core"
                               xmlns:utils="clr-namespace:Dopamine.Utils"
@@ -79,7 +80,7 @@
                                     </CompositeCollection>
                                 </MenuItem.ItemsSource>
                             </MenuItem>
-                            <Popup IsOpen="{TemplateBinding IsSubmenuOpen}" Placement="Right" AllowsTransparency="True" PopupAnimation="Fade">
+                            <Popup IsOpen="{TemplateBinding IsSubmenuOpen}" Placement="Right" AllowsTransparency="True" PopupAnimation="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=FadePopupAnimation}">
                                 <Border BorderBrush="Transparent" BorderThickness="8,10,5,10" Background="White">
                                     <Border.Effect>
                                         <DropShadowEffect BlurRadius="8" Opacity="0.6" ShadowDepth="0" />
@@ -111,10 +112,10 @@
                 <commonviews:PlaybackInfoControlNano Panel.ZIndex="0" Width="220" Margin="15,0,15,0" HorizontalAlignment="Left"/>
                 <Grid.Triggers>
                     <EventTrigger RoutedEvent="Grid.MouseEnter">
-                        <BeginStoryboard Storyboard="{StaticResource ShowPlaybackInfoControls}"/>
+                        <animation:ConditionalBeginStoryboard Storyboard="{StaticResource ShowPlaybackInfoControls}"/>
                     </EventTrigger>
                     <EventTrigger RoutedEvent="Grid.MouseLeave">
-                        <BeginStoryboard Storyboard="{StaticResource HidePlaybackInfoControls}"/>
+                        <animation:ConditionalBeginStoryboard Storyboard="{StaticResource HidePlaybackInfoControls}"/>
                     </EventTrigger>
                 </Grid.Triggers>
             </Grid>

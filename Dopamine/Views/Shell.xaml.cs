@@ -7,6 +7,7 @@ using Dopamine.Core.Base;
 using Dopamine.Core.Extensions;
 using Dopamine.Core.IO;
 using Dopamine.Core.Prism;
+using Dopamine.Core.Settings;
 using Dopamine.Services.Appearance;
 using Dopamine.Services.I18n;
 using Dopamine.Services.Lifetime;
@@ -140,7 +141,14 @@ namespace Dopamine.Views
             Storyboard closingAnimation = this.ClosingBorder.Resources["ClosingAnimation"] as Storyboard;
 
             this.ClosingBorder.Visibility = Visibility.Visible;
-            closingAnimation.Begin();
+
+            if (!UiAnimationSettings.AreAnimationsEnabled)
+            {
+                this.ClosingBorder.Opacity = 1.0;
+                return;
+            }
+
+            UiAnimationSettings.BeginStoryboard(closingAnimation);
         }
 
         private void ShowWindowInForeground()

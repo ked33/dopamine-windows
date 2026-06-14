@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dopamine.Core.Settings;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
@@ -26,11 +27,17 @@ namespace Dopamine.Controls
 
         private void DoAnimation()
         {
+            if (!UiAnimationSettings.AreAnimationsEnabled)
+            {
+                this.Margin = new Thickness(0, 0, 0, 0);
+                return;
+            }
+
             var ta = new ThicknessAnimation();
             ta.From = new Thickness(this.ActualWidth / 2, this.ActualHeight / 2, this.ActualWidth / 2, this.ActualHeight / 2);
             ta.To = new Thickness(0, 0, 0, 0);
             ta.Duration = new Duration(TimeSpan.FromSeconds(this.Duration));
-            this.BeginAnimation(MarginProperty, ta);
+            UiAnimationSettings.BeginAnimationOrSet(this, MarginProperty, ta, new Thickness(0, 0, 0, 0));
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using CommonServiceLocator;
+using Dopamine.Core.Settings;
 using Digimezzo.Foundation.Core.Settings;
 using Dopamine.Core.Enums;
 using Dopamine.Core.Helpers;
@@ -32,7 +33,8 @@ namespace Dopamine.Views.Common
 
             SettingsClient.SettingChanged += (_, e) =>
             {
-                if (SettingsClient.IsSettingChanged(e, "Playback", "ShowSpectrumAnalyzer"))
+                if (SettingsClient.IsSettingChanged(e, "Playback", "ShowSpectrumAnalyzer") ||
+                    SettingsClient.IsSettingChanged(e, "Appearance", "EnableAnimations"))
                 {
                     this.TryRegisterSpectrumPlayers();
                 }
@@ -53,6 +55,12 @@ namespace Dopamine.Views.Common
             if (!SettingsClient.Get<bool>("Playback", "ShowSpectrumAnalyzer"))
             {
                 // The settings don't allow showing the spectrum analyzer
+                return;
+            }
+
+            if (!UiAnimationSettings.AreAnimationsEnabled)
+            {
+                // The animation settings don't allow showing animated spectrum visuals
                 return;
             }
 

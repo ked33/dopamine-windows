@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">Prikaži obaveštenje samo kada plejer nije vidljiv</Text>
   <Text Key="Transparency">Prozirnost</Text>
   <Text Key="Enable_Transparency">Učini neke elemente prozirnim</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">Zatvori u oblast sa obaveštenjima</Text>
   <Text Key="Edit">Izmeni</Text>
   <Text Key="Edit_Song">Izmeni numeru</Text>

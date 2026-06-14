@@ -1,5 +1,6 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:animation="clr-namespace:Dopamine.Core.Settings;assembly=Dopamine.Core"
     xmlns:controls="clr-namespace:Dopamine.Controls">
 
     <ResourceDictionary.MergedDictionaries>
@@ -30,21 +31,5 @@
                     CenterY="{Binding Middle,RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type controls:SyncRing}}}" />
             </Setter.Value>
         </Setter>
-        <Style.Triggers>
-            <Trigger Property="IsEnabled" Value="True">
-                <Trigger.EnterActions>
-                    <BeginStoryboard>
-                        <Storyboard>
-                            <DoubleAnimation 
-                                Storyboard.TargetProperty="RenderTransform.Angle"
-                                From="0" 
-                                To="360" 
-                                Duration="0:0:1" 
-                                RepeatBehavior="Forever" />
-                        </Storyboard>
-                    </BeginStoryboard>
-                </Trigger.EnterActions>
-            </Trigger>
-        </Style.Triggers>
     </Style>
 </ResourceDictionary>

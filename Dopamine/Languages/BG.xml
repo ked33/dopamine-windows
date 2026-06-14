@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">Покажи уведомлението само когато плеъра не се вижда</Text>
   <Text Key="Transparency">Прозрачност</Text>
   <Text Key="Enable_Transparency">Направи някои елементи прозрачни</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">Затвори в зоната на известията</Text>
   <Text Key="Edit">Редакция</Text>
   <Text Key="Edit_Song">Редактиране на песен</Text>

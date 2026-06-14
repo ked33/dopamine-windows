@@ -2,7 +2,7 @@
 <Settings>
   <Namespace Name="Configuration">
     <Setting Name="Version">
-      <Value>119</Value>
+      <Value>120</Value>
     </Setting>
     <Setting Name="IsPortable">
       <Value>False</Value>
@@ -87,6 +87,9 @@
       <Value>EN</Value>
     </Setting>
     <Setting Name="EnableTransparency">
+      <Value>True</Value>
+    </Setting>
+    <Setting Name="EnableAnimations">
       <Value>True</Value>
     </Setting>
   </Namespace>

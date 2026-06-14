@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">فقط زمانی که پخش کننده قابل مشاهده نیست، اعلان را نشان دهید</Text>
   <Text Key="Transparency">شفافیت</Text>
   <Text Key="Enable_Transparency">تغییر شفافیت برنامه</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">مخفی کردن اعلان ها</Text>
   <Text Key="Edit">ویرایش</Text>
   <Text Key="Edit_Song">ویرایش موزیک</Text>

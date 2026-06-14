@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">Показувати сповіщення тільки яко плеєр сховано</Text>
   <Text Key="Transparency">Прозорість</Text>
   <Text Key="Enable_Transparency">Зробити деякі елементи прозорими</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">При натисканні кнопки 'закрити' ховати у рядок сповіщень</Text>
   <Text Key="Edit">Редагувати</Text>
   <Text Key="Edit_Song">Редагувати трек</Text>

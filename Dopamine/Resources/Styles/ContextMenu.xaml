@@ -1,5 +1,6 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:animation="clr-namespace:Dopamine.Core.Settings;assembly=Dopamine.Core"
     xmlns:controls="clr-namespace:Dopamine.Controls">
 
     <ResourceDictionary.MergedDictionaries>
@@ -167,7 +168,7 @@
                        IsOpen="{TemplateBinding IsSubmenuOpen}"
                        AllowsTransparency="True"
                        Focusable="False"
-                       PopupAnimation="Fade">
+                       PopupAnimation="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=FadePopupAnimation}">
                     <Border Name="SubmenuBorder"
                             Margin="10"
                             Background="{DynamicResource Brush_ContextMenuBackground}">

@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">Dema ku lêder neyê dîtin tenê agahî nîşan bide</Text>
   <Text Key="Transparency">Zelalî</Text>
   <Text Key="Enable_Transparency">Zelaliyê çalak bike</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">Nêzîkî devera agahiyê</Text>
   <Text Key="Edit">Rast bike</Text>
   <Text Key="Edit_Song">Stranê rast bike</Text>

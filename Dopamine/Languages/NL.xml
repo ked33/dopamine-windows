@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">Toon de popup enkel als de speler niet zichtbaar is</Text>
   <Text Key="Transparency">Doorzichtigheid</Text>
   <Text Key="Enable_Transparency">Maak bepaalde elementen doorzichtig</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">Sluiten naar systeemvak</Text>
   <Text Key="Edit">Aanpassen</Text>
   <Text Key="Edit_Song">Nummer aanpassen</Text>

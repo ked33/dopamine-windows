@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">Mostrar notificació únicament quan el reproductor no estigui visible</Text>
   <Text Key="Transparency">Transparència</Text>
   <Text Key="Enable_Transparency">Mostrar alguns elements transparents</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">Mantenir minimitzat en l'àrea de notificació en tancar</Text>
   <Text Key="Edit">Editar</Text>
   <Text Key="Edit_Song">Editar cançó</Text>

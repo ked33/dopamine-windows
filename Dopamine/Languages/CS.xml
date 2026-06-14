@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">Zobrazit oznámení pouze pokud je přehrávač schovaný</Text>
   <Text Key="Transparency">Průhlednost</Text>
   <Text Key="Enable_Transparency">Zprůhlednit některé části</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">Poblíž oznamovací oblasti</Text>
   <Text Key="Edit">Upravit</Text>
   <Text Key="Edit_Song">Upravit skladbu</Text>

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dopamine.Core.Settings;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -68,6 +69,13 @@ namespace Dopamine.Controls
 
         private void BeginAnimateContentReplacement()
         {
+            if (!UiAnimationSettings.AreAnimationsEnabled)
+            {
+                PART_PaintArea.Opacity = 0.0;
+                PART_MainContent.Opacity = 1.0;
+                return;
+            }
+
             PART_PaintArea.Opacity = 1.0;
 
             var fadeOutAnimation = new DoubleAnimation
@@ -86,8 +94,8 @@ namespace Dopamine.Controls
                 AutoReverse = false
             };
 
-            PART_PaintArea.BeginAnimation(OpacityProperty, fadeOutAnimation);
-            PART_MainContent.BeginAnimation(OpacityProperty, fadeInAnimation);
+            UiAnimationSettings.BeginAnimationOrSet(PART_PaintArea, OpacityProperty, fadeOutAnimation, 0.0);
+            UiAnimationSettings.BeginAnimationOrSet(PART_MainContent, OpacityProperty, fadeInAnimation, 1.0);
         }
     }
 }

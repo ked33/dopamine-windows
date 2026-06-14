@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">當播放器處於隱藏狀態時才顯示通知</Text>
   <Text Key="Transparency">透明度</Text>
   <Text Key="Enable_Transparency">讓部分元素透明</Text>
+  <Text Key="Animation">動畫</Text>
+  <Text Key="Enable_Visual_Animations">啟用介面視覺動畫</Text>
   <Text Key="Close_To_Tray">關閉時隱藏到通知區域</Text>
   <Text Key="Edit">編輯</Text>
   <Text Key="Edit_Song">編輯音樂</Text>

@@ -3,6 +3,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:animation="clr-namespace:Dopamine.Core.Settings;assembly=Dopamine.Core"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:prism="http://www.codeplex.com/prism"
              xmlns:dc="clr-namespace:Digimezzo.Foundation.WPF.Controls;assembly=Digimezzo.Foundation.WPF"
@@ -56,22 +57,22 @@
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding Path=CanShowControls,ElementName=This}" Value="True">
                                 <DataTrigger.EnterActions>
-                                    <BeginStoryboard>
+                                    <animation:ConditionalBeginStoryboard>
                                         <Storyboard>
                                             <DoubleAnimationUsingKeyFrames BeginTime="0:0:0" Storyboard.TargetProperty="Opacity">
                                                 <SplineDoubleKeyFrame KeyTime="0:0:0.3" Value="1"/>
                                             </DoubleAnimationUsingKeyFrames>
                                         </Storyboard>
-                                    </BeginStoryboard>
+                                    </animation:ConditionalBeginStoryboard>
                                 </DataTrigger.EnterActions>
                                 <DataTrigger.ExitActions>
-                                    <BeginStoryboard>
+                                    <animation:ConditionalBeginStoryboard>
                                         <Storyboard>
                                             <DoubleAnimationUsingKeyFrames BeginTime="0:0:0.5" Storyboard.TargetProperty="Opacity">
                                                 <SplineDoubleKeyFrame KeyTime="0:0:0.3" Value="0"/>
                                             </DoubleAnimationUsingKeyFrames>
                                         </Storyboard>
-                                    </BeginStoryboard>
+                                    </animation:ConditionalBeginStoryboard>
                                 </DataTrigger.ExitActions>
                             </DataTrigger>
                         </Style.Triggers>
@@ -88,22 +89,22 @@
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Path=CanShowControls,ElementName=This}" Value="True">
                                     <DataTrigger.EnterActions>
-                                        <BeginStoryboard>
+                                        <animation:ConditionalBeginStoryboard>
                                             <Storyboard>
                                                 <DoubleAnimationUsingKeyFrames BeginTime="0:0:0" Storyboard.TargetProperty="Opacity">
                                                     <SplineDoubleKeyFrame KeyTime="0:0:0.3" Value="1"/>
                                                 </DoubleAnimationUsingKeyFrames>
                                             </Storyboard>
-                                        </BeginStoryboard>
+                                        </animation:ConditionalBeginStoryboard>
                                     </DataTrigger.EnterActions>
                                     <DataTrigger.ExitActions>
-                                        <BeginStoryboard>
+                                        <animation:ConditionalBeginStoryboard>
                                             <Storyboard>
                                                 <DoubleAnimationUsingKeyFrames BeginTime="0:0:0.5" Storyboard.TargetProperty="Opacity">
                                                     <SplineDoubleKeyFrame KeyTime="0:0:0.3" Value="0"/>
                                                 </DoubleAnimationUsingKeyFrames>
                                             </Storyboard>
-                                        </BeginStoryboard>
+                                        </animation:ConditionalBeginStoryboard>
                                     </DataTrigger.ExitActions>
                                 </DataTrigger>
                             </Style.Triggers>
@@ -119,22 +120,22 @@
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Path=CanShowControls,ElementName=This}" Value="True">
                                         <DataTrigger.EnterActions>
-                                            <BeginStoryboard>
+                                            <animation:ConditionalBeginStoryboard>
                                                 <Storyboard>
                                                     <DoubleAnimationUsingKeyFrames BeginTime="0:0:0" Storyboard.TargetProperty="Opacity">
                                                         <SplineDoubleKeyFrame KeyTime="0:0:0.3" Value="1"/>
                                                     </DoubleAnimationUsingKeyFrames>
                                                 </Storyboard>
-                                            </BeginStoryboard>
+                                            </animation:ConditionalBeginStoryboard>
                                         </DataTrigger.EnterActions>
                                         <DataTrigger.ExitActions>
-                                            <BeginStoryboard>
+                                            <animation:ConditionalBeginStoryboard>
                                                 <Storyboard>
                                                     <DoubleAnimationUsingKeyFrames BeginTime="0:0:0.75" Storyboard.TargetProperty="Opacity">
                                                         <SplineDoubleKeyFrame KeyTime="0:0:0.3" Value="0"/>
                                                     </DoubleAnimationUsingKeyFrames>
                                                 </Storyboard>
-                                            </BeginStoryboard>
+                                            </animation:ConditionalBeginStoryboard>
                                         </DataTrigger.ExitActions>
                                     </DataTrigger>
                                 </Style.Triggers>

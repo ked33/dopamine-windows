@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">Hanya tampilkan notifikasi saat pemutar disembunyikan</Text>
   <Text Key="Transparency">Transparansi</Text>
   <Text Key="Enable_Transparency">Buat beberapa elemen transparan</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">Tutup ke arena notifikasi</Text>
   <Text Key="Edit">Sunting</Text>
   <Text Key="Edit_Song">Sunting lagu</Text>

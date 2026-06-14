@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">플레이어가 보이지 않을 때만 알림 보이기</Text>
   <Text Key="Transparency">투명도</Text>
   <Text Key="Enable_Transparency">일부 요소 투명하게 만들기</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">알림 영역으로 닫기</Text>
   <Text Key="Edit">편집</Text>
   <Text Key="Edit_Song">노래 편집</Text>

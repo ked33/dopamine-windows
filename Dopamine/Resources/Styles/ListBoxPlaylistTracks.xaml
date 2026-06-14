@@ -1,5 +1,6 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:animation="clr-namespace:Dopamine.Core.Settings;assembly=Dopamine.Core"
                     xmlns:converters="clr-namespace:Dopamine.Converters"
                     xmlns:base="clr-namespace:Dopamine.Core.Base;assembly=Dopamine.Core"
                     xmlns:pc="clr-namespace:Dopamine.Controls">
@@ -129,18 +130,18 @@
                             <Setter Property="Background" Value="{DynamicResource Brush_ItemSelected}"/>
                         </Trigger>
                         <EventTrigger RoutedEvent="MouseEnter">
-                            <BeginStoryboard>
+                            <animation:ConditionalBeginStoryboard>
                                 <Storyboard Storyboard.TargetName="MouseHoverHelper" TargetProperty="Opacity">
                                     <DoubleAnimation To="1" Duration="{x:Static base:Constants.MouseEnterDuration}"/>
                                 </Storyboard>
-                            </BeginStoryboard>
+                            </animation:ConditionalBeginStoryboard>
                         </EventTrigger>
                         <EventTrigger RoutedEvent="MouseLeave">
-                            <BeginStoryboard>
+                            <animation:ConditionalBeginStoryboard>
                                 <Storyboard Storyboard.TargetName="MouseHoverHelper" TargetProperty="Opacity">
                                     <DoubleAnimation To="0" Duration="{x:Static base:Constants.MouseLeaveDuration}"/>
                                 </Storyboard>
-                            </BeginStoryboard>
+                            </animation:ConditionalBeginStoryboard>
                         </EventTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

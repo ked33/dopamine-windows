@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">Prikaži obavijest samo kada svirač nije vidljiv</Text>
   <Text Key="Transparency">Prozirnost</Text>
   <Text Key="Enable_Transparency">Neka neki elementi budu prozirni</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">Zatvori u područje obavijesti</Text>
   <Text Key="Edit">Uredi</Text>
   <Text Key="Edit_Song">Uredi pjesmu</Text>

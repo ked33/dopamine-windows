@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">Εμφάνιση ειδοποίησης μόνο όταν το player δεν είναι ορατό</Text>
   <Text Key="Transparency">Διαφάνεια</Text>
   <Text Key="Enable_Transparency">Ενεργοποιεί τη διαφάνεια κάποιων στοιχείων</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">Σμίκρυνση στην περιοχή ειδοποιήσεων</Text>
   <Text Key="Edit">Επεξεργασία</Text>
   <Text Key="Edit_Song">Επεξεργασία τραγουδιού</Text>

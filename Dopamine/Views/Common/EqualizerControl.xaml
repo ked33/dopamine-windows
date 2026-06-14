@@ -1,6 +1,7 @@
 ﻿<UserControl x:Class="Dopamine.Views.Common.EqualizerControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:animation="clr-namespace:Dopamine.Core.Settings;assembly=Dopamine.Core"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
@@ -29,10 +30,10 @@
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding IsEqualizerEnabled}" Value="False">
                             <DataTrigger.EnterActions>
-                                <BeginStoryboard Storyboard="{StaticResource FadeOut}" />
+                                <animation:ConditionalBeginStoryboard Storyboard="{StaticResource FadeOut}" />
                             </DataTrigger.EnterActions>
                             <DataTrigger.ExitActions>
-                                <BeginStoryboard Storyboard="{StaticResource FadeIn}" />
+                                <animation:ConditionalBeginStoryboard Storyboard="{StaticResource FadeIn}" />
                             </DataTrigger.ExitActions>
                         </DataTrigger>
                     </Style.Triggers>

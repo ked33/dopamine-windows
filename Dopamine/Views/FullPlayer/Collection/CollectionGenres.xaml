@@ -1,6 +1,7 @@
 ﻿<baseviews:TracksViewBase x:Class="Dopamine.Views.FullPlayer.Collection.CollectionGenres"
                           xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                           xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:animation="clr-namespace:Dopamine.Core.Settings;assembly=Dopamine.Core"
                           xmlns:dc="clr-namespace:Digimezzo.Foundation.WPF.Controls;assembly=Digimezzo.Foundation.WPF"
                           xmlns:pc="clr-namespace:Dopamine.Controls"
                           xmlns:baseviews="clr-namespace:Dopamine.Views.Common.Base"
@@ -96,10 +97,10 @@
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsGenresZoomVisible}" Value="True">
                                                 <DataTrigger.EnterActions>
-                                                    <BeginStoryboard Storyboard ="{StaticResource ShowSemanticZoom}"/>
+                                                    <animation:ConditionalBeginStoryboard Storyboard ="{StaticResource ShowSemanticZoom}"/>
                                                 </DataTrigger.EnterActions>
                                                 <DataTrigger.ExitActions>
-                                                    <BeginStoryboard Storyboard ="{StaticResource HideSemanticZoom}"/>
+                                                    <animation:ConditionalBeginStoryboard Storyboard ="{StaticResource HideSemanticZoom}"/>
                                                 </DataTrigger.ExitActions>
                                             </DataTrigger>
                                         </Style.Triggers>

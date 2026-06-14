@@ -155,6 +155,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="Settings\PlaybackFadeSettings.cs" />
+    <Compile Include="Settings\UiAnimationSettings.cs" />
     <Compile Include="Utils\ArrayUtils.cs" />
     <Compile Include="Utils\ColorUtils.cs" />
     <Compile Include="Utils\FormatUtils.cs" />

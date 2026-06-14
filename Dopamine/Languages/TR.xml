@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">Oynatıcı gizli olduğunda sadece bildirim göster</Text>
   <Text Key="Transparency">Saydamlık</Text>
   <Text Key="Enable_Transparency">Bazı öğeleri saydamlaştır</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">Bildirim alanına küçült</Text>
   <Text Key="Edit">Düzenle</Text>
   <Text Key="Edit_Song">Şarkıyı düzenle</Text>

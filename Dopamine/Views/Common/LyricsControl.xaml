@@ -2,6 +2,7 @@
   x:Class="Dopamine.Views.Common.LyricsControl"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:animation="clr-namespace:Dopamine.Core.Settings;assembly=Dopamine.Core"
   xmlns:commonviewmodels="clr-namespace:Dopamine.ViewModels.Common"
   xmlns:commonviews="clr-namespace:Dopamine.Views.Common"
   xmlns:cp="clr-namespace:Dopamine.Core.Prism;assembly=Dopamine.Core"
@@ -232,7 +233,7 @@
                                             </CompositeCollection>
                                         </MenuItem.ItemsSource>
                                     </MenuItem>
-                                    <Popup IsOpen="{TemplateBinding IsSubmenuOpen}" Placement="Right" AllowsTransparency="True" PopupAnimation="Fade">
+                                    <Popup IsOpen="{TemplateBinding IsSubmenuOpen}" Placement="Right" AllowsTransparency="True" PopupAnimation="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=FadePopupAnimation}">
                                         <Border BorderBrush="Transparent" BorderThickness="8,10,5,10" Background="White">
                                             <Border.Effect>
                                                 <DropShadowEffect BlurRadius="8" Opacity="0.6" ShadowDepth="0" />

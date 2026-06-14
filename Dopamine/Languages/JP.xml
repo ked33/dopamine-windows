@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">プレイヤーが表示されていない時のみ通知</Text>
   <Text Key="Transparency">透明化</Text>
   <Text Key="Enable_Transparency">いくつかの要素を透明化</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">ウィンドウを閉じた時にタスクトレイに表示</Text>
   <Text Key="Edit">編集</Text>
   <Text Key="Edit_Song">曲の編集</Text>

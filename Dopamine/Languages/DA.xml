@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">Vis kun beskedvinduet når afspilleren ikke er synlig</Text>
   <Text Key="Transparency">Gennemsigtighed</Text>
   <Text Key="Enable_Transparency">Gør nogle elementer gennemsigtige</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">Luk til meddelelsesområdet</Text>
   <Text Key="Edit">Rediger</Text>
   <Text Key="Edit_Song">Rediger sang</Text>

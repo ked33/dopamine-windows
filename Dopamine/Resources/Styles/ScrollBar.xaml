@@ -1,5 +1,6 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:animation="clr-namespace:Dopamine.Core.Settings;assembly=Dopamine.Core"
     xmlns:sys="clr-namespace:System;assembly=mscorlib"
     xmlns:base="clr-namespace:Dopamine.Core.Base;assembly=Dopamine.Core">
 
@@ -74,18 +75,18 @@
                             <Setter TargetName="Border" Property="Opacity" Value="1.0" />
                         </Trigger>-->
                         <EventTrigger RoutedEvent="UIElement.MouseEnter">
-                            <BeginStoryboard>
+                            <animation:ConditionalBeginStoryboard>
                                 <Storyboard>
                                     <DoubleAnimation Duration="0:0:0.15" To="0.7" Storyboard.TargetProperty="Opacity" />
                                 </Storyboard>
-                            </BeginStoryboard>
+                            </animation:ConditionalBeginStoryboard>
                         </EventTrigger>
                         <EventTrigger RoutedEvent="UIElement.MouseLeave">
-                            <BeginStoryboard>
+                            <animation:ConditionalBeginStoryboard>
                                 <Storyboard>
                                     <DoubleAnimation Duration="0:0:0.15" To="1" Storyboard.TargetProperty="Opacity" />
                                 </Storyboard>
-                            </BeginStoryboard>
+                            </animation:ConditionalBeginStoryboard>
                         </EventTrigger>
                         <Trigger Property="IsDragging" Value="true">
                             <Setter TargetName="Border" Property="Opacity" Value="0.7" />
@@ -250,20 +251,20 @@
                     </Grid>
                     <ControlTemplate.Triggers>
                         <EventTrigger RoutedEvent="UIElement.MouseEnter">
-                            <BeginStoryboard>
+                            <animation:ConditionalBeginStoryboard>
                                 <Storyboard>
                                     <DoubleAnimation Duration="{x:Static base:Constants.MouseEnterDuration}" Storyboard.TargetName="PART_VerticalScrollBar" To="1" Storyboard.TargetProperty="Opacity" />
                                     <DoubleAnimation Duration="{x:Static base:Constants.MouseEnterDuration}" Storyboard.TargetName="PART_HorizontalScrollBar" To="1" Storyboard.TargetProperty="Opacity" />
                                 </Storyboard>
-                            </BeginStoryboard>
+                            </animation:ConditionalBeginStoryboard>
                         </EventTrigger>
                         <EventTrigger RoutedEvent="UIElement.MouseLeave">
-                            <BeginStoryboard>
+                            <animation:ConditionalBeginStoryboard>
                                 <Storyboard>
                                     <DoubleAnimation Duration="{x:Static base:Constants.MouseLeaveDuration}" Storyboard.TargetName="PART_VerticalScrollBar" To="0" Storyboard.TargetProperty="Opacity" />
                                     <DoubleAnimation Duration="{x:Static base:Constants.MouseLeaveDuration}" Storyboard.TargetName="PART_HorizontalScrollBar" To="0" Storyboard.TargetProperty="Opacity" />
                                 </Storyboard>
-                            </BeginStoryboard>
+                            </animation:ConditionalBeginStoryboard>
                         </EventTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -297,20 +298,20 @@
         </Grid>
         <ControlTemplate.Triggers>
             <EventTrigger RoutedEvent="UIElement.MouseEnter">
-                <BeginStoryboard>
+                <animation:ConditionalBeginStoryboard>
                     <Storyboard>
                         <DoubleAnimation Duration="0:0:0.15" Storyboard.TargetName="PART_VerticalScrollBar" To="1" Storyboard.TargetProperty="Opacity" />
                         <DoubleAnimation Duration="0:0:0.15" Storyboard.TargetName="PART_HorizontalScrollBar" To="1" Storyboard.TargetProperty="Opacity" />
                     </Storyboard>
-                </BeginStoryboard>
+                </animation:ConditionalBeginStoryboard>
             </EventTrigger>
             <EventTrigger RoutedEvent="UIElement.MouseLeave">
-                <BeginStoryboard>
+                <animation:ConditionalBeginStoryboard>
                     <Storyboard>
                         <DoubleAnimation Duration="0:0:0.15" Storyboard.TargetName="PART_VerticalScrollBar" To="0" Storyboard.TargetProperty="Opacity" />
                         <DoubleAnimation Duration="0:0:0.15" Storyboard.TargetName="PART_HorizontalScrollBar" To="0" Storyboard.TargetProperty="Opacity" />
                     </Storyboard>
-                </BeginStoryboard>
+                </animation:ConditionalBeginStoryboard>
             </EventTrigger>
         </ControlTemplate.Triggers>
     </ControlTemplate>

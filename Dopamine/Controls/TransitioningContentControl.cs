@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dopamine.Core.Settings;
+using System;
 using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
@@ -90,13 +91,30 @@ namespace Dopamine.Controls
 
         private void DoAnimation()
         {
+            if (!UiAnimationSettings.AreAnimationsEnabled)
+            {
+                if (this.FadeIn)
+                {
+                    this.Opacity = 1;
+                }
+
+                if (this.SlideIn)
+                {
+                    this.Margin = new Thickness(this.SlideInTo, this.Margin.Top, this.SlideInTo, this.Margin.Bottom);
+                }
+
+                this.StopTimer();
+                this.RaiseContentChangedEvent();
+                return;
+            }
+
             if (this.FadeInTimeout != null && this.FadeIn)
             {
                 var da = new DoubleAnimation();
                 da.From = 0;
                 da.To = 1;
                 da.Duration = new Duration(TimeSpan.FromSeconds(this.FadeInTimeout));
-                this.BeginAnimation(OpacityProperty, da);
+                UiAnimationSettings.BeginAnimationOrSet(this, OpacityProperty, da, 1.0);
             }
 
 
@@ -108,7 +126,7 @@ namespace Dopamine.Controls
                     ta.From = new Thickness(this.SlideInFrom, this.Margin.Top, 2 * this.SlideInTo - this.SlideInFrom, this.Margin.Bottom);
                     ta.To = new Thickness(this.SlideInTo, this.Margin.Top, this.SlideInTo, this.Margin.Bottom);
                     ta.Duration = new Duration(TimeSpan.FromSeconds(this.SlideInTimeout));
-                    this.BeginAnimation(MarginProperty, ta);
+                    UiAnimationSettings.BeginAnimationOrSet(this, MarginProperty, ta, new Thickness(this.SlideInTo, this.Margin.Top, this.SlideInTo, this.Margin.Bottom));
                 }
                 else
                 {
@@ -116,15 +134,11 @@ namespace Dopamine.Controls
                     ta.From = new Thickness(2 * this.SlideInTo - this.SlideInFrom, this.Margin.Top, this.SlideInFrom, this.Margin.Bottom);
                     ta.To = new Thickness(this.SlideInTo, this.Margin.Top, this.SlideInTo, this.Margin.Bottom);
                     ta.Duration = new Duration(TimeSpan.FromSeconds(this.SlideInTimeout));
-                    this.BeginAnimation(MarginProperty, ta);
+                    UiAnimationSettings.BeginAnimationOrSet(this, MarginProperty, ta, new Thickness(this.SlideInTo, this.Margin.Top, this.SlideInTo, this.Margin.Bottom));
                 }
             }
 
-            if (this.timer != null)
-            {
-                this.timer.Stop();
-                this.timer.Elapsed -= new ElapsedEventHandler(this.TimerElapsedHandler);
-            }
+            this.StopTimer();
 
             this.timer = new Timer();
 
@@ -152,6 +166,15 @@ namespace Dopamine.Controls
             }
             catch (Exception)
             {
+            }
+        }
+
+        private void StopTimer()
+        {
+            if (this.timer != null)
+            {
+                this.timer.Stop();
+                this.timer.Elapsed -= new ElapsedEventHandler(this.TimerElapsedHandler);
             }
         }
     }

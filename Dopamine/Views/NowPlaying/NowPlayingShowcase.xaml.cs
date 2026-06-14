@@ -1,4 +1,5 @@
-﻿using System.Windows.Controls;
+﻿using Dopamine.Core.Settings;
+using System.Windows.Controls;
 using System.Windows.Media.Animation;
 
 namespace Dopamine.Views.NowPlaying
@@ -35,7 +36,7 @@ namespace Dopamine.Views.NowPlaying
 
             if (resizeCoverArtStoryboard != null)
             {
-                resizeCoverArtStoryboard.Begin();
+                UiAnimationSettings.BeginStoryboard(resizeCoverArtStoryboard);
             }
         }
 

@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">Vis meldingen bare når spilleren ikke er synlig</Text>
   <Text Key="Transparency">gjennomsiktig</Text>
   <Text Key="Enable_Transparency">Gjør noen elementer gjennomsiktig</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">Nær systemstatusfeltet</Text>
   <Text Key="Edit">Redigere</Text>
   <Text Key="Edit_Song">Rediger sang</Text>

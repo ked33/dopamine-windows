@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">Chỉ hiển thị thông báo khi trình phát không thấy được</Text>
   <Text Key="Transparency">Độ trong suốt</Text>
   <Text Key="Enable_Transparency">Làm cho một số thành phần trong suốt</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">Nhấn nút đóng sẽ thu nhỏ xuống khay hệ thống</Text>
   <Text Key="Edit">Chỉnh sửa</Text>
   <Text Key="Edit_Song">Chỉnh sửa bài hát</Text>

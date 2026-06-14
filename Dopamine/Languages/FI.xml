@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">Näytä ilmoituksia vain kun soitin ei ole näkyvissä</Text>
   <Text Key="Transparency">Läpikuultavuus</Text>
   <Text Key="Enable_Transparency">Salli joidenkin käyttöliittymän osioiden olla läpikuultavia</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">Sulje ilmoitusalueelle</Text>
   <Text Key="Edit">Muokkaa</Text>
   <Text Key="Edit_Song">Muokkaa kappaletta</Text>

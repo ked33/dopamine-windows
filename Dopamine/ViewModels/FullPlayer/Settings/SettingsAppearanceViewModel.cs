@@ -17,6 +17,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
         private IPlaybackService playbackService;
         private bool checkBoxCheckBoxShowWindowBorderChecked;
         private bool checkBoxEnableTransparencyChecked;
+        private bool checkBoxEnableAnimationsChecked;
         private IEventAggregator eventAggregator;
 
         public DelegateCommand<string> OpenColorSchemesDirectoryCommand { get; set; }
@@ -45,6 +46,16 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             }
         }
 
+        public bool CheckBoxEnableAnimationsChecked
+        {
+            get { return this.checkBoxEnableAnimationsChecked; }
+            set
+            {
+                SettingsClient.Set<bool>("Appearance", "EnableAnimations", value, true);
+                SetProperty<bool>(ref this.checkBoxEnableAnimationsChecked, value);
+            }
+        }
+
         public SettingsAppearanceViewModel(IPlaybackService playbackService, IEventAggregator eventAggregator)
         {
             this.playbackService = playbackService;
@@ -69,11 +80,20 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
 
         public async void GetCheckBoxesAsync()
         {
+            bool showWindowBorder = false;
+            bool enableTransparency = false;
+            bool enableAnimations = true;
+
             await Task.Run(() =>
             {
-                this.checkBoxCheckBoxShowWindowBorderChecked = SettingsClient.Get<bool>("Appearance", "ShowWindowBorder");
-                this.checkBoxEnableTransparencyChecked = SettingsClient.Get<bool>("Appearance", "EnableTransparency");
+                showWindowBorder = SettingsClient.Get<bool>("Appearance", "ShowWindowBorder");
+                enableTransparency = SettingsClient.Get<bool>("Appearance", "EnableTransparency");
+                enableAnimations = SettingsClient.Get<bool>("Appearance", "EnableAnimations");
             });
+
+            SetProperty<bool>(ref this.checkBoxCheckBoxShowWindowBorderChecked, showWindowBorder);
+            SetProperty<bool>(ref this.checkBoxEnableTransparencyChecked, enableTransparency);
+            SetProperty<bool>(ref this.checkBoxEnableAnimationsChecked, enableAnimations);
         }
     }
 }

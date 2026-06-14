@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">Show the notification only when the player is not visible</Text>
   <Text Key="Transparency">Transparency</Text>
   <Text Key="Enable_Transparency">Make some elements transparent</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">Close to the notification area</Text>
   <Text Key="Edit">Edit</Text>
   <Text Key="Edit_Song">Edit song</Text>

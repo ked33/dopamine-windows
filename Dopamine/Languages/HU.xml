@@ -212,6 +212,8 @@
   <Text Key="Show_Notification_Only_When_Player_Not_Visible">Az értesítések csak akkor jelenjenek meg, ha a lejátszó nem látható</Text>
   <Text Key="Transparency">Átlátszóság</Text>
   <Text Key="Enable_Transparency">Egyes elemek átlátszóvá válnak</Text>
+  <Text Key="Animation">Animation</Text>
+  <Text Key="Enable_Visual_Animations">Enable visual animations</Text>
   <Text Key="Close_To_Tray">A Dopamine értesítési területre helyezése bezáráskor</Text>
   <Text Key="Edit">Szerkesztés</Text>
   <Text Key="Edit_Song">Zeneszám szerkesztése</Text>
