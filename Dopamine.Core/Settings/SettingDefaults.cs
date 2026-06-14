@@ -27,22 +27,23 @@ namespace Dopamine.Core.Settings
                 return runtimeValue;
             }
 
+            T xmlValue;
+
+            if (TryReadSettingFromSettingsXml(settingsNamespace, settingName, out xmlValue))
+            {
+                SetRuntimeValue(key, xmlValue, false);
+                return xmlValue;
+            }
+
             try
             {
                 T persistedValue = SettingsClient.Get<T>(settingsNamespace, settingName);
                 SetRuntimeValue(key, persistedValue, false);
+                TryWriteSetting(settingsNamespace, settingName, persistedValue, requiresRestart, true);
                 return persistedValue;
             }
             catch (Exception)
             {
-                T xmlValue;
-
-                if (TryReadSettingFromSettingsXml(settingsNamespace, settingName, out xmlValue))
-                {
-                    SetRuntimeValue(key, xmlValue, false);
-                    return xmlValue;
-                }
-
                 if (TryGetRuntimeValue(key, false, out runtimeValue))
                 {
                     return runtimeValue;
@@ -58,16 +59,7 @@ namespace Dopamine.Core.Settings
         {
             string key = GetKey(settingsNamespace, settingName);
             SetRuntimeValue(key, value, true);
-
-            try
-            {
-                SettingsClient.Set<T>(settingsNamespace, settingName, value, requiresRestart);
-                return;
-            }
-            catch (Exception)
-            {
-                TryWriteSetting(settingsNamespace, settingName, value, requiresRestart, false);
-            }
+            TryWriteSetting(settingsNamespace, settingName, value, requiresRestart, false);
         }
 
         private static void TryWriteSetting<T>(string settingsNamespace, string settingName, T value, bool requiresRestart, bool skipWhenAlreadyAttempted)
@@ -91,7 +83,10 @@ namespace Dopamine.Core.Settings
             {
                 SettingsClient.Set<T>(settingsNamespace, settingName, value, requiresRestart);
                 TryWriteSettingsClient();
-                return;
+                if (SettingValueMatchesSettingsXml(settingsNamespace, settingName, value))
+                {
+                    return;
+                }
             }
             catch (Exception)
             {
@@ -104,6 +99,18 @@ namespace Dopamine.Core.Settings
             catch (Exception)
             {
             }
+        }
+
+        private static bool SettingValueMatchesSettingsXml<T>(string settingsNamespace, string settingName, T value)
+        {
+            T xmlValue;
+
+            if (!TryReadSettingFromSettingsXml(settingsNamespace, settingName, out xmlValue))
+            {
+                return false;
+            }
+
+            return EqualityComparer<T>.Default.Equals(xmlValue, value);
         }
 
         private static bool TryReadSettingFromSettingsXml<T>(string settingsNamespace, string settingName, out T value)
