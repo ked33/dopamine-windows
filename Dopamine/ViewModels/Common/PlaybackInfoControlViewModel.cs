@@ -6,6 +6,7 @@ using Dopamine.Services.Entities;
 using Dopamine.Services.Metadata;
 using Dopamine.Services.Playback;
 using Dopamine.Services.Scrobbling;
+using Dopamine.Services.Shell;
 using Prism.Mvvm;
 using System;
 using System.Threading.Tasks;
@@ -19,6 +20,7 @@ namespace Dopamine.ViewModels.Common
         private IPlaybackService playbackService;
         private IMetadataService metadataService;
         private IScrobblingService scrobblingService;
+        private IAppVisibilityService appVisibilityService;
         private SlideDirection slideDirection;
         private TrackViewModel previousTrack;
         private TrackViewModel track;
@@ -91,24 +93,52 @@ namespace Dopamine.ViewModels.Common
             set { SetProperty<bool>(ref this.enableLove, value); }
         }
 
-        public PlaybackInfoControlViewModel(IPlaybackService playbackService, IMetadataService metadataService, IScrobblingService scrobblingService)
+        public PlaybackInfoControlViewModel(IPlaybackService playbackService, IMetadataService metadataService, IScrobblingService scrobblingService,
+            IAppVisibilityService appVisibilityService)
         {
             this.playbackService = playbackService;
             this.metadataService = metadataService;
             this.scrobblingService = scrobblingService;
+            this.appVisibilityService = appVisibilityService;
 
             this.refreshTimer.Interval = this.refreshTimerIntervalMilliseconds;
             this.refreshTimer.Elapsed += RefreshTimer_Elapsed;
 
             this.playbackService.PlaybackSuccess += (_, e) =>
             {
+                if (!this.CanRefreshUi)
+                {
+                    return;
+                }
+
                 this.SlideDirection = e.IsPlayingPreviousTrack ? SlideDirection.UpToDown : SlideDirection.DownToUp;
                 this.refreshTimer.Stop();
                 this.refreshTimer.Start();
             };
 
-            this.playbackService.PlaybackProgressChanged += (_, __) => this.UpdateTime();
-            this.playbackService.PlayingTrackChanged += (_, __) => this.RefreshPlaybackInfoAsync(this.playbackService.CurrentTrack, true);
+            this.playbackService.PlaybackProgressChanged += (_, __) =>
+            {
+                if (this.CanRefreshUi)
+                {
+                    this.UpdateTime();
+                }
+            };
+
+            this.playbackService.PlayingTrackChanged += (_, __) =>
+            {
+                if (this.CanRefreshUi)
+                {
+                    this.RefreshPlaybackInfoAsync(this.playbackService.CurrentTrack, true);
+                }
+            };
+
+            this.appVisibilityService.VisibilityChanged += (_, __) =>
+            {
+                if (this.CanRefreshUi)
+                {
+                    this.RefreshPlaybackInfoAsync(this.playbackService.CurrentTrack, true);
+                }
+            };
 
             this.metadataService.RatingChanged += (e) =>
             {
@@ -145,6 +175,7 @@ namespace Dopamine.ViewModels.Common
 
             // Defaults
             this.SlideDirection = SlideDirection.DownToUp;
+            this.ClearPlaybackInfo();
             this.RefreshPlaybackInfoAsync(this.playbackService.CurrentTrack, false);
             this.EnableRating = SettingsClient.Get<bool>("Behaviour", "EnableRating");
             this.EnableLove = SettingsClient.Get<bool>("Behaviour", "EnableLove");
@@ -153,7 +184,18 @@ namespace Dopamine.ViewModels.Common
         private void RefreshTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             this.refreshTimer.Stop();
+
+            if (!this.CanRefreshUi)
+            {
+                return;
+            }
+
             this.RefreshPlaybackInfoAsync(this.playbackService.CurrentTrack, false);
+        }
+
+        private bool CanRefreshUi
+        {
+            get { return !this.appVisibilityService.IsBackgroundPlaybackMode; }
         }
 
         private void ClearPlaybackInfo()
@@ -173,6 +215,11 @@ namespace Dopamine.ViewModels.Common
 
         private async void RefreshPlaybackInfoAsync(TrackViewModel track, bool allowRefreshingCurrentTrack)
         {
+            if (!this.CanRefreshUi)
+            {
+                return;
+            }
+
             await Task.Run(() =>
             {
                 this.previousTrack = this.track;
@@ -216,6 +263,11 @@ namespace Dopamine.ViewModels.Common
 
         private void UpdateTime()
         {
+            if (!this.CanRefreshUi)
+            {
+                return;
+            }
+
             if(this.PlaybackInfoViewModel == null)
             {
                 return;

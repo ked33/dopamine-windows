@@ -1,6 +1,7 @@
 ﻿using Dopamine.Services.Metadata;
 using Dopamine.Services.Playback;
 using Dopamine.Services.Scrobbling;
+using Dopamine.Services.Shell;
 
 namespace Dopamine.ViewModels.Common
 {
@@ -9,10 +10,12 @@ namespace Dopamine.ViewModels.Common
         public PlaybackInfoControlNanoViewModel(
             IPlaybackService playbackService, 
             IMetadataService metadataService,
-            IScrobblingService scrobblingService) : base(
+            IScrobblingService scrobblingService,
+            IAppVisibilityService appVisibilityService) : base(
             playbackService, 
             metadataService,
-            scrobblingService
+            scrobblingService,
+            appVisibilityService
             )
         {
         }

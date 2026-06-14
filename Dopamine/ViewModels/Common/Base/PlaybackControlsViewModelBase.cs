@@ -3,6 +3,7 @@ using Dopamine.Core.Utils;
 using Dopamine.ViewModels;
 using Dopamine.Services.Dialog;
 using Dopamine.Services.Playback;
+using Dopamine.Services.Shell;
 using Dopamine.Views.Common;
 using Prism.Commands;
 using Prism.Ioc;
@@ -17,6 +18,7 @@ namespace Dopamine.ViewModels.Common.Base
 
         public IPlaybackService PlaybackService { get; }
         public IDialogService DialogService { get; }
+        public IAppVisibilityService AppVisibilityService { get; }
 
         public PlaybackInfoViewModel PlaybackInfoViewModel
         {
@@ -28,7 +30,21 @@ namespace Dopamine.ViewModels.Common.Base
         {
             this.PlaybackService = container.Resolve<IPlaybackService>();
             this.DialogService = container.Resolve<IDialogService>();
-            this.PlaybackService.PlaybackProgressChanged += (_, __) => this.UpdateTime();
+            this.AppVisibilityService = container.Resolve<IAppVisibilityService>();
+            this.PlaybackService.PlaybackProgressChanged += (_, __) =>
+            {
+                if (this.CanRefreshUi)
+                {
+                    this.UpdateTime();
+                }
+            };
+            this.AppVisibilityService.VisibilityChanged += (_, __) =>
+            {
+                if (this.CanRefreshUi)
+                {
+                    this.UpdateTime();
+                }
+            };
 
             this.ShowEqualizerCommand = new DelegateCommand(() =>
             {
@@ -56,8 +72,18 @@ namespace Dopamine.ViewModels.Common.Base
 
         protected void UpdateTime()
         {
+            if (!this.CanRefreshUi || this.PlaybackInfoViewModel == null)
+            {
+                return;
+            }
+
             this.PlaybackInfoViewModel.CurrentTime = FormatUtils.FormatTime(this.PlaybackService.GetCurrentTime);
             this.PlaybackInfoViewModel.TotalTime = " / " + FormatUtils.FormatTime(this.PlaybackService.GetTotalTime);
+        }
+
+        protected bool CanRefreshUi
+        {
+            get { return !this.AppVisibilityService.IsBackgroundPlaybackMode; }
         }
 
         protected void Reset()

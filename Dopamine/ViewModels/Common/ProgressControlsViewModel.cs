@@ -1,4 +1,5 @@
 ﻿using Dopamine.Services.Playback;
+using Dopamine.Services.Shell;
 using Prism.Mvvm;
 
 namespace Dopamine.ViewModels.Common
@@ -6,6 +7,7 @@ namespace Dopamine.ViewModels.Common
     public class ProgressControlsViewModel : BindableBase
     {
         protected IPlaybackService playBackService;
+        protected IAppVisibilityService appVisibilityService;
         private double progressValue;
         private bool canReportProgress;
         public double ProgressValue
@@ -24,19 +26,36 @@ namespace Dopamine.ViewModels.Common
             set { SetProperty<bool>(ref this.canReportProgress, value); }
         }
    
-        public ProgressControlsViewModel(IPlaybackService playBackService)
+        public ProgressControlsViewModel(IPlaybackService playBackService, IAppVisibilityService appVisibilityService)
         {
             this.playBackService = playBackService;
+            this.appVisibilityService = appVisibilityService;
 
-            this.playBackService.PlaybackProgressChanged += (sender,e) => this.GetPlayBackServiceProgress();
-            this.playBackService.PlaybackFailed += (_, __) => this.GetPlayBackServiceProgress();
-            this.playBackService.PlaybackStopped += (_, __) => this.GetPlayBackServiceProgress();
-            this.playBackService.PlaybackSuccess += (_,__) => this.GetPlayBackServiceProgress();
+            this.playBackService.PlaybackProgressChanged += (sender,e) => this.RefreshFromPlayBackService();
+            this.playBackService.PlaybackFailed += (_, __) => this.RefreshFromPlayBackService();
+            this.playBackService.PlaybackStopped += (_, __) => this.RefreshFromPlayBackService();
+            this.playBackService.PlaybackSuccess += (_,__) => this.RefreshFromPlayBackService();
+            this.appVisibilityService.VisibilityChanged += (_, __) => this.RefreshFromPlayBackService();
         }
         
         private void SetPlayBackServiceProgress(double progress)
         {
             this.playBackService.SkipProgress(progress);
+        }
+
+        protected bool CanRefreshUi
+        {
+            get { return !this.appVisibilityService.IsBackgroundPlaybackMode; }
+        }
+
+        protected void RefreshFromPlayBackService()
+        {
+            if (!this.CanRefreshUi)
+            {
+                return;
+            }
+
+            this.GetPlayBackServiceProgress();
         }
 
         protected virtual void GetPlayBackServiceProgress()
