@@ -5,6 +5,7 @@ using Digimezzo.Foundation.Core.Win32;
 using Digimezzo.Foundation.Core.Helpers;
 using Dopamine.Core.Base;
 using Dopamine.Services.Notification;
+using Dopamine.Services.Shell;
 using System;
 using System.Windows;
 
@@ -13,12 +14,14 @@ namespace Dopamine.Views.Common
     public partial class TrayControls : Window
     {
         private INotificationService notificationService;
+        private IAppVisibilityService appVisibilityService;
 
-        public TrayControls(INotificationService notificationService)
+        public TrayControls(INotificationService notificationService, IAppVisibilityService appVisibilityService)
         {
             InitializeComponent();
 
             this.notificationService = notificationService;
+            this.appVisibilityService = appVisibilityService;
         }
 
         public void Show()
@@ -27,6 +30,7 @@ namespace Dopamine.Views.Common
             this.notificationService.HideNotification(); // If a notification is shown, hide it.
 
             base.Show();
+            this.appVisibilityService.SetTrayControlsVisible(true);
 
             this.SetTransparency();
             this.SetGeometry();
@@ -42,6 +46,7 @@ namespace Dopamine.Views.Common
         private void Window_Deactivated(object sender, EventArgs e)
         {
             // Closes this window when the mouse is clicked outside it
+            this.appVisibilityService.SetTrayControlsVisible(false);
             this.Hide();
         }
 

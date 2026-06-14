@@ -41,6 +41,7 @@ namespace Dopamine.Views
         private IMetadataService metadataService;
         private IAppearanceService appearanceService;
         private IShellService shellService;
+        private IAppVisibilityService appVisibilityService;
         private II18nService i18nService;
         private ILifetimeService lifetimeService;
         private IEventAggregator eventAggregator;
@@ -58,7 +59,7 @@ namespace Dopamine.Views
         public Shell(IContainerProvider container, IWindowsIntegrationService windowsIntegrationService, II18nService i18nService,
             INotificationService notificationService, IWin32InputService win32InputService, IAppearanceService appearanceService,
             IPlaybackService playbackService, IMetadataService metadataService, ILifetimeService lifetimeService,
-            IEventAggregator eventAggregator)
+            IEventAggregator eventAggregator, IAppVisibilityService appVisibilityService)
         {
             InitializeComponent();
 
@@ -69,6 +70,7 @@ namespace Dopamine.Views
             this.playbackService = playbackService;
             this.metadataService = metadataService;
             this.appearanceService = appearanceService;
+            this.appVisibilityService = appVisibilityService;
             this.i18nService = i18nService;
             this.lifetimeService = lifetimeService;
             this.eventAggregator = eventAggregator;
@@ -108,6 +110,7 @@ namespace Dopamine.Views
 
                 // When closing to tray, hide this window from Taskbar and ALT-TAB menu.
                 this.ShowInTaskbar = false;
+                this.appVisibilityService.SetMainWindowInteractiveVisible(false);
 
                 try
                 {
@@ -143,6 +146,7 @@ namespace Dopamine.Views
         {
             // When restored, show this window in Taskbar and ALT-TAB menu.
             this.ShowInTaskbar = true;
+            this.appVisibilityService.SetMainWindowInteractiveVisible(true);
 
             try
             {
@@ -321,6 +325,8 @@ namespace Dopamine.Views
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            this.appVisibilityService.SetMainWindowInteractiveVisible(this.WindowState != WindowState.Minimized);
+
             // This call is not in the constructor, because we want to show the tray icon only
             // when the main window has been shown by explicitly calling Show(). This prevents 
             // showing the tray icon when the OOBE window is displayed.
@@ -332,6 +338,8 @@ namespace Dopamine.Views
 
         private void Window_Closed(object sender, System.EventArgs e)
         {
+            this.appVisibilityService.SetMainWindowInteractiveVisible(false);
+
             // Stop monitoring tablet mode
             this.windowsIntegrationService.StopMonitoringTabletMode();
 
@@ -400,6 +408,8 @@ namespace Dopamine.Views
         {
             if (this.WindowState == WindowState.Minimized)
             {
+                this.appVisibilityService.SetMainWindowInteractiveVisible(false);
+
                 if (SettingsClient.Get<bool>("Behaviour", "ShowTrayIcon") &
                     SettingsClient.Get<bool>("Behaviour", "MinimizeToTray"))
                 {
@@ -418,6 +428,8 @@ namespace Dopamine.Views
             }
             else
             {
+                this.appVisibilityService.SetMainWindowInteractiveVisible(true);
+
                 if (this.WindowState == WindowState.Maximized)
                 {
                     try

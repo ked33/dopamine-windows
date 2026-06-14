@@ -252,6 +252,7 @@ namespace Dopamine
                 containerRegistry.RegisterSingleton<IExternalControlService, ExternalControlService>();
                 containerRegistry.RegisterSingleton<IWindowsIntegrationService, WindowsIntegrationService>();
                 containerRegistry.RegisterSingleton<ILyricsService, LyricsService>();
+                containerRegistry.RegisterSingleton<IAppVisibilityService, AppVisibilityService>();
                 containerRegistry.RegisterSingleton<IShellService, ShellService>();
                 containerRegistry.RegisterSingleton<ILifetimeService, LifetimeService>();
                 containerRegistry.RegisterSingleton<IInfoDownloadService, InfoDownloadService>();
