@@ -15,6 +15,10 @@ namespace Dopamine.Services.Notification
 
         Task ShowNotificationAsync();
         void HideNotification();
+
+        /// <summary>
+        /// Updates the window references used by notifications. Null arguments keep the existing reference.
+        /// </summary>
         void SetApplicationWindows(Windows10BorderlessWindow mainWindow, Windows10BorderlessWindow playlistWindow, Window trayControlsWindow);
     }
 }

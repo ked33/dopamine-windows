@@ -206,14 +206,11 @@ namespace Dopamine.Views
             // Start monitoring system uses light theme
             this.windowsIntegrationService.StartMonitoringSystemUsesLightTheme();
 
-            // Tray controls
-            this.trayControls = this.container.Resolve<TrayControls>();
-
             // Create the Mini Player playlist
             this.miniPlayerPlaylist = this.container.Resolve<Func<Windows10BorderlessWindow, MiniPlayerPlaylist>>()(this);
 
             // NotificationService needs to know about the application windows
-            this.notificationService.SetApplicationWindows(this, this.miniPlayerPlaylist, this.trayControls);
+            this.notificationService.SetApplicationWindows(this, this.miniPlayerPlaylist, null);
 
             // Settings changed
             SettingsClient.SettingChanged += (_, e) =>
@@ -303,8 +300,9 @@ namespace Dopamine.Views
         {
             if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
-                this.trayControls.Topmost = true; // Make sure this appears above the Windows Tray pop-up
-                this.trayControls.Show();
+                TrayControls controls = this.EnsureTrayControls();
+                controls.Topmost = true; // Make sure this appears above the Windows Tray pop-up
+                controls.Show();
             }
 
             if (e.Button == System.Windows.Forms.MouseButtons.Right)
@@ -316,6 +314,17 @@ namespace Dopamine.Views
                 // See: http://copycodetheory.blogspot.be/2012/07/notify-icon-in-wpf-applications.html
                 this.Activate();
             }
+        }
+
+        private TrayControls EnsureTrayControls()
+        {
+            if (this.trayControls == null)
+            {
+                this.trayControls = this.container.Resolve<TrayControls>();
+                this.notificationService.SetApplicationWindows(null, null, this.trayControls);
+            }
+
+            return this.trayControls;
         }
 
         private void Window_Deactivated(object sender, System.EventArgs e)

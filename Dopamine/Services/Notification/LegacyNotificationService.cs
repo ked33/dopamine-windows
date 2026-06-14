@@ -220,6 +220,7 @@ namespace Dopamine.Services.Notification
 
         public void SetApplicationWindows(Windows10BorderlessWindow mainWindow, Windows10BorderlessWindow playlistWindow, Window trayControlsWindow)
         {
+            // Null arguments mean that the existing window reference should be kept.
             if (mainWindow != null)
             {
                 this.mainWindow = mainWindow;
