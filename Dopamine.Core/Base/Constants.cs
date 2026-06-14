@@ -41,6 +41,38 @@ namespace Dopamine.Core.Base
         // is set to 250%, images won't need to be upscaled by Windows and they'll remain sharp.
         public static readonly double CoverUpscaleFactor = 2.5;
         public static readonly int CoverQualityPercent = 80;
+        public static readonly int ArtworkDefaultSize = 900;
+        public static readonly int ArtworkNotificationSize = 512;
+        public static readonly int ArtworkColorExtractionSize = 256;
+        private static readonly int[] ArtworkSizeBuckets = new int[] { 128, 256, 512, 900, 1500 };
+
+        public static int NormalizeArtworkSize(double size)
+        {
+            if (size <= 0)
+            {
+                return 0;
+            }
+
+            foreach (int bucket in ArtworkSizeBuckets)
+            {
+                if (size <= bucket)
+                {
+                    return bucket;
+                }
+            }
+
+            return ArtworkSizeBuckets[ArtworkSizeBuckets.Length - 1];
+        }
+
+        public static int GetArtworkSizeBucket(double size)
+        {
+            if (size <= 0)
+            {
+                return ArtworkDefaultSize;
+            }
+
+            return NormalizeArtworkSize(size);
+        }
 
         // Headphone icon
         public static readonly double HeadPhoneSmallSize = 45;

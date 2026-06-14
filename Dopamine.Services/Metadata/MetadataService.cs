@@ -45,6 +45,17 @@ namespace Dopamine.Services.Metadata
             this.updater = new FileMetadataUpdater(this.playbackService, this.trackRepository);
         }
 
+        private int NormalizeArtworkSize(int size)
+        {
+            return Constants.NormalizeArtworkSize(size);
+        }
+
+        private string GetArtworkCacheKey(string filename, int normalizedSize)
+        {
+            string sizeKey = normalizedSize <= 0 ? "original" : normalizedSize.ToString();
+            return $"{filename}|artwork-size:{sizeKey}";
+        }
+
         public FileMetadata GetFileMetadata(string path)
         {
             // First, check if there is a fileMetadata which is queued for saving.
@@ -142,6 +153,8 @@ namespace Dopamine.Services.Metadata
         public async Task<byte[]> GetArtworkAsync(string filename, int size = 0)
         {
             byte[] artwork = null;
+            int normalizedSize = this.NormalizeArtworkSize(size);
+            string cacheKey = this.GetArtworkCacheKey(filename, normalizedSize);
 
             if (System.IO.File.Exists(filename))
             {
@@ -150,30 +163,30 @@ namespace Dopamine.Services.Metadata
                     lock (artworkCacheLock)
                     {
                         // First, try to find artwork in the memory cache
-                        artwork = this.artworkCache[filename] as byte[];
+                        artwork = this.artworkCache[cacheKey] as byte[];
 
                         if (artwork == null)
                         {
                             // If no artwork was found in the cache, try to find embedded artwork.
-                            artwork = this.GetEmbeddedArtwork(filename, size);
+                            artwork = this.GetEmbeddedArtwork(filename, normalizedSize);
 
                             if (artwork == null)
                             {
                                 // If no embedded artwork was found, try to find external artwork.
-                                artwork = this.GetExternalArtwork(filename, size);
+                                artwork = this.GetExternalArtwork(filename, normalizedSize);
                             }
 
                             if (artwork == null)
                             {
                                 // If no external artwork was found, try to find album artwork.
-                                artwork = this.GetAlbumArtwork(filename, size);
+                                artwork = this.GetAlbumArtwork(filename, normalizedSize);
                             }
 
                             if (artwork != null)
                             {
                                 // If artwork was found, add it to the cache.
                                 CacheItemPolicy policy = new CacheItemPolicy() { AbsoluteExpiration = DateTimeOffset.Now.AddSeconds(5.0) };
-                                this.artworkCache.Set(filename, artwork, policy);
+                                this.artworkCache.Set(cacheKey, artwork, policy);
                             }
                         }
                     }

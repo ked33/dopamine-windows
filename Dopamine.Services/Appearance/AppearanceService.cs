@@ -353,7 +353,9 @@ namespace Dopamine.Services.Appearance
                     }
                     else
                     {
-                        byte[] artwork = await this.metadataService.GetArtworkAsync(this.playbackService.CurrentTrack.Path);
+                        byte[] artwork = await this.metadataService.GetArtworkAsync(
+                            this.playbackService.CurrentTrack.Path,
+                            Constants.ArtworkColorExtractionSize);
 
                         if (artwork?.Length > 0)
                         {

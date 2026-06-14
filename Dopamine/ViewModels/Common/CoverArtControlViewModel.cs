@@ -1,5 +1,6 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
 using Digimezzo.Foundation.WPF.Controls;
+using Dopamine.Core.Base;
 using Dopamine.Data.Entities;
 using Dopamine.ViewModels;
 using Dopamine.Services.Cache;
@@ -24,6 +25,11 @@ namespace Dopamine.ViewModels.Common
         private SlideDirection slideDirection;
         private byte[] previousArtwork;
         private byte[] artwork;
+        private int previousArtworkSize;
+        private int artworkSize;
+        private int requestedArtworkSize = Constants.ArtworkDefaultSize;
+        private string previousArtworkTrackPath;
+        private string artworkTrackPath;
 
         public CoverArtViewModel CoverArtViewModel
         {
@@ -37,10 +43,33 @@ namespace Dopamine.ViewModels.Common
             set { SetProperty<SlideDirection>(ref this.slideDirection, value); }
         }
 
+        public int RequestedArtworkSize
+        {
+            get { return this.requestedArtworkSize; }
+            set
+            {
+                int normalizedSize = Constants.GetArtworkSizeBucket(value);
+
+                if (this.requestedArtworkSize == normalizedSize)
+                {
+                    return;
+                }
+
+                SetProperty<int>(ref this.requestedArtworkSize, normalizedSize);
+
+                if (this.CanLoadArtwork)
+                {
+                    this.RefreshCoverArtAsync(this.playbackService.CurrentTrack);
+                }
+            }
+        }
+
         private void ClearArtwork()
         {
             this.CoverArtViewModel = new CoverArtViewModel { CoverArt = null };
             this.artwork = null;
+            this.artworkSize = 0;
+            this.artworkTrackPath = null;
         }
 
         public CoverArtControlViewModel(IPlaybackService playbackService, ICacheService cacheService, IMetadataService metadataService,
@@ -116,6 +145,8 @@ namespace Dopamine.ViewModels.Common
                 }
 
                 this.previousArtwork = this.artwork;
+                this.previousArtworkSize = this.artworkSize;
+                this.previousArtworkTrackPath = this.artworkTrackPath;
 
                 // No track selected: clear cover art.
                 if (track == null)
@@ -126,10 +157,11 @@ namespace Dopamine.ViewModels.Common
 
                 // Try to find artwork
                 byte[] artwork = null;
+                int requestedArtworkSize = this.RequestedArtworkSize;
 
                 try
                 {
-                    artwork = await this.metadataService.GetArtworkAsync(track.Path);
+                    artwork = await this.metadataService.GetArtworkAsync(track.Path, requestedArtworkSize);
                 }
                 catch (Exception ex)
                 {
@@ -137,9 +169,14 @@ namespace Dopamine.ViewModels.Common
                 }
 
                 this.artwork = artwork;
+                this.artworkSize = requestedArtworkSize;
+                this.artworkTrackPath = track.Path;
 
                 // Verify if the artwork changed
-                if ((this.artwork != null & this.previousArtwork != null) && (this.artwork.LongLength == this.previousArtwork.LongLength))
+                if ((this.artwork != null & this.previousArtwork != null) &&
+                    (this.artwork.LongLength == this.previousArtwork.LongLength) &&
+                    (this.artworkSize == this.previousArtworkSize) &&
+                    string.Equals(this.artworkTrackPath, this.previousArtworkTrackPath, StringComparison.OrdinalIgnoreCase))
                 {
                     return;
                 }
