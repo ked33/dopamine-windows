@@ -19,6 +19,7 @@ namespace Dopamine.Services.Taskbar
         private double progressValue;
         private string playPauseText;
         private ImageSource playPauseIcon;
+        private bool showProgressInTaskbar;
 
         public string Description
         {
@@ -53,25 +54,26 @@ namespace Dopamine.Services.Taskbar
         public TaskbarService(IPlaybackService playbackService)
         {
             this.playbackService = playbackService;
+            this.showProgressInTaskbar = SettingsClient.Get<bool>("Playback", "ShowProgressInTaskbar");
 
             this.ShowTaskBarItemInfoPause(false);  // When starting, we're not playing yet.
 
             this.playbackService.PlaybackFailed += (_, __) =>
             {
                 this.Description = ProductInformation.ApplicationName;
-                this.SetTaskbarProgressState(SettingsClient.Get<bool>("Playback", "ShowProgressInTaskbar"), this.playbackService.IsPlaying);
+                this.SetTaskbarProgressState(this.showProgressInTaskbar, this.playbackService.IsPlaying);
                 this.ShowTaskBarItemInfoPause(false);
             };
 
             this.playbackService.PlaybackPaused += (_, __) =>
             {
-                this.SetTaskbarProgressState(SettingsClient.Get<bool>("Playback", "ShowProgressInTaskbar"), this.playbackService.IsPlaying);
+                this.SetTaskbarProgressState(this.showProgressInTaskbar, this.playbackService.IsPlaying);
                 this.ShowTaskBarItemInfoPause(false);
             };
 
             this.playbackService.PlaybackResumed += (_, __) =>
             {
-                this.SetTaskbarProgressState(SettingsClient.Get<bool>("Playback", "ShowProgressInTaskbar"), this.playbackService.IsPlaying);
+                this.SetTaskbarProgressState(this.showProgressInTaskbar, this.playbackService.IsPlaying);
                 this.ShowTaskBarItemInfoPause(true);
             };
 
@@ -93,11 +95,17 @@ namespace Dopamine.Services.Taskbar
                     this.Description = this.playbackService.CurrentTrack.FileName;
                 }
 
-                this.SetTaskbarProgressState(SettingsClient.Get<bool>("Playback", "ShowProgressInTaskbar"), this.playbackService.IsPlaying);
+                this.SetTaskbarProgressState(this.showProgressInTaskbar, this.playbackService.IsPlaying);
                 this.ShowTaskBarItemInfoPause(true);
             };
 
-            this.playbackService.PlaybackProgressChanged += (_, __) => { this.ProgressValue = this.playbackService.Progress; };
+            this.playbackService.PlaybackProgressChanged += (_, __) =>
+            {
+                if (this.showProgressInTaskbar)
+                {
+                    this.ProgressValue = this.playbackService.Progress;
+                }
+            };
         }
 
         private void ShowTaskBarItemInfoPause(bool showPause)
@@ -143,6 +151,7 @@ namespace Dopamine.Services.Taskbar
 
         public void SetShowProgressInTaskbar(bool showProgressInTaskbar)
         {
+            this.showProgressInTaskbar = showProgressInTaskbar;
             this.SetTaskbarProgressState(showProgressInTaskbar, this.playbackService.IsPlaying);
         }
     }
