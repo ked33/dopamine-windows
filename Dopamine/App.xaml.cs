@@ -83,6 +83,7 @@ namespace Dopamine
             {
                 this.instanceMutex.ReleaseMutex();
                 this.LaunchInitializer();
+                UiAnimationSettings.SyncWithPersistedSetting();
                 base.OnStartup(e);
             }
             else

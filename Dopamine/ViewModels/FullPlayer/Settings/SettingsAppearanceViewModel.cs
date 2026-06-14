@@ -117,7 +117,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             SetProperty<bool>(ref this.checkBoxEnableTransparencyChecked, enableTransparency);
             SetProperty<bool>(ref this.checkBoxEnableAnimationsChecked, enableAnimations);
             SetProperty<bool>(ref this.checkBoxEnableLoggingChecked, enableLogging);
-            UiAnimationSettings.Refresh();
+            UiAnimationSettings.SyncWithSettingValue(enableAnimations);
         }
     }
 }

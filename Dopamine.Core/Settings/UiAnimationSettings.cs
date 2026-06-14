@@ -35,6 +35,22 @@ namespace Dopamine.Core.Settings
             Refresh();
         }
 
+        public static void SyncWithPersistedSetting()
+        {
+            SyncWithSettingValue(GetAnimationsEnabled());
+        }
+
+        public static void SyncWithSettingValue(bool isEnabled)
+        {
+            if (!isEnabled)
+            {
+                SetAnimationsEnabled(false);
+                return;
+            }
+
+            Refresh();
+        }
+
         public static void Refresh()
         {
             GetAnimationsEnabled();
