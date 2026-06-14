@@ -11,6 +11,7 @@
 
     <!-- Constants -->
     <core:Double x:Key="Opacity_CoverArtShadow">0.5</core:Double>
+    <core:Double x:Key="Opacity_Image">0.7</core:Double>
 
     <!-- Palette -->
     <Color x:Key="Color_SoftWhite">#E2E2E2</Color>

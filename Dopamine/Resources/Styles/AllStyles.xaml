@@ -10,6 +10,7 @@
         <ResourceDictionary Source="/Dopamine;component/Resources/Styles/FontStyles.xaml" />
         <ResourceDictionary Source="/Dopamine;component/Resources/Styles/Geometries.xaml" />
         <ResourceDictionary Source="/Dopamine;component/Resources/Styles/HotKey.xaml" />
+        <ResourceDictionary Source="/Dopamine;component/Resources/Styles/Images.xaml" />
         <ResourceDictionary Source="/Dopamine;component/Resources/Styles/LinkButton.xaml" />
         <ResourceDictionary Source="/Dopamine;component/Resources/Styles/ListBoxAlbums.xaml" />
         <ResourceDictionary Source="/Dopamine;component/Resources/Styles/ListBoxArtists.xaml" />
