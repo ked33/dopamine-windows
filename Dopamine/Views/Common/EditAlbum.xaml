@@ -2,7 +2,6 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:animation="clr-namespace:Dopamine.Core.Settings;assembly=Dopamine.Core"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:dc="clr-namespace:Digimezzo.Foundation.WPF.Controls;assembly=Digimezzo.Foundation.WPF"
              xmlns:utils="clr-namespace:Dopamine.Utils"
@@ -23,13 +22,13 @@
     <UserControl.Resources>
         <utils:BindingProxy x:Key="ChangeProxy" Data="{DynamicResource Language_Change}"/>
         <utils:BindingProxy x:Key="ExportProxy" Data="{DynamicResource Language_Export}"/>
-        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="FadeIn">
-            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
+        <Storyboard x:Key="FadeIn">
+            <Storyboard>
                 <DoubleAnimation Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="0.5" To="1" Duration="0:0:0.15" />
             </Storyboard>
         </Storyboard>
-        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="FadeOut">
-            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
+        <Storyboard x:Key="FadeOut">
+            <Storyboard>
                 <DoubleAnimation Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="1" To="0.5" Duration="0:0:0.15" />
             </Storyboard>
         </Storyboard>

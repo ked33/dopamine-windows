@@ -135,7 +135,7 @@
                                         <pc:SourceChangedImage.Triggers>
                                             <EventTrigger RoutedEvent="pc:SourceChangedImage.SourceChanged">
                                                 <BeginStoryboard>
-                                                    <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
+                                                    <Storyboard>
                                                         <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="{x:Static base:Constants.SourceChangedImageChangedDuration}" />
                                                     </Storyboard>
                                                 </BeginStoryboard>
@@ -173,14 +173,14 @@
                         </Trigger>
                         <EventTrigger RoutedEvent="MouseEnter">
                             <BeginStoryboard>
-                                <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" Storyboard.TargetName="MouseHoverHelper" TargetProperty="Opacity">
+                                <Storyboard Storyboard.TargetName="MouseHoverHelper" TargetProperty="Opacity">
                                     <DoubleAnimation To="1" Duration="{x:Static base:Constants.MouseEnterDuration}"/>
                                 </Storyboard>
                             </BeginStoryboard>
                         </EventTrigger>
                         <EventTrigger RoutedEvent="MouseLeave">
                             <BeginStoryboard>
-                                <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" Storyboard.TargetName="MouseHoverHelper" TargetProperty="Opacity">
+                                <Storyboard Storyboard.TargetName="MouseHoverHelper" TargetProperty="Opacity">
                                     <DoubleAnimation To="0" Duration="{x:Static base:Constants.MouseLeaveDuration}"/>
                                 </Storyboard>
                             </BeginStoryboard>

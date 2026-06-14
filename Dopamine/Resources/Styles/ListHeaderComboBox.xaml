@@ -98,7 +98,7 @@
                                 <VisualState x:Name="Normal" />
                                 <VisualState x:Name="MouseOver" />
                                 <VisualState x:Name="Disabled">
-                                    <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
+                                    <Storyboard>
                                         <ColorAnimationUsingKeyFrames Storyboard.TargetName="PART_EditableTextBox"
                                                 Storyboard.TargetProperty="(TextElement.Foreground).
                       (SolidColorBrush.Color)">
@@ -110,7 +110,7 @@
                             </VisualStateGroup>
                             <VisualStateGroup x:Name="EditStates">
                                 <VisualState x:Name="Editable">
-                                    <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
+                                    <Storyboard>
                                         <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.Visibility)"
                                                  Storyboard.TargetName="PART_EditableTextBox">
                                             <DiscreteObjectKeyFrame KeyTime="0"

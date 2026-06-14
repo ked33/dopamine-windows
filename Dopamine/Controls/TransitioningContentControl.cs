@@ -93,16 +93,7 @@ namespace Dopamine.Controls
         {
             if (!UiAnimationSettings.AreAnimationsEnabled)
             {
-                if (this.FadeIn)
-                {
-                    this.Opacity = 1;
-                }
-
-                if (this.SlideIn)
-                {
-                    this.Margin = new Thickness(this.SlideInTo, this.Margin.Top, this.SlideInTo, this.Margin.Bottom);
-                }
-
+                this.ApplyFinalAnimationState();
                 this.StopTimer();
                 this.RaiseContentChangedEvent();
                 return;
@@ -162,10 +153,29 @@ namespace Dopamine.Controls
 
             try
             {
-                Application.Current.Dispatcher.BeginInvoke(new Action(() => this.RaiseContentChangedEvent()));
+                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    this.ApplyFinalAnimationState();
+                    this.RaiseContentChangedEvent();
+                }));
             }
             catch (Exception)
             {
+            }
+        }
+
+        private void ApplyFinalAnimationState()
+        {
+            if (this.FadeIn)
+            {
+                this.BeginAnimation(OpacityProperty, null);
+                this.Opacity = 1;
+            }
+
+            if (this.SlideIn)
+            {
+                this.BeginAnimation(MarginProperty, null);
+                this.Margin = new Thickness(this.SlideInTo, this.Margin.Top, this.SlideInTo, this.Margin.Bottom);
             }
         }
 

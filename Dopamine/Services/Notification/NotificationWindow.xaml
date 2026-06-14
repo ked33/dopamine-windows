@@ -2,7 +2,6 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:animation="clr-namespace:Dopamine.Core.Settings;assembly=Dopamine.Core"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:mybase="clr-namespace:Dopamine.Core.Base;assembly=Dopamine.Core"
         xmlns:controls="clr-namespace:Dopamine.Controls"
@@ -22,13 +21,13 @@
 
     <!-- Resources -->
     <Window.Resources>
-        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="ShowCoverControls">
-            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
+        <Storyboard x:Key="ShowCoverControls">
+            <Storyboard>
                 <DoubleAnimation Storyboard.TargetName="CoverControls" Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="0" To="1" Duration="0:0:0.15" />
             </Storyboard>
         </Storyboard>
-        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="HideCoverControls">
-            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
+        <Storyboard x:Key="HideCoverControls">
+            <Storyboard>
                 <DoubleAnimation Storyboard.TargetName="CoverControls" Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="1" To="0" Duration="0:0:0.15" />
             </Storyboard>
         </Storyboard>
@@ -101,7 +100,7 @@
                     <DataTrigger Binding="{Binding Path=IsEnabled,ElementName=Me}" Value="True">
                         <DataTrigger.EnterActions>
                             <BeginStoryboard>
-                                <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
+                                <Storyboard>
                                     <DoubleAnimationUsingKeyFrames BeginTime="0:0:0.1" Storyboard.TargetProperty="(UIElement.Opacity)">
                                         <SplineDoubleKeyFrame KeyTime="0:0:0.25" Value="1"/>
                                     </DoubleAnimationUsingKeyFrames>
@@ -110,7 +109,7 @@
                         </DataTrigger.EnterActions>
                         <DataTrigger.ExitActions>
                             <BeginStoryboard>
-                                <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
+                                <Storyboard>
                                     <DoubleAnimationUsingKeyFrames BeginTime="0:0:0.26" Storyboard.TargetProperty="(UIElement.Opacity)">
                                         <SplineDoubleKeyFrame KeyTime="0:0:0.25" Value="0"/>
                                     </DoubleAnimationUsingKeyFrames>

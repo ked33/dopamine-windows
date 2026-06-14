@@ -1,7 +1,6 @@
 ﻿<baseviews:TracksViewBase x:Class="Dopamine.Views.FullPlayer.Collection.CollectionGenres"
                           xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                           xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:animation="clr-namespace:Dopamine.Core.Settings;assembly=Dopamine.Core"
                           xmlns:dc="clr-namespace:Digimezzo.Foundation.WPF.Controls;assembly=Digimezzo.Foundation.WPF"
                           xmlns:pc="clr-namespace:Dopamine.Controls"
                           xmlns:baseviews="clr-namespace:Dopamine.Views.Common.Base"
@@ -19,14 +18,14 @@
     </i:Interaction.Triggers>
 
     <baseviews:TracksViewBase.Resources>
-        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="ShowSemanticZoom">
-            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
+        <Storyboard x:Key="ShowSemanticZoom">
+            <Storyboard>
                 <DoubleAnimation Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="0" To="1" Duration="0:0:0.25" />
                 <ThicknessAnimation Storyboard.TargetProperty="Margin" BeginTime="0:0:0" From="-50" To="0" Duration="0:0:0.15" />
             </Storyboard>
         </Storyboard>
-        <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="HideSemanticZoom">
-            <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
+        <Storyboard x:Key="HideSemanticZoom">
+            <Storyboard>
                 <DoubleAnimation Storyboard.TargetProperty="Opacity" BeginTime="0:0:0" From="1" To="0" Duration="0:0:0" />
                 <ThicknessAnimation Storyboard.TargetProperty="Margin" BeginTime="0:0:0" From="0" To="-50" Duration="0:0:0" />
             </Storyboard>

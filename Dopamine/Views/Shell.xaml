@@ -2,7 +2,6 @@
                               xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                               xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:animation="clr-namespace:Dopamine.Core.Settings;assembly=Dopamine.Core"
                               xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                               xmlns:prism="http://www.codeplex.com/prism"
                               xmlns:dc="clr-namespace:Digimezzo.Foundation.WPF.Controls;assembly=Digimezzo.Foundation.WPF"
@@ -110,7 +109,7 @@
         <Grid Focusable="true" x:Name="WindowGrid">
             <Border x:Name="ClosingBorder" Panel.ZIndex="1" Visibility="Collapsed" Opacity="0" Background="{DynamicResource Brush_WindowHeaderBackground}">
                 <Border.Resources>
-                    <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}" x:Key="ClosingAnimation">
+                    <Storyboard x:Key="ClosingAnimation">
                         <DoubleAnimation Storyboard.TargetName="ClosingBorder" Storyboard.TargetProperty="Opacity" From="0.0" To="1.0" BeginTime="0:0:0.5" Duration="0:0:0.3" />
                     </Storyboard>
                 </Border.Resources>

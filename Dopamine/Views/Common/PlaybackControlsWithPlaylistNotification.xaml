@@ -2,7 +2,6 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:animation="clr-namespace:Dopamine.Core.Settings;assembly=Dopamine.Core"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:pv="clr-namespace:Dopamine.Views"
              xmlns:prismMvvm="clr-namespace:Prism.Mvvm;assembly=Prism.Wpf"
@@ -25,14 +24,14 @@
                         <DataTrigger Binding="{Binding ShowAddedTracksToPlaylistText}" Value="True">
                             <DataTrigger.EnterActions>
                                 <BeginStoryboard>
-                                    <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
+                                    <Storyboard>
                                         <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0" Duration="0:0:0.15"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </DataTrigger.EnterActions>
                             <DataTrigger.ExitActions>
                                 <BeginStoryboard>
-                                    <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
+                                    <Storyboard>
                                         <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" BeginTime="0:0:0.20" Duration="0:0:0.15"/>
                                     </Storyboard>
                                 </BeginStoryboard>
@@ -60,7 +59,7 @@
                         <DataTrigger Binding="{Binding ShowAddedTracksToPlaylistText}" Value="True">
                             <DataTrigger.EnterActions>
                                 <BeginStoryboard>
-                                    <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
+                                    <Storyboard>
                                         <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" BeginTime="0:0:0.10" Duration="0:0:0.25"/>
                                         <ThicknessAnimation Storyboard.TargetProperty="Margin" From="0,0,0,-30" To="0,0,0,0" BeginTime="0:0:0.10" Duration="0:0:0.15"/>
                                     </Storyboard>
@@ -68,7 +67,7 @@
                             </DataTrigger.EnterActions>
                             <DataTrigger.ExitActions>
                                 <BeginStoryboard>
-                                    <Storyboard SpeedRatio="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StoryboardSpeedRatio}">
+                                    <Storyboard>
                                         <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0" Duration="0:0:0.15"/>
                                         <ThicknessAnimation Storyboard.TargetProperty="Margin" From="0,0,0,0" To="0,-30,0,0" Duration="0:0:0.25"/>
                                         <ThicknessAnimation Storyboard.TargetProperty="Margin" From="0,-30,0,0" To="0,0,0,-30" BeginTime="0:0:0.25" Duration="0:0:0"/>
