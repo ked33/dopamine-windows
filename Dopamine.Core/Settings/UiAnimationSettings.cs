@@ -27,9 +27,17 @@ namespace Dopamine.Core.Settings
 
         public PopupAnimation SlidePopupAnimation => this.AnimationsEnabled ? PopupAnimation.Slide : PopupAnimation.None;
 
+        public double StandardDurationSeconds => this.AnimationsEnabled ? 0.5 : 0.0;
+
         public static void SetAnimationsEnabled(bool isEnabled)
         {
             SettingDefaults.SetSafe(SettingsNamespace, SettingName, isEnabled, true);
+            Refresh();
+        }
+
+        public static void Refresh()
+        {
+            GetAnimationsEnabled();
             Instance.NotifyAnimationPropertiesChanged();
         }
 
@@ -222,6 +230,7 @@ namespace Dopamine.Core.Settings
             this.OnPropertyChanged(nameof(this.AnimationsEnabled));
             this.OnPropertyChanged(nameof(this.FadePopupAnimation));
             this.OnPropertyChanged(nameof(this.SlidePopupAnimation));
+            this.OnPropertyChanged(nameof(this.StandardDurationSeconds));
         }
 
         private void OnPropertyChanged(string propertyName)

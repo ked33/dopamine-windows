@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows;
+using Dopamine.Core.Settings;
 using Digimezzo.Foundation.Core.Utils;
 
 namespace Dopamine.Core.Base
@@ -142,9 +143,19 @@ namespace Dopamine.Core.Base
         public static readonly Thickness AlbumTileMargin = new Thickness(6);
 
         // Animation
-        public static readonly Duration MouseEnterDuration = new Duration(TimeSpan.FromMilliseconds(50));
-        public static readonly Duration MouseLeaveDuration = new Duration(TimeSpan.FromMilliseconds(200));
-        public static readonly Duration SourceChangedImageChangedDuration = new Duration(TimeSpan.FromMilliseconds(500));
+        private static readonly Duration NoAnimationDuration = new Duration(TimeSpan.Zero);
+        private static readonly Duration MouseEnterAnimationDuration = new Duration(TimeSpan.FromMilliseconds(50));
+        private static readonly Duration MouseLeaveAnimationDuration = new Duration(TimeSpan.FromMilliseconds(200));
+        private static readonly Duration SourceChangedImageAnimationDuration = new Duration(TimeSpan.FromMilliseconds(500));
+
+        public static Duration MouseEnterDuration => AnimationDuration(MouseEnterAnimationDuration);
+        public static Duration MouseLeaveDuration => AnimationDuration(MouseLeaveAnimationDuration);
+        public static Duration SourceChangedImageChangedDuration => AnimationDuration(SourceChangedImageAnimationDuration);
         public static readonly int SlideDistance = 20;
+
+        private static Duration AnimationDuration(Duration duration)
+        {
+            return UiAnimationSettings.AreAnimationsEnabled ? duration : NoAnimationDuration;
+        }
     }
 }

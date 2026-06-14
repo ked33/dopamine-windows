@@ -1,8 +1,19 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:animation="clr-namespace:Dopamine.Core.Settings;assembly=Dopamine.Core"
                     xmlns:dc="clr-namespace:Digimezzo.Foundation.WPF.Controls;assembly=Digimezzo.Foundation.WPF">
 
-    <Style x:Key="MenuPivot" TargetType="{x:Type dc:Pivot}">
+    <Style TargetType="{x:Type dc:Pivot}">
+        <Setter Property="Duration" Value="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StandardDurationSeconds}"/>
+        <Setter Property="SlideFadeInDuration" Value="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StandardDurationSeconds}"/>
+    </Style>
+
+    <Style TargetType="{x:Type dc:SlidingContentControl}">
+        <Setter Property="Duration" Value="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StandardDurationSeconds}"/>
+        <Setter Property="SlideFadeInDuration" Value="{Binding Source={x:Static animation:UiAnimationSettings.Instance}, Path=StandardDurationSeconds}"/>
+    </Style>
+
+    <Style x:Key="MenuPivot" TargetType="{x:Type dc:Pivot}" BasedOn="{StaticResource {x:Type dc:Pivot}}">
         <Setter Property="IndicatorHeight" Value="2"/>
         <Setter Property="IndicatorBackground" Value="{DynamicResource Brush_Accent}"/>
     </Style>

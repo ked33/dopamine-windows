@@ -70,7 +70,7 @@
         SlideDirection="{Binding SlideDirection}" 
         Content="{Binding ArtistInfoViewModel}">
             <dc:SlidingContentControl.Style>
-                <Style>
+                <Style TargetType="{x:Type dc:SlidingContentControl}" BasedOn="{StaticResource {x:Type dc:SlidingContentControl}}">
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding IsBusy}" Value="True">
                             <DataTrigger.EnterActions>

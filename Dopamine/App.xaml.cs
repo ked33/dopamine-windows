@@ -8,6 +8,7 @@ using Digimezzo.Foundation.WPF.Controls;
 using Dopamine.Core.Base;
 using Dopamine.Core.Helpers;
 using Dopamine.Core.IO;
+using Dopamine.Core.Settings;
 using Dopamine.Data;
 using Dopamine.Data.Repositories;
 using Dopamine.Services.Appearance;
@@ -155,6 +156,7 @@ namespace Dopamine
 
             // Show the main window
             AppLog.Info("Showing Main screen");
+            UiAnimationSettings.Refresh();
             shell.Show();
 
             // We're not showing the OOBE screen, tell the IndexingService to start.
