@@ -69,6 +69,10 @@ namespace Dopamine.Services.Playback
         private IBlacklistService blacklistService;
         private System.Timers.Timer saveQueuedTracksTimer = new System.Timers.Timer();
         private int saveQueuedTracksTimeoutSeconds = 5;
+        private int saveQueuedTracksQuickTimeoutSeconds = 1;
+        private int savePlaybackPositionIntervalSeconds = 10;
+        private long lastSavedPlaybackPositionSeconds = -1;
+        private string lastSavedPlaybackPositionQueueID = string.Empty;
 
         private bool isSavingQueuedTracks = false;
 
@@ -202,9 +206,11 @@ namespace Dopamine.Services.Playback
 
             }
 
+            SettingsClient.Set<bool>("Playback", "Shuffle", this.shuffle);
             this.PlaybackShuffleChanged(this, new EventArgs());
+            this.WriteSettings();
             this.QueueChanged(this, new EventArgs());
-            this.ResetSaveQueuedTracksTimer();
+            await this.SaveQueuedTracksNowAsync();
         }
 
         public bool UseAllAvailableChannels { get; set; }
@@ -526,6 +532,7 @@ namespace Dopamine.Services.Playback
                 await this.queuedTrackRepository.SaveQueuedTracksAsync(queuedTracks);
 
                 LogClient.Info("Saved {0} queued tracks", queuedTracks.Count.ToString());
+                this.RememberSavedPlaybackPosition();
             }
             catch (Exception ex)
             {
@@ -533,6 +540,57 @@ namespace Dopamine.Services.Playback
             }
 
             this.isSavingQueuedTracks = false;
+        }
+
+        private async Task SaveQueuedTracksNowAsync()
+        {
+            this.saveQueuedTracksTimer.Stop();
+            this.isQueueChanged = true;
+
+            while (this.isSavingQueuedTracks)
+            {
+                await Task.Delay(50);
+            }
+
+            await this.SaveQueuedTracksAsync();
+        }
+
+        private void RememberSavedPlaybackPosition()
+        {
+            this.lastSavedPlaybackPositionQueueID = this.CurrentTrack?.QueueID ?? string.Empty;
+            this.lastSavedPlaybackPositionSeconds = Convert.ToInt64(this.GetCurrentTime.TotalSeconds);
+        }
+
+        private void WriteSettings()
+        {
+            try
+            {
+                SettingsClient.Write();
+            }
+            catch (Exception ex)
+            {
+                LogClient.Error("Could not write settings. Exception: {0}", ex.Message);
+            }
+        }
+
+        private void QueuePlaybackPositionSaveIfNeeded(TimeSpan currentTime)
+        {
+            string currentQueueID = this.CurrentTrack?.QueueID;
+
+            if (string.IsNullOrWhiteSpace(currentQueueID))
+            {
+                return;
+            }
+
+            long currentSeconds = Convert.ToInt64(currentTime.TotalSeconds);
+
+            if (!currentQueueID.Equals(this.lastSavedPlaybackPositionQueueID) ||
+                Math.Abs(currentSeconds - this.lastSavedPlaybackPositionSeconds) >= this.savePlaybackPositionIntervalSeconds)
+            {
+                this.lastSavedPlaybackPositionQueueID = currentQueueID;
+                this.lastSavedPlaybackPositionSeconds = currentSeconds;
+                this.ResetSaveQueuedTracksTimer(this.saveQueuedTracksQuickTimeoutSeconds);
+            }
         }
 
         public async Task SavePlaybackCountersAsync()
@@ -625,6 +683,7 @@ namespace Dopamine.Services.Playback
                 int newSeconds = Convert.ToInt32(progress * this.player.GetTotalTime().TotalSeconds);
                 this.player.Skip(newSeconds);
                 this.PlaybackSkipped(this, new EventArgs());
+                this.ResetSaveQueuedTracksTimer(this.saveQueuedTracksQuickTimeoutSeconds);
             }
             else
             {
@@ -651,6 +710,7 @@ namespace Dopamine.Services.Playback
 
                 this.PlaybackSkipped(this, new EventArgs());
                 this.PlaybackProgressChanged(this, new EventArgs());
+                this.ResetSaveQueuedTracksTimer(this.saveQueuedTracksQuickTimeoutSeconds);
             }
         }
 
@@ -1106,6 +1166,7 @@ namespace Dopamine.Services.Playback
 
                     await Task.Run(() => pausePlayer.Pause());
                     this.PlaybackPaused(this, new PlaybackPausedEventArgs() { IsSilent = isSilent });
+                    this.ResetSaveQueuedTracksTimer(this.saveQueuedTracksQuickTimeoutSeconds);
                 }
             }
             catch (Exception ex)
@@ -1285,6 +1346,11 @@ namespace Dopamine.Services.Playback
                 this.isPlayingPreviousTrack = false;
                 LogClient.Info("Playing the file {0}. EventMode={1}, ExclusiveMode={2}, LoopMode={3}, Shuffle={4}", track.Path, this.EventMode, this.ExclusiveMode, this.LoopMode, this.shuffle);
 
+                if (!isSilent)
+                {
+                    await this.SaveQueuedTracksNowAsync();
+                }
+
                 fadeInAfterPlaybackSuccess = this.ShouldUsePlaybackFade(isSilent);
             }
             catch (FileNotFoundException fnfex)
@@ -1342,6 +1408,7 @@ namespace Dopamine.Services.Playback
                 // If we're more than 3 seconds into the Track, try to
                 // jump to the beginning of the current Track.
                 this.player.Skip(0);
+                this.ResetSaveQueuedTracksTimer(this.saveQueuedTracksQuickTimeoutSeconds);
                 return true;
             }
 
@@ -1579,6 +1646,7 @@ namespace Dopamine.Services.Playback
                 TimeSpan currentTime = this.player.GetCurrentTime();
 
                 this.Progress = currentTime.TotalMilliseconds / totalTime.TotalMilliseconds;
+                this.QueuePlaybackPositionSaveIfNeeded(currentTime);
             }
             else
             {
@@ -1618,7 +1686,13 @@ namespace Dopamine.Services.Playback
 
         private void ResetSaveQueuedTracksTimer()
         {
+            this.ResetSaveQueuedTracksTimer(this.saveQueuedTracksTimeoutSeconds);
+        }
+
+        private void ResetSaveQueuedTracksTimer(double timeoutSeconds)
+        {
             this.saveQueuedTracksTimer.Stop();
+            this.saveQueuedTracksTimer.Interval = TimeSpan.FromSeconds(timeoutSeconds).TotalMilliseconds;
             this.isQueueChanged = true;
             this.saveQueuedTracksTimer.Start();
         }
