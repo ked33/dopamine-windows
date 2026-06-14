@@ -8,6 +8,7 @@ using Dopamine.Core.Api.Lastfm;
 using Dopamine.Services.Entities;
 using Dopamine.Services.I18n;
 using Dopamine.Services.Playback;
+using Dopamine.Services.Shell;
 using Prism.Commands;
 using Prism.Ioc;
 using Prism.Mvvm;
@@ -21,11 +22,13 @@ namespace Dopamine.ViewModels.Common
         private IContainerProvider container;
         private ArtistInfoViewModel artistInfoViewModel;
         private IPlaybackService playbackService;
+        private IAppVisibilityService appVisibilityService;
         private II18nService i18nService;
         private string previousArtistName;
         private string artistName;
         private SlideDirection slideDirection;
         private bool isBusy;
+        private int refreshVersion;
 
         public DelegateCommand<string> OpenLinkCommand { get; set; }
 
@@ -47,10 +50,12 @@ namespace Dopamine.ViewModels.Common
             set { SetProperty<bool>(ref this.isBusy, value); }
         }
 
-        public ArtistInfoControlViewModel(IContainerProvider container, IPlaybackService playbackService, II18nService i18nService)
+        public ArtistInfoControlViewModel(IContainerProvider container, IPlaybackService playbackService, II18nService i18nService,
+            IAppVisibilityService appVisibilityService)
         {
             this.container = container;
             this.playbackService = playbackService;
+            this.appVisibilityService = appVisibilityService;
             this.i18nService = i18nService;
 
             this.OpenLinkCommand = new DelegateCommand<string>((url) =>
@@ -67,13 +72,31 @@ namespace Dopamine.ViewModels.Common
 
             this.playbackService.PlaybackSuccess += async (_, e) =>
             {
+                if (!this.CanLoadArtistInfo)
+                {
+                    this.ResetArtistInfo();
+                    return;
+                }
+
                 this.SlideDirection = e.IsPlayingPreviousTrack ? SlideDirection.RightToLeft : SlideDirection.LeftToRight;
                 await this.ShowArtistInfoAsync(this.playbackService.CurrentTrack, false);
             };
 
             this.i18nService.LanguageChanged += async (_, __) =>
             {
-                if (this.playbackService.HasCurrentTrack) await this.ShowArtistInfoAsync(this.playbackService.CurrentTrack, true);
+                if (this.playbackService.HasCurrentTrack && this.CanLoadArtistInfo) await this.ShowArtistInfoAsync(this.playbackService.CurrentTrack, true);
+            };
+
+            this.appVisibilityService.VisibilityChanged += async (_, __) =>
+            {
+                if (this.CanLoadArtistInfo)
+                {
+                    if (this.playbackService.HasCurrentTrack) await this.ShowArtistInfoAsync(this.playbackService.CurrentTrack, true);
+                }
+                else
+                {
+                    this.ResetArtistInfo();
+                }
             };
 
             // Defaults
@@ -83,13 +106,20 @@ namespace Dopamine.ViewModels.Common
 
         private async Task ShowArtistInfoAsync(TrackViewModel track, bool forceReload)
         {
+            if (!this.CanLoadArtistInfo)
+            {
+                this.ResetArtistInfo();
+                return;
+            }
+
+            int currentRefreshVersion = ++this.refreshVersion;
+
             this.previousArtistName = this.artistName;
 
             // User doesn't want to download artist info, or no track is selected.
             if (!SettingsClient.Get<bool>("Lastfm", "DownloadArtistInformation") || track == null)
             {
-                this.ArtistInfoViewModel = this.container.Resolve<ArtistInfoViewModel>();
-                this.artistName = string.Empty;
+                this.ResetArtistInfo();
                 return;
             }
 
@@ -98,6 +128,12 @@ namespace Dopamine.ViewModels.Common
             {
                 ArtistInfoViewModel localArtistInfoViewModel = this.container.Resolve<ArtistInfoViewModel>();
                 await localArtistInfoViewModel.SetArtistInformation(new LastFmArtist { Name = string.Empty }, string.Empty);
+
+                if (!this.CanApplyArtistInfo(currentRefreshVersion))
+                {
+                    return;
+                }
+
                 this.ArtistInfoViewModel = localArtistInfoViewModel;
                 this.artistName = string.Empty;
                 return;
@@ -144,6 +180,12 @@ namespace Dopamine.ViewModels.Common
 
                         ArtistInfoViewModel localArtistInfoViewModel = this.container.Resolve<ArtistInfoViewModel>();
                         await localArtistInfoViewModel.SetArtistInformation(lfmArtist, artistImageUrl);
+
+                        if (!this.CanApplyArtistInfo(currentRefreshVersion))
+                        {
+                            return;
+                        }
+
                         this.ArtistInfoViewModel = localArtistInfoViewModel;
 
                        
@@ -157,10 +199,34 @@ namespace Dopamine.ViewModels.Common
             catch (Exception ex)
             {
                 LogClient.Error("Could not show artist information for Track {0}. Exception: {1}", track.Path, ex.Message);
-                this.ArtistInfoViewModel = this.container.Resolve<ArtistInfoViewModel>();
-                this.artistName = string.Empty;
+
+                if (this.CanApplyArtistInfo(currentRefreshVersion))
+                {
+                    this.ResetArtistInfo();
+                }
             }
 
+            if (this.CanApplyArtistInfo(currentRefreshVersion))
+            {
+                this.IsBusy = false;
+            }
+        }
+
+        private bool CanLoadArtistInfo
+        {
+            get { return !this.appVisibilityService.IsBackgroundPlaybackMode; }
+        }
+
+        private bool CanApplyArtistInfo(int currentRefreshVersion)
+        {
+            return this.CanLoadArtistInfo && currentRefreshVersion == this.refreshVersion;
+        }
+
+        private void ResetArtistInfo()
+        {
+            this.refreshVersion++;
+            this.ArtistInfoViewModel = this.container.Resolve<ArtistInfoViewModel>();
+            this.artistName = string.Empty;
             this.IsBusy = false;
         }
     }
