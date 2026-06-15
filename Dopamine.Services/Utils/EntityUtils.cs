@@ -53,6 +53,97 @@ namespace Dopamine.Services.Utils
             track.Year.ToString().Contains(s.ToLower()));
         }
 
+        private static string GetTrackAlbumArtist(Track track)
+        {
+            if (track == null)
+            {
+                return string.Empty;
+            }
+
+            if (!string.IsNullOrEmpty(track.AlbumArtists))
+            {
+                return DataUtils.GetCommaSeparatedColumnMultiValue(track.AlbumArtists);
+            }
+
+            if (!string.IsNullOrEmpty(track.Artists))
+            {
+                return DataUtils.GetCommaSeparatedColumnMultiValue(track.Artists);
+            }
+
+            return ResourceUtils.GetString("Language_Unknown_Artist");
+        }
+
+        private static string GetTrackAlbumTitle(Track track)
+        {
+            return track != null && !string.IsNullOrEmpty(track.AlbumTitle) ? track.AlbumTitle : ResourceUtils.GetString("Language_Unknown_Album");
+        }
+
+        private static string GetTrackFileName(Track track)
+        {
+            return track != null ? track.FileName : string.Empty;
+        }
+
+        private static string GetTrackSortDiscNumber(Track track)
+        {
+            return track != null && track.DiscNumber.HasValue && track.DiscNumber.Value > 0 ? track.DiscNumber.Value.ToString("0000") : string.Empty;
+        }
+
+        private static long GetTrackSortTrackNumber(Track track)
+        {
+            return track != null && track.TrackNumber.HasValue ? track.TrackNumber.Value : 0;
+        }
+
+        private static string GetTrackTitle(Track track)
+        {
+            return track != null && !string.IsNullOrEmpty(track.TrackTitle) ? track.TrackTitle : GetTrackFileName(track);
+        }
+
+        private static int GetTrackRating(Track track)
+        {
+            return track != null && track.Rating.HasValue ? Convert.ToInt32(track.Rating.Value) : 0;
+        }
+
+        public static async Task<List<Track>> OrderTrackEntitiesAsync(IList<Track> tracks, TrackOrder trackOrder)
+        {
+            var orderedTracks = new List<Track>();
+
+            if (tracks == null)
+            {
+                return orderedTracks;
+            }
+
+            await Task.Run(() =>
+            {
+                switch (trackOrder)
+                {
+                    case TrackOrder.Alphabetical:
+                        orderedTracks = tracks.OrderBy((t) => !string.IsNullOrEmpty(FormatUtils.GetSortableString(GetTrackTitle(t))) ? FormatUtils.GetSortableString(GetTrackTitle(t)) : FormatUtils.GetSortableString(GetTrackFileName(t))).ToList();
+                        break;
+                    case TrackOrder.ByAlbum:
+                        orderedTracks = tracks.OrderBy((t) => FormatUtils.GetSortableString(GetTrackAlbumArtist(t))).ThenBy((t) => FormatUtils.GetSortableString(GetTrackAlbumTitle(t))).ThenBy((t) => GetTrackSortDiscNumber(t)).ThenBy((t) => GetTrackSortTrackNumber(t)).ToList();
+                        break;
+                    case TrackOrder.ByFileName:
+                        orderedTracks = tracks.OrderBy((t) => FormatUtils.GetSortableString(GetTrackFileName(t))).ToList();
+                        break;
+                    case TrackOrder.ByRating:
+                        orderedTracks = tracks.OrderByDescending((t) => GetTrackRating(t)).ToList();
+                        break;
+                    case TrackOrder.ReverseAlphabetical:
+                        orderedTracks = tracks.OrderByDescending((t) => !string.IsNullOrEmpty(FormatUtils.GetSortableString(GetTrackTitle(t))) ? FormatUtils.GetSortableString(GetTrackTitle(t)) : FormatUtils.GetSortableString(GetTrackFileName(t))).ToList();
+                        break;
+                    case TrackOrder.None:
+                        orderedTracks = tracks.ToList();
+                        break;
+                    default:
+                        // By album
+                        orderedTracks = tracks.OrderBy((t) => FormatUtils.GetSortableString(GetTrackAlbumTitle(t))).ThenBy((t) => GetTrackSortDiscNumber(t)).ThenBy((t) => GetTrackSortTrackNumber(t)).ToList();
+                        break;
+                }
+            });
+
+            return orderedTracks;
+        }
+
         public static async Task<List<TrackViewModel>> OrderTracksAsync(IList<TrackViewModel> tracks, TrackOrder trackOrder)
         {
             var orderedTracks = new List<TrackViewModel>();

@@ -23,6 +23,7 @@ namespace Dopamine.ViewModels.Common
         private IPlaybackService playbackService;
         private IDialogService dialogService;
         private IFileService fileService;
+        private EventHandler queueChangedHandler;
         protected bool isDroppingTracks;
 
         public NowPlayingControlViewModel(IContainerProvider container) : base(container)
@@ -63,13 +64,42 @@ namespace Dopamine.ViewModels.Common
             }
 
             // Listen to queue changes.
-            this.playbackService.QueueChanged += async (_, __) =>
+            this.SubscribeToQueueChanged();
+        }
+
+        protected async override Task UnloadedCommandAsync()
+        {
+            this.UnsubscribeFromQueueChanged();
+            await base.UnloadedCommandAsync();
+        }
+
+        private void SubscribeToQueueChanged()
+        {
+            if (this.queueChangedHandler != null)
+            {
+                return;
+            }
+
+            this.queueChangedHandler = async (_, __) =>
             {
                 if (!this.isDroppingTracks)
                 {
                     await this.GetTracksAsync();
                 }
             };
+
+            this.playbackService.QueueChanged += this.queueChangedHandler;
+        }
+
+        private void UnsubscribeFromQueueChanged()
+        {
+            if (this.queueChangedHandler == null)
+            {
+                return;
+            }
+
+            this.playbackService.QueueChanged -= this.queueChangedHandler;
+            this.queueChangedHandler = null;
         }
 
         public void DragOver(IDropInfo dropInfo)

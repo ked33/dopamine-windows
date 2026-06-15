@@ -8,5 +8,7 @@ namespace Dopamine.Services.Playback
         public bool IsSuccess { get; set; }
 
         public IList<TrackViewModel> EnqueuedTracks { get; set; }
+
+        public int EnqueuedTrackCount { get; set; }
     }
 }

@@ -354,6 +354,78 @@ namespace Dopamine.Services.Playback
                         }
 
                         result.EnqueuedTracks = tracks;
+                        result.EnqueuedTrackCount = addedQueueIndices.Count;
+                    }
+                });
+
+                if (shuffle)
+                {
+                    await Task.Run(() =>
+                    {
+                        lock (this.queueLock)
+                        {
+                            if (this.playbackOrder.Count == 0 || this.currentTrack == null || !this.queue.Contains(this.currentTrack))
+                            {
+                                this.playbackOrder = this.GetRandomizedQueueIndices(-1);
+                            }
+                            else
+                            {
+                                this.InsertShuffledIndicesAfterCurrentTrack(addedQueueIndices);
+                            }
+                        }
+                    });
+                }
+                else
+                {
+                    await this.UnShuffleAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                result.IsSuccess = false;
+                AppLog.Error("Error while enqueuing tracks. Exception: {0}", ex.Message);
+            }
+
+            return result;
+        }
+
+        public async Task<EnqueueResult> EnqueueAsync(IList<Track> tracks, bool shuffle, Func<Track, TrackViewModel> createTrackViewModel)
+        {
+            var result = new EnqueueResult { IsSuccess = true };
+            var addedQueueIndices = new List<int>();
+
+            if (tracks == null || createTrackViewModel == null)
+            {
+                return result;
+            }
+
+            try
+            {
+                await Task.Run(() =>
+                {
+                    lock (this.queueLock)
+                    {
+                        foreach (Track track in tracks)
+                        {
+                            if (track == null)
+                            {
+                                continue;
+                            }
+
+                            TrackViewModel queuedTrack = createTrackViewModel(track);
+
+                            if (queuedTrack == null)
+                            {
+                                continue;
+                            }
+
+                            EnsureQueueID(queuedTrack);
+
+                            this.queue.Add(queuedTrack);
+                            addedQueueIndices.Add(this.queue.Count - 1);
+                        }
+
+                        result.EnqueuedTrackCount = addedQueueIndices.Count;
                     }
                 });
 
@@ -400,12 +472,13 @@ namespace Dopamine.Services.Playback
                     {
                         foreach (TrackViewModel track in tracks)
                         {
-                            TrackViewModel queuedTrack = track.DeepCopy(true);
+                            TrackViewModel queuedTrack = track;
                             EnsureQueueID(queuedTrack);
                             this.queue.Add(queuedTrack);
                         }
 
                         result.EnqueuedTracks = tracks;
+                        result.EnqueuedTrackCount = tracks.Count;
 
                         if (shuffle && shuffleOrderIDs != null && shuffleOrderIDs.Count == this.queue.Count)
                         {
@@ -473,6 +546,7 @@ namespace Dopamine.Services.Playback
                         this.playbackOrder.InsertRange(playbackOrderIndex + 1, Enumerable.Range(queueIndex + 1, tracksToAdd.Count));
 
                         result.EnqueuedTracks = tracks;
+                        result.EnqueuedTrackCount = tracksToAdd.Count;
                     }
                 });
             }
