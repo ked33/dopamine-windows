@@ -1,4 +1,5 @@
-﻿using Dopamine.Core.Base;
+﻿using Digimezzo.Foundation.Core.Utils;
+using Dopamine.Core.Base;
 using Dopamine.Core.Utils;
 using Dopamine.Data;
 using Dopamine.Data.Entities;
