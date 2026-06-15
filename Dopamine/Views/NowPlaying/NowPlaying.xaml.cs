@@ -11,6 +11,8 @@ namespace Dopamine.Views.NowPlaying
     {
         private Timer hideControlsTimer = new Timer();
         private IAppVisibilityService appVisibilityService;
+        private bool isActive;
+        private bool isSubscribedToEvents;
 
         public bool CanShowControls
         {
@@ -26,16 +28,58 @@ namespace Dopamine.Views.NowPlaying
             InitializeComponent();
 
             this.appVisibilityService = ServiceLocator.Current.GetInstance<IAppVisibilityService>();
-            this.appVisibilityService.VisibilityChanged += (_, __) => this.HandleVisibilityChanged();
 
             this.hideControlsTimer.Interval = 2000;
             this.hideControlsTimer.Elapsed += new ElapsedEventHandler(this.CleanupNowPlayingHandler);
+
+            this.Loaded += this.NowPlaying_Loaded;
+            this.Unloaded += this.NowPlaying_Unloaded;
+        }
+
+        private void NowPlaying_Loaded(object sender, RoutedEventArgs e)
+        {
+            this.isActive = true;
+            this.SubscribeToEvents();
             this.ShowControls();
+        }
+
+        private void NowPlaying_Unloaded(object sender, RoutedEventArgs e)
+        {
+            this.isActive = false;
+            this.hideControlsTimer.Stop();
+            this.UnsubscribeFromEvents();
+        }
+
+        private void SubscribeToEvents()
+        {
+            if (this.isSubscribedToEvents)
+            {
+                return;
+            }
+
+            this.appVisibilityService.VisibilityChanged += this.AppVisibilityService_VisibilityChanged;
+            this.isSubscribedToEvents = true;
+        }
+
+        private void UnsubscribeFromEvents()
+        {
+            if (!this.isSubscribedToEvents)
+            {
+                return;
+            }
+
+            this.appVisibilityService.VisibilityChanged -= this.AppVisibilityService_VisibilityChanged;
+            this.isSubscribedToEvents = false;
+        }
+
+        private void AppVisibilityService_VisibilityChanged(object sender, EventArgs e)
+        {
+            this.HandleVisibilityChanged();
         }
 
         private bool CanRunHideControlsTimer
         {
-            get { return !this.appVisibilityService.IsBackgroundPlaybackMode; }
+            get { return this.isActive && !this.appVisibilityService.IsBackgroundPlaybackMode; }
         }
 
         private void ShowControls()
@@ -71,7 +115,7 @@ namespace Dopamine.Views.NowPlaying
 
             this.Dispatcher.BeginInvoke(new Action(() =>
             {
-                if (!this.BackButton.IsMouseOver)
+                if (this.CanRunHideControlsTimer && !this.BackButton.IsMouseOver)
                 {
                     this.CanShowControls = false;
                 }

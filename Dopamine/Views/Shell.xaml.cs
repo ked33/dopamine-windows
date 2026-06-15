@@ -50,6 +50,7 @@ namespace Dopamine.Views
         private System.Windows.Forms.NotifyIcon trayIcon;
         private ContextMenu trayIconContextMenu;
         private System.Windows.Threading.DispatcherTimer trayLeftClickTimer;
+        private System.Windows.Threading.DispatcherTimer backgroundPlayerUnloadTimer;
         private TrayControls trayControls;
         private MiniPlayerPlaylist miniPlayerPlaylist;
         private bool isShuttingDown = false;
@@ -85,6 +86,7 @@ namespace Dopamine.Views
             this.InitializeServices();
             this.InitializeWindows();
             this.InitializeTrayIcon();
+            this.InitializeBackgroundPlayerUnload();
             this.InitializeCommands();
         }
 
@@ -114,6 +116,7 @@ namespace Dopamine.Views
                 // When closing to tray, hide this window from Taskbar and ALT-TAB menu.
                 this.ShowInTaskbar = false;
                 this.appVisibilityService.SetMainWindowInteractiveVisible(false);
+                this.UpdateBackgroundPlayerUnloadTimer();
 
                 try
                 {
@@ -157,6 +160,7 @@ namespace Dopamine.Views
             // When restored, show this window in Taskbar and ALT-TAB menu.
             this.ShowInTaskbar = true;
             this.appVisibilityService.SetMainWindowInteractiveVisible(true);
+            this.RestorePlayerContentAfterBackground();
 
             try
             {
@@ -210,6 +214,70 @@ namespace Dopamine.Views
             this.trayIcon.MouseDoubleClick += TrayIcon_MouseDoubleClick;
 
             this.trayIconContextMenu = (ContextMenu)this.FindResource("TrayIconContextMenu");
+        }
+
+        private void InitializeBackgroundPlayerUnload()
+        {
+            this.backgroundPlayerUnloadTimer = new System.Windows.Threading.DispatcherTimer();
+            this.backgroundPlayerUnloadTimer.Interval = TimeSpan.FromSeconds(30);
+            this.backgroundPlayerUnloadTimer.Tick += BackgroundPlayerUnloadTimer_Tick;
+            this.appVisibilityService.VisibilityChanged += this.AppVisibilityService_VisibilityChanged;
+        }
+
+        private bool CanUnloadPlayerContentForBackground
+        {
+            get
+            {
+                return SettingsClient.Get<bool>("Behaviour", "ShowTrayIcon") &&
+                    !this.ShowInTaskbar &&
+                    this.appVisibilityService.IsBackgroundPlaybackMode;
+            }
+        }
+
+        private void AppVisibilityService_VisibilityChanged(object sender, EventArgs e)
+        {
+            this.UpdateBackgroundPlayerUnloadTimer();
+        }
+
+        private void BackgroundPlayerUnloadTimer_Tick(object sender, EventArgs e)
+        {
+            this.backgroundPlayerUnloadTimer.Stop();
+
+            if (this.CanUnloadPlayerContentForBackground)
+            {
+                this.shellService.UnloadPlayerContentForBackground();
+            }
+        }
+
+        private void UpdateBackgroundPlayerUnloadTimer()
+        {
+            if (this.backgroundPlayerUnloadTimer == null)
+            {
+                return;
+            }
+
+            if (this.appVisibilityService.IsMainWindowInteractiveVisible)
+            {
+                this.RestorePlayerContentAfterBackground();
+                return;
+            }
+
+            this.backgroundPlayerUnloadTimer.Stop();
+
+            if (this.CanUnloadPlayerContentForBackground)
+            {
+                this.backgroundPlayerUnloadTimer.Start();
+            }
+        }
+
+        private void RestorePlayerContentAfterBackground()
+        {
+            if (this.backgroundPlayerUnloadTimer != null)
+            {
+                this.backgroundPlayerUnloadTimer.Stop();
+            }
+
+            this.shellService.RestorePlayerContentAfterBackground();
         }
 
         private void InitializeWindows()
@@ -391,6 +459,13 @@ namespace Dopamine.Views
         private void Window_Closed(object sender, System.EventArgs e)
         {
             this.appVisibilityService.SetMainWindowInteractiveVisible(false);
+            this.appVisibilityService.VisibilityChanged -= this.AppVisibilityService_VisibilityChanged;
+
+            if (this.backgroundPlayerUnloadTimer != null)
+            {
+                this.backgroundPlayerUnloadTimer.Stop();
+                this.backgroundPlayerUnloadTimer.Tick -= this.BackgroundPlayerUnloadTimer_Tick;
+            }
 
             // Stop monitoring tablet mode
             this.windowsIntegrationService.StopMonitoringTabletMode();
@@ -477,10 +552,13 @@ namespace Dopamine.Views
                         AppLog.Error("Could not hide main window from ALT-TAB menu. Exception: {0}", ex.Message);
                     }
                 }
+
+                this.UpdateBackgroundPlayerUnloadTimer();
             }
             else
             {
                 this.appVisibilityService.SetMainWindowInteractiveVisible(true);
+                this.RestorePlayerContentAfterBackground();
 
                 if (this.WindowState == WindowState.Maximized)
                 {

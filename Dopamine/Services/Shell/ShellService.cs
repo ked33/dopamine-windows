@@ -8,6 +8,7 @@ using Prism.Commands;
 using Prism.Events;
 using Prism.Regions;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -26,6 +27,7 @@ namespace Dopamine.Services.Shell
         private string coverPlayerPage;
         private string microplayerPage;
         private string nanoPlayerPage;
+        private bool isPlayerContentUnloadedForBackground;
 
         public event WindowStateChangedEventHandler WindowStateChanged = delegate { };
         public event WindowStateChangeRequestedEventHandler WindowStateChangeRequested = delegate { };
@@ -70,6 +72,7 @@ namespace Dopamine.Services.Shell
 
             this.ShowNowPlayingCommand = new DelegateCommand(() =>
             {
+                this.isPlayerContentUnloadedForBackground = false;
                 this.regionManager.RequestNavigate(RegionNames.PlayerTypeRegion, this.nowPlayingPage);
                 SettingsClient.Set<bool>("FullPlayer", "IsNowPlayingSelected", true);
                 this.eventAggregator.GetEvent<IsNowPlayingPageActiveChanged>().Publish(true);
@@ -79,6 +82,7 @@ namespace Dopamine.Services.Shell
 
             this.ShowFullPlayerCommmand = new DelegateCommand(() =>
             {
+                this.isPlayerContentUnloadedForBackground = false;
                 this.regionManager.RequestNavigate(RegionNames.PlayerTypeRegion, this.fullPlayerPage);
                 SettingsClient.Set<bool>("FullPlayer", "IsNowPlayingSelected", false);
                 this.eventAggregator.GetEvent<IsNowPlayingPageActiveChanged>().Publish(false);
@@ -163,6 +167,8 @@ namespace Dopamine.Services.Shell
 
         public async void SetPlayer(bool isMiniPlayer, MiniPlayerType miniPlayerType, bool isInitializing = false)
         {
+            this.isPlayerContentUnloadedForBackground = false;
+
             string screenName = typeof(Empty).FullName;
 
             // Clear player content
@@ -236,6 +242,80 @@ namespace Dopamine.Services.Shell
             this.regionManager.RequestNavigate(RegionNames.PlayerTypeRegion, screenName);
 
             this.canSaveWindowGeometry = true;
+        }
+
+        public void UnloadPlayerContentForBackground()
+        {
+            if (this.isPlayerContentUnloadedForBackground ||
+                SettingsClient.Get<bool>("General", "IsMiniPlayer") ||
+                !this.regionManager.Regions.ContainsRegionWithName(RegionNames.PlayerTypeRegion))
+            {
+                return;
+            }
+
+            this.regionManager.RequestNavigate(RegionNames.PlayerTypeRegion, typeof(Empty).FullName);
+            this.RemoveHeavyPlayerViews();
+            this.RemoveHeavyPlayerChildRegions();
+
+            this.isPlayerContentUnloadedForBackground = true;
+        }
+
+        public void RestorePlayerContentAfterBackground()
+        {
+            if (!this.isPlayerContentUnloadedForBackground)
+            {
+                return;
+            }
+
+            this.SetPlayer(SettingsClient.Get<bool>("General", "IsMiniPlayer"), (MiniPlayerType)SettingsClient.Get<int>("General", "MiniPlayerType"));
+        }
+
+        private void RemoveHeavyPlayerViews()
+        {
+            IRegion playerTypeRegion = this.regionManager.Regions[RegionNames.PlayerTypeRegion];
+
+            foreach (object view in playerTypeRegion.Views.Where(view => this.IsHeavyPlayerView(view)).ToList())
+            {
+                playerTypeRegion.Remove(view);
+            }
+        }
+
+        private bool IsHeavyPlayerView(object view)
+        {
+            if (view == null)
+            {
+                return false;
+            }
+
+            string viewName = view.GetType().FullName;
+            return string.Equals(viewName, this.fullPlayerPage) || string.Equals(viewName, this.nowPlayingPage);
+        }
+
+        private void RemoveHeavyPlayerChildRegions()
+        {
+            this.RemoveRegionIfRegistered(RegionNames.FullPlayerRegion);
+            this.RemoveRegionIfRegistered(RegionNames.FullPlayerMenuRegion);
+            this.RemoveRegionIfRegistered(RegionNames.CollectionRegion);
+            this.RemoveRegionIfRegistered(RegionNames.SettingsRegion);
+            this.RemoveRegionIfRegistered(RegionNames.InformationRegion);
+            this.RemoveRegionIfRegistered(RegionNames.NowPlayingSubPageRegion);
+        }
+
+        private void RemoveRegionIfRegistered(string regionName)
+        {
+            if (!this.regionManager.Regions.ContainsRegionWithName(regionName))
+            {
+                return;
+            }
+
+            IRegion region = this.regionManager.Regions[regionName];
+
+            foreach (object view in region.Views.ToList())
+            {
+                region.Remove(view);
+            }
+
+            this.regionManager.Regions.Remove(regionName);
         }
 
         private void SetFullPlayer()

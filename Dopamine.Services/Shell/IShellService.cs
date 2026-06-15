@@ -18,6 +18,10 @@ namespace Dopamine.Services.Shell
 
         void CheckIfTabletMode(bool isInitializing);
 
+        void UnloadPlayerContentForBackground();
+
+        void RestorePlayerContentAfterBackground();
+
         void SaveWindowLocation(double top, double left, WindowState state);
 
         void SaveWindowState(WindowState state);
