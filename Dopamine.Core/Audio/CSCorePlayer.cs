@@ -425,7 +425,7 @@ namespace Dopamine.Core.Audio
 
                 if (inputStreamList.Count != 0)
                 {
-                    foreach (var inputStream in inputStreamList)
+                    foreach (var inputStream in inputStreamList.ToList())
                     {
                         this.notificationSource.SingleBlockRead += inputStream;
                     }
@@ -459,7 +459,7 @@ namespace Dopamine.Core.Audio
                 {
                     if (this.notificationSource != null)
                     {
-                        foreach (var inputStream in inputStreamList)
+                        foreach (var inputStream in inputStreamList.ToList())
                         {
                             this.notificationSource.SingleBlockRead -= inputStream;
                         }
@@ -541,46 +541,103 @@ namespace Dopamine.Core.Audio
 
         public ISpectrumPlayer GetWrapperSpectrumPlayer(SpectrumChannel channel)
         {
-            return new WrapperSpectrumPlayer(instance, channel, inputStreamList);
+            return new WrapperSpectrumPlayer(this, channel, inputStreamList);
         }
 
-        public class WrapperSpectrumPlayer : ISpectrumPlayer
+        public class WrapperSpectrumPlayer : ISpectrumPlayer, IDisposable
         {
             public event PropertyChangedEventHandler PropertyChanged = delegate { };
 
-            public CSCorePlayer player;
+            private CSCorePlayer player;
+            private readonly ICollection<EventHandler<SingleBlockReadEventArgs>> inputStreamList;
+            private readonly EventHandler<SingleBlockReadEventArgs> inputStreamHandler = null;
+            private readonly PropertyChangedEventHandler playerPropertyChangedHandler;
             private readonly FftProvider fftProvider;
             private readonly ISoundOut soundOut;
+            private bool isDisposed;
 
-            public bool IsPlaying => this.player.isPlaying;
+            public bool IsPlaying => this.player != null && this.player.isPlaying;
 
             public WrapperSpectrumPlayer(CSCorePlayer player, SpectrumChannel channel,
                 ICollection<EventHandler<SingleBlockReadEventArgs>> inputStreamList)
             {
                 this.player = player;
-                this.player.PropertyChanged += (_, __) => PropertyChanged(_, __);
+                this.inputStreamList = inputStreamList;
+                this.playerPropertyChangedHandler = this.Player_PropertyChanged;
+                this.player.PropertyChanged += this.playerPropertyChangedHandler;
                 this.soundOut = player.soundOut;
 
-                fftProvider = new FftProvider(2, FftSize.Fft1024);
+                this.fftProvider = new FftProvider(2, FftSize.Fft1024);
 
                 if (channel != SpectrumChannel.Stereo)
                 {
                     if (channel == SpectrumChannel.Left)
                     {
-                        if (this.player.notificationSource != null) this.player.notificationSource.SingleBlockRead += InputStream_LeftSample;
-                        inputStreamList.Add(InputStream_LeftSample);
+                        this.inputStreamHandler = this.InputStream_LeftSample;
                     }
                     if (channel == SpectrumChannel.Right)
                     {
-                        if (this.player.notificationSource != null) this.player.notificationSource.SingleBlockRead += InputStream_RightSample;
-                        inputStreamList.Add(InputStream_RightSample);
+                        this.inputStreamHandler = this.InputStream_RightSample;
                     }
                 }
                 else
                 {
-                    if (this.player.notificationSource != null) this.player.notificationSource.SingleBlockRead += InputStream_Sample;
-                    inputStreamList.Add(InputStream_Sample);
+                    this.inputStreamHandler = this.InputStream_Sample;
                 }
+
+                this.RegisterInputStream();
+            }
+
+            public void Dispose()
+            {
+                if (this.isDisposed)
+                {
+                    return;
+                }
+
+                this.isDisposed = true;
+                this.UnregisterInputStream();
+
+                if (this.player != null)
+                {
+                    this.player.PropertyChanged -= this.playerPropertyChangedHandler;
+                    this.player = null;
+                }
+            }
+
+            private void RegisterInputStream()
+            {
+                if (this.inputStreamHandler == null)
+                {
+                    return;
+                }
+
+                if (this.player.notificationSource != null)
+                {
+                    this.player.notificationSource.SingleBlockRead += this.inputStreamHandler;
+                }
+
+                this.inputStreamList.Add(this.inputStreamHandler);
+            }
+
+            private void UnregisterInputStream()
+            {
+                if (this.inputStreamHandler == null)
+                {
+                    return;
+                }
+
+                if (this.player != null && this.player.notificationSource != null)
+                {
+                    this.player.notificationSource.SingleBlockRead -= this.inputStreamHandler;
+                }
+
+                this.inputStreamList.Remove(this.inputStreamHandler);
+            }
+
+            private void Player_PropertyChanged(object sender, PropertyChangedEventArgs e)
+            {
+                this.PropertyChanged(sender, e);
             }
 
             private void InputStream_Sample(object sender, SingleBlockReadEventArgs e)

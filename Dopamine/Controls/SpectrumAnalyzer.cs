@@ -306,6 +306,8 @@ namespace Dopamine.Controls
             if (soundPlayer != null)
             {
                 this.soundPlayer.PropertyChanged -= soundPlayer_PropertyChanged;
+                IDisposable disposableSoundPlayer = this.soundPlayer as IDisposable;
+                disposableSoundPlayer?.Dispose();
                 this.soundPlayer = null;
             }
         }

@@ -6,6 +6,7 @@ using Dopamine.Services.Appearance;
 using Dopamine.Services.Playback;
 using Prism.Events;
 using Prism.Mvvm;
+using System;
 using System.Windows;
 using System.Windows.Media;
 
@@ -16,8 +17,8 @@ namespace Dopamine.ViewModels.Common
         private IPlaybackService playbackService;
         private IAppearanceService appearanceService;
         private IEventAggregator eventAggregator;
-        private bool showSpectrumAnalyzer;
         private bool isPlaying;
+        private bool isActive;
         private double blurRadius;
         private int spectrumBarCount;
         private double spectrumEllipseWidth;
@@ -128,35 +129,95 @@ namespace Dopamine.ViewModels.Common
             this.eventAggregator = eventAggregator;
             this.appearanceService = appearanceService;
 
-            this.appearanceService.ColorSchemeChanged += (_, __) =>
-            Application.Current.Dispatcher.Invoke(() => this.SetSpectrumStyle((SpectrumStyle)SettingsClient.Get<int>("Playback", "SpectrumStyle")));
+            this.RefreshPlaybackState();
+            this.SetSpectrumStyle((SpectrumStyle)SettingsClient.Get<int>("Playback", "SpectrumStyle"));
+        }
 
-            this.playbackService.PlaybackFailed += (_, __) => this.IsPlaying = false;
-            this.playbackService.PlaybackStopped += (_, __) => this.IsPlaying = false;
-            this.playbackService.PlaybackPaused += (_, __) => this.IsPlaying = false;
-            this.playbackService.PlaybackResumed += (_, __) => this.IsPlaying = true;
-            this.playbackService.PlaybackSuccess += (_, __) => this.IsPlaying = true;
-
-            SettingsClient.SettingChanged += (_, e) =>
+        public void Activate()
+        {
+            if (this.isActive)
             {
-                if (SettingsClient.IsSettingChanged(e, "Playback", "SpectrumStyle"))
-                {
-                    this.SetSpectrumStyle((SpectrumStyle)e.Entry.Value);
-                }
-            };
+                return;
+            }
 
-            // Initial value
-            if (!this.playbackService.IsStopped & this.playbackService.IsPlaying)
+            this.appearanceService.ColorSchemeChanged += this.AppearanceService_ColorSchemeChanged;
+            this.playbackService.PlaybackFailed += this.PlaybackService_PlaybackFailed;
+            this.playbackService.PlaybackStopped += this.PlaybackService_PlaybackStopped;
+            this.playbackService.PlaybackPaused += this.PlaybackService_PlaybackPaused;
+            this.playbackService.PlaybackResumed += this.PlaybackService_PlaybackResumed;
+            this.playbackService.PlaybackSuccess += this.PlaybackService_PlaybackSuccess;
+            SettingsClient.SettingChanged += this.SettingsClient_SettingChanged;
+
+            this.isActive = true;
+            this.RefreshPlaybackState();
+            this.SetSpectrumStyle((SpectrumStyle)SettingsClient.Get<int>("Playback", "SpectrumStyle"));
+        }
+
+        public void Deactivate()
+        {
+            if (!this.isActive)
+            {
+                return;
+            }
+
+            this.appearanceService.ColorSchemeChanged -= this.AppearanceService_ColorSchemeChanged;
+            this.playbackService.PlaybackFailed -= this.PlaybackService_PlaybackFailed;
+            this.playbackService.PlaybackStopped -= this.PlaybackService_PlaybackStopped;
+            this.playbackService.PlaybackPaused -= this.PlaybackService_PlaybackPaused;
+            this.playbackService.PlaybackResumed -= this.PlaybackService_PlaybackResumed;
+            this.playbackService.PlaybackSuccess -= this.PlaybackService_PlaybackSuccess;
+            SettingsClient.SettingChanged -= this.SettingsClient_SettingChanged;
+
+            this.isActive = false;
+        }
+
+        private void AppearanceService_ColorSchemeChanged(object sender, EventArgs e)
+        {
+            Application.Current.Dispatcher.Invoke(() => this.SetSpectrumStyle((SpectrumStyle)SettingsClient.Get<int>("Playback", "SpectrumStyle")));
+        }
+
+        private void PlaybackService_PlaybackFailed(object sender, PlaybackFailedEventArgs e)
+        {
+            this.IsPlaying = false;
+        }
+
+        private void PlaybackService_PlaybackStopped(object sender, EventArgs e)
+        {
+            this.IsPlaying = false;
+        }
+
+        private void PlaybackService_PlaybackPaused(object sender, PlaybackPausedEventArgs e)
+        {
+            this.IsPlaying = false;
+        }
+
+        private void PlaybackService_PlaybackResumed(object sender, EventArgs e)
+        {
+            this.IsPlaying = true;
+        }
+
+        private void PlaybackService_PlaybackSuccess(object sender, PlaybackSuccessEventArgs e)
+        {
+            this.IsPlaying = true;
+        }
+
+        private void SettingsClient_SettingChanged(object sender, SettingChangedEventArgs e)
+        {
+            if (SettingsClient.IsSettingChanged(e, "Playback", "SpectrumStyle"))
+            {
+                this.SetSpectrumStyle((SpectrumStyle)e.Entry.Value);
+            }
+        }
+
+        private void RefreshPlaybackState()
+        {
+            if (!this.playbackService.IsStopped && this.playbackService.IsPlaying)
             {
                 this.IsPlaying = true;
-            }
-            else
-            {
-                this.IsPlaying = false;
+                return;
             }
 
-            // Default spectrum
-            this.SetSpectrumStyle((SpectrumStyle)SettingsClient.Get<int>("Playback", "SpectrumStyle"));
+            this.IsPlaying = false;
         }
 
         private void SpectrumStyleFlames()
