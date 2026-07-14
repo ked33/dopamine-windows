@@ -54,7 +54,7 @@ namespace Dopamine.Services.Playback
                 Directory.CreateDirectory(this.cacheDirectory);
                 string finalPath = this.GetFinalPath(songId, mediaType, url);
 
-                if (File.Exists(finalPath))
+                if (System.IO.File.Exists(finalPath))
                 {
                     var existing = new FileInfo(finalPath);
 
@@ -113,12 +113,12 @@ namespace Dopamine.Services.Playback
                         }
                     }
 
-                    if (File.Exists(finalPath))
+                    if (System.IO.File.Exists(finalPath))
                     {
                         TryDelete(finalPath);
                     }
 
-                    File.Move(partialPath, finalPath);
+                    System.IO.File.Move(partialPath, finalPath);
                     this.TryCleanup();
                     return NeteaseResult<string>.Success(finalPath);
                 }
@@ -270,9 +270,9 @@ namespace Dopamine.Services.Playback
         {
             try
             {
-                if (File.Exists(path))
+                if (System.IO.File.Exists(path))
                 {
-                    File.Delete(path);
+                    System.IO.File.Delete(path);
                 }
             }
             catch

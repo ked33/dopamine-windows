@@ -1,6 +1,5 @@
 ﻿using Dopamine.Core.Audio;
 using Dopamine.Services.Entities;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -29,7 +28,7 @@ namespace Dopamine.Services.Playback
 
             if (track.IsLocalFile)
             {
-                if (!File.Exists(track.Path))
+                if (!System.IO.File.Exists(track.Path))
                 {
                     return Task.FromResult(Failure(PlaybackFailureReason.FileNotFound, string.Empty));
                 }

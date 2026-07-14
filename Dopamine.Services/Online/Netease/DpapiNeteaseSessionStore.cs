@@ -36,7 +36,7 @@ namespace Dopamine.Services.Online.Netease
         {
             return Task.Run(() =>
             {
-                if (!File.Exists(this.sessionPath))
+                if (!System.IO.File.Exists(this.sessionPath))
                 {
                     return new NeteaseSessionLoadResult { Exists = false, IsSuccess = true };
                 }
@@ -46,7 +46,7 @@ namespace Dopamine.Services.Online.Netease
                 try
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    byte[] protectedBytes = File.ReadAllBytes(this.sessionPath);
+                    byte[] protectedBytes = System.IO.File.ReadAllBytes(this.sessionPath);
                     plainBytes = ProtectedData.Unprotect(protectedBytes, Entropy, DataProtectionScope.CurrentUser);
                     string json = Encoding.UTF8.GetString(plainBytes);
                     var snapshot = JsonConvert.DeserializeObject<NeteaseSessionSnapshot>(json);
@@ -101,13 +101,13 @@ namespace Dopamine.Services.Online.Netease
                         stream.Flush(true);
                     }
 
-                    if (File.Exists(this.sessionPath))
+                    if (System.IO.File.Exists(this.sessionPath))
                     {
-                        File.Replace(this.temporaryPath, this.sessionPath, null);
+                        System.IO.File.Replace(this.temporaryPath, this.sessionPath, null);
                     }
                     else
                     {
-                        File.Move(this.temporaryPath, this.sessionPath);
+                        System.IO.File.Move(this.temporaryPath, this.sessionPath);
                     }
 
                     return NeteaseResult<bool>.Success(true);
@@ -167,9 +167,9 @@ namespace Dopamine.Services.Online.Netease
         {
             try
             {
-                if (File.Exists(path))
+                if (System.IO.File.Exists(path))
                 {
-                    File.Delete(path);
+                    System.IO.File.Delete(path);
                 }
             }
             catch (Exception ex)
