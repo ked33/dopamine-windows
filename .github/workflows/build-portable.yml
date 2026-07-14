@@ -12,6 +12,7 @@ permissions:
 env:
   SOLUTION_FILE: Dopamine.sln
   PROJECT_FILE: Dopamine\Dopamine.csproj
+  TEST_PROJECT_FILE: Dopamine.Tests\Dopamine.Tests.csproj
   PACKAGER_CONFIG: Dopamine.Packager\PackagerConfiguration.xml
   BUILD_CONFIGURATION: Release
   BUILD_PLATFORM: AnyCPU
@@ -158,6 +159,40 @@ jobs:
             "/p:UseWinRTContracts=true" `
             "/p:WinRTContractsRoot=$env:WINRT_CONTRACTS_ROOT" `
             /verbosity:minimal
+
+      - name: Build Dopamine tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          msbuild $env:TEST_PROJECT_FILE `
+            /m `
+            "/p:Configuration=$env:BUILD_CONFIGURATION" `
+            "/p:Platform=$env:BUILD_PLATFORM" `
+            /verbosity:minimal
+
+      - name: Run Dopamine tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $testAssembly = Join-Path $env:GITHUB_WORKSPACE 'Dopamine.Tests\bin\Release\Dopamine.Tests.dll'
+          $adapterPath = Join-Path $env:GITHUB_WORKSPACE 'packages\NUnit3TestAdapter.4.5.0\build\net462'
+          $vstest = (Get-Command vstest.console.exe -ErrorAction Stop).Source
+
+          if (-not (Test-Path -LiteralPath $testAssembly -PathType Leaf)) {
+            throw "Test assembly was not found: $testAssembly"
+          }
+
+          if (-not (Test-Path -LiteralPath $adapterPath -PathType Container)) {
+            throw "NUnit test adapter directory was not found: $adapterPath"
+          }
+
+          & $vstest $testAssembly "/TestAdapterPath:$adapterPath"
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Dopamine tests failed with exit code $LASTEXITCODE"
+          }
 
       - name: Stage Portable Files
         shell: pwsh
