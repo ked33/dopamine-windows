@@ -178,7 +178,7 @@ jobs:
 
           $testAssembly = Join-Path $env:GITHUB_WORKSPACE 'Dopamine.Tests\bin\Release\Dopamine.Tests.dll'
           $adapterPath = Join-Path $env:GITHUB_WORKSPACE 'packages\NUnit3TestAdapter.4.5.0\build\net462'
-          $vstest = (Get-Command vstest.console.exe -ErrorAction Stop).Source
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
 
           if (-not (Test-Path -LiteralPath $testAssembly -PathType Leaf)) {
             throw "Test assembly was not found: $testAssembly"
@@ -186,6 +186,20 @@ jobs:
 
           if (-not (Test-Path -LiteralPath $adapterPath -PathType Container)) {
             throw "NUnit test adapter directory was not found: $adapterPath"
+          }
+
+          if (-not (Test-Path -LiteralPath $vswhere -PathType Leaf)) {
+            throw "Visual Studio locator was not found: $vswhere"
+          }
+
+          $vstest = & $vswhere `
+            -latest `
+            -products * `
+            -find 'Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe' |
+            Select-Object -First 1
+
+          if ([string]::IsNullOrWhiteSpace($vstest) -or -not (Test-Path -LiteralPath $vstest -PathType Leaf)) {
+            throw "vstest.console.exe was not found in the installed Visual Studio instance."
           }
 
           & $vstest $testAssembly "/TestAdapterPath:$adapterPath"
