@@ -30,6 +30,7 @@ using Dopamine.Services.Lifetime;
 using Dopamine.Services.Lyrics;
 using Dopamine.Services.Metadata;
 using Dopamine.Services.Notification;
+using Dopamine.Services.Online.Netease;
 using Dopamine.Services.Playback;
 using Dopamine.Services.Playlist;
 using Dopamine.Services.Provider;
@@ -57,6 +58,7 @@ using System;
 using System.Linq;
 using System.ServiceModel;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Shell;
 using System.Windows.Threading;
@@ -92,6 +94,23 @@ namespace Dopamine
                 AppLog.Warning("{0} is already running. Shutting down.", ProductInformation.ApplicationName);
                 this.Shutdown();
             }
+        }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            try
+            {
+                if (Container != null)
+                {
+                    Container.Resolve<NeteaseTemporaryAudioCache>().Clear();
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warning("Could not clear the Netease temporary audio cache on exit. ErrorType={0}", ex.GetType().Name);
+            }
+
+            base.OnExit(e);
         }
 
         private void LaunchInitializer()
@@ -159,6 +178,13 @@ namespace Dopamine
             AppLog.Info("Showing Main screen");
             UiAnimationSettings.Refresh();
             shell.Show();
+
+            Task restoreNeteaseSessionTask = Container.Resolve<INeteaseSessionService>().RestoreAsync(CancellationToken.None);
+            restoreNeteaseSessionTask.ContinueWith(task =>
+            {
+                AppLog.Warning("Netease session restore failed unexpectedly. ErrorType={0}",
+                    task.Exception?.GetBaseException().GetType().Name ?? "Unknown");
+            }, TaskContinuationOptions.OnlyOnFaulted);
 
             // We're not showing the OOBE screen, tell the IndexingService to start.
             if (!showOobe)
@@ -262,6 +288,13 @@ namespace Dopamine
                 containerRegistry.RegisterSingleton<IInfoDownloadService, InfoDownloadService>();
                 containerRegistry.RegisterSingleton<IRichPresenceService, RichPresenceService>();
                 containerRegistry.RegisterSingleton<IBlacklistService, BlacklistService>();
+                containerRegistry.RegisterSingleton<INeteaseApiClient, NeteaseApiClient>();
+                containerRegistry.RegisterSingleton<INeteaseSessionStore, DpapiNeteaseSessionStore>();
+                containerRegistry.RegisterSingleton<INeteaseSessionService, NeteaseSessionService>();
+                containerRegistry.RegisterSingleton<INeteaseMusicService, NeteaseMusicService>();
+                containerRegistry.RegisterSingleton<NeteaseTemporaryAudioCache>();
+                containerRegistry.RegisterSingleton<NeteasePlaybackSourceResolver>();
+                containerRegistry.RegisterSingleton<IPlaybackSourceResolver, PlaybackSourceResolver>();
 
                 INotificationService notificationService;
 
@@ -338,6 +371,7 @@ namespace Dopamine
                 containerRegistry.Register<object, CollectionFolders>(typeof(CollectionFolders).FullName);
                 containerRegistry.Register<object, CollectionGenres>(typeof(CollectionGenres).FullName);
                 containerRegistry.Register<object, CollectionTracks>(typeof(CollectionTracks).FullName);
+                containerRegistry.Register<object, CollectionDailyRecommendations>(typeof(CollectionDailyRecommendations).FullName);
 
                 // Settings
                 containerRegistry.Register<object, SettingsMenu>(typeof(SettingsMenu).FullName);

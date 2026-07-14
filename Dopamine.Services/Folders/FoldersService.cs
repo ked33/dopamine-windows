@@ -242,6 +242,7 @@ namespace Dopamine.Services.Folders
 
                         if (!subfolderViewModel.IsGoToParent &&
                         !this.playbackService.IsStopped &&
+                        this.playbackService.CurrentTrack.IsLocalFile &&
                         this.playbackService.CurrentTrack.SafePath.Contains(subfolderViewModel.SafePath))
                         {
                             subfolderViewModel.IsPlaying = true;

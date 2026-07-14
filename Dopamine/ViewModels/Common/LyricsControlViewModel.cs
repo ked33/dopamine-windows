@@ -10,6 +10,7 @@ using Dopamine.Data.Entities;
 using Dopamine.Data.Metadata;
 using Dopamine.Services.I18n;
 using Dopamine.Services.Metadata;
+using Dopamine.Services.Online.Netease;
 using Dopamine.Services.Playback;
 using Dopamine.Services.Shell;
 using Dopamine.ViewModels.Common.Base;
@@ -19,9 +20,11 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 using System.Timers;
 using Prism.Ioc;
 using Dopamine.Services.Entities;
+using System.Windows;
 
 namespace Dopamine.ViewModels.Common
 {
@@ -49,6 +52,9 @@ namespace Dopamine.ViewModels.Common
         private bool isNowPlayingPageActive;
         private bool isNowPlayingLyricsPageActive;
         private LyricsFactory lyricsFactory;
+        private INeteaseMusicService neteaseMusicService;
+        private CancellationTokenSource lyricsCancellationTokenSource;
+        private int lyricsGeneration;
 
         public DelegateCommand RefreshLyricsCommand { get; set; }
 
@@ -83,6 +89,7 @@ namespace Dopamine.ViewModels.Common
             this.appVisibilityService = container.Resolve<IAppVisibilityService>();
             this.eventAggregator = container.Resolve<IEventAggregator>();
             this.i18NService = container.Resolve<II18nService>();
+            this.neteaseMusicService = container.Resolve<INeteaseMusicService>();
 
             this.highlightTimer.Interval = this.highlightTimerIntervalMilliseconds;
             this.highlightTimer.Elapsed += HighlightTimer_Elapsed;
@@ -119,12 +126,24 @@ namespace Dopamine.ViewModels.Common
             this.eventAggregator.GetEvent<IsNowPlayingPageActiveChanged>().Subscribe(isNowPlayingPageActive =>
             {
                 this.isNowPlayingPageActive = isNowPlayingPageActive;
+
+                if (!isNowPlayingPageActive)
+                {
+                    this.CancelLyricsRequest();
+                }
+
                 this.RestartRefreshTimer();
             });
 
             this.eventAggregator.GetEvent<IsNowPlayingSubPageChanged>().Subscribe(tuple =>
             {
                 this.isNowPlayingLyricsPageActive = tuple.Item2 == NowPlayingSubPage.Lyrics;
+
+                if (!this.isNowPlayingLyricsPageActive)
+                {
+                    this.CancelLyricsRequest();
+                }
+
                 this.RestartRefreshTimer();
             });
 
@@ -134,6 +153,7 @@ namespace Dopamine.ViewModels.Common
             this.playbackService.PlaybackSuccess += (_, e) =>
             {
                 this.ContentSlideInFrom = e.IsPlayingPreviousTrack ? -30 : 30;
+                this.CancelLyricsRequest();
                 this.RestartRefreshTimer();
             };
 
@@ -258,11 +278,30 @@ namespace Dopamine.ViewModels.Common
             if (this.appVisibilityService.IsBackgroundPlaybackMode) return;
             if (track == null) return;
 
+            int generation = Interlocked.Increment(ref this.lyricsGeneration);
+            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            CancellationTokenSource previousCancellationTokenSource = Interlocked.Exchange(
+                ref this.lyricsCancellationTokenSource,
+                cancellationTokenSource);
+            previousCancellationTokenSource?.Cancel();
+
             this.previousTrack = track;
 
             this.StopHighlighting();
 
+            if (track.IsOnline)
+            {
+                await this.RefreshNeteaseLyricsAsync(track, generation, cancellationTokenSource);
+                return;
+            }
+
             FileMetadata fmd = await this.metadataService.GetFileMetadataAsync(track.Path);
+
+            if (generation != this.lyricsGeneration)
+            {
+                cancellationTokenSource.Dispose();
+                return;
+            }
 
             await Task.Run(() =>
             {
@@ -344,6 +383,11 @@ namespace Dopamine.ViewModels.Common
 
                 await Task.Run(() =>
                             {
+                                if (generation != this.lyricsGeneration)
+                                {
+                                    return;
+                                }
+
                                 this.LyricsViewModel = new LyricsViewModel(container, track);
                                 this.LyricsViewModel.SetLyrics(lyrics);
                             });
@@ -353,10 +397,69 @@ namespace Dopamine.ViewModels.Common
                 this.IsDownloadingLyrics = false;
                 AppLog.Error("Could not show lyrics for Track {0}. Exception: {1}", track.Path, ex.Message);
                 this.ClearLyrics(track);
+                this.CompleteLyricsRequest(generation, cancellationTokenSource);
                 return;
             }
 
             this.StartHighlightingIfAllowed();
+            this.CompleteLyricsRequest(generation, cancellationTokenSource);
+        }
+
+        private async Task RefreshNeteaseLyricsAsync(
+            TrackViewModel track,
+            int generation,
+            CancellationTokenSource cancellationTokenSource)
+        {
+            this.IsDownloadingLyrics = true;
+
+            try
+            {
+                NeteaseLyricResult result = await this.neteaseMusicService.GetLyricsAsync(
+                    track.SourceInfo.RemoteId,
+                    cancellationTokenSource.Token);
+
+                if (generation != this.lyricsGeneration || cancellationTokenSource.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                var lyrics = result.IsSuccess
+                    ? new Lyrics(result.Lyric ?? string.Empty, "Netease Cloud Music", SourceTypeEnum.Online)
+                    : new Lyrics();
+
+                this.Dispatch(() =>
+                {
+                    if (generation != this.lyricsGeneration)
+                    {
+                        return;
+                    }
+
+                    this.LyricsViewModel = new LyricsViewModel(this.container, track);
+                    this.LyricsViewModel.SetLyrics(lyrics);
+                });
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warning("Could not show Netease lyrics. SongId={0}, ErrorType={1}",
+                    track.SourceInfo.RemoteId,
+                    ex.GetType().Name);
+                this.Dispatch(() => this.ClearLyrics(track));
+            }
+            finally
+            {
+                if (generation == this.lyricsGeneration)
+                {
+                    this.IsDownloadingLyrics = false;
+                    Interlocked.CompareExchange(ref this.lyricsCancellationTokenSource, null, cancellationTokenSource);
+
+                    this.StartHighlightingIfAllowed();
+                }
+
+                cancellationTokenSource.Dispose();
+            }
         }
 
         private async Task HighlightLyricsLineAsync()
@@ -420,6 +523,38 @@ namespace Dopamine.ViewModels.Common
                 }
 
             });
+        }
+
+        private void CompleteLyricsRequest(int generation, CancellationTokenSource cancellationTokenSource)
+        {
+            if (generation == this.lyricsGeneration)
+            {
+                Interlocked.CompareExchange(ref this.lyricsCancellationTokenSource, null, cancellationTokenSource);
+            }
+
+            cancellationTokenSource.Dispose();
+        }
+
+        private void CancelLyricsRequest()
+        {
+            Interlocked.Increment(ref this.lyricsGeneration);
+            CancellationTokenSource cancellationTokenSource = Interlocked.Exchange(
+                ref this.lyricsCancellationTokenSource,
+                null);
+            cancellationTokenSource?.Cancel();
+            this.Dispatch(() => this.IsDownloadingLyrics = false);
+        }
+
+        private void Dispatch(Action action)
+        {
+            if (Application.Current == null || Application.Current.Dispatcher.CheckAccess())
+            {
+                action();
+            }
+            else
+            {
+                Application.Current.Dispatcher.Invoke(action);
+            }
         }
 
         protected override void SearchOnline(string id)

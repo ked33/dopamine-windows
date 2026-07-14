@@ -54,6 +54,8 @@ namespace Dopamine.ViewModels.Common
             get { return (this.lyrics == null || string.IsNullOrEmpty(this.lyrics.Text)) & !this.IsEditing; }
         }
 
+        public bool CanEditLyrics => this.track != null && this.track.SupportsFileMetadataActions;
+
         public bool IsEditing
         {
             get { return this.isEditing; }
@@ -120,6 +122,11 @@ namespace Dopamine.ViewModels.Common
 
         private async Task SaveLyricsInAudioFileAsync()
         {
+            if (!this.CanEditLyrics)
+            {
+                return;
+            }
+
             this.IsEditing = false;
             this.ParseLyrics(this.lyrics);
 
@@ -153,15 +160,17 @@ namespace Dopamine.ViewModels.Common
 
             this.DecreaseFontSizeCommand = new DelegateCommand(() => { if (this.FontSize > 11) this.FontSize--; });
             this.IncreaseFontSizeCommand = new DelegateCommand(() => { if (this.FontSize < 50) this.FontSize++; });
-            this.EditCommand = new DelegateCommand(() => { this.IsEditing = true; });
+            this.EditCommand = new DelegateCommand(() => { this.IsEditing = true; }, () => this.CanEditLyrics);
             this.CancelEditCommand = new DelegateCommand(() =>
             {
                 this.Lyrics = this.uneditedLyrics.Clone();
                 this.IsEditing = false;
             });
 
-            this.SaveCommand = new DelegateCommand(async () => await this.SaveLyricsInAudioFileAsync());
-            this.SaveIfNotEmptyCommand = new DelegateCommand(async () => await this.SaveLyricsInAudioFileAsync(), () => !string.IsNullOrWhiteSpace(this.lyrics.Text));
+            this.SaveCommand = new DelegateCommand(async () => await this.SaveLyricsInAudioFileAsync(), () => this.CanEditLyrics);
+            this.SaveIfNotEmptyCommand = new DelegateCommand(
+                async () => await this.SaveLyricsInAudioFileAsync(),
+                () => this.CanEditLyrics && !string.IsNullOrWhiteSpace(this.lyrics.Text));
 
             this.SearchOnlineCommand = new DelegateCommand<string>((id) => this.SearchOnline(id));
         }

@@ -135,7 +135,8 @@ namespace Dopamine.Services.Appearance
 
         private void PlaybackService_PlaybackSuccess(object sender, PlaybackSuccessEventArgs e)
         {
-            if (!this.followAlbumCoverColor || this.appVisibilityService.IsBackgroundPlaybackMode)
+            if (!this.followAlbumCoverColor || this.appVisibilityService.IsBackgroundPlaybackMode ||
+                this.playbackService.CurrentTrack == null || !this.playbackService.CurrentTrack.IsLocalFile)
             {
                 return;
             }
@@ -348,7 +349,8 @@ namespace Dopamine.Services.Appearance
                 }
                 else if (followAlbumCoverColor)
                 {
-                    if (this.appVisibilityService.IsBackgroundPlaybackMode)
+                    if (this.appVisibilityService.IsBackgroundPlaybackMode ||
+                        this.playbackService.CurrentTrack == null || !this.playbackService.CurrentTrack.IsLocalFile)
                     {
                         applySelectedColorScheme = true;
                     }

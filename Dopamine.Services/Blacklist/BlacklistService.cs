@@ -25,6 +25,11 @@ namespace Dopamine.Services.Blacklist
 
             foreach (TrackViewModel selectedTrack in selectedTracks)
             {
+                if (selectedTrack == null || !selectedTrack.IsLocalFile)
+                {
+                    continue;
+                }
+
                 if (!await this.IsInBlacklistAsync(selectedTrack))
                 {
                     var blacklistTrack = new BlacklistTrack();
@@ -55,6 +60,11 @@ namespace Dopamine.Services.Blacklist
 
         public async Task<bool> IsInBlacklistAsync(TrackViewModel track)
         {
+            if (track == null || !track.IsLocalFile)
+            {
+                return false;
+            }
+
             return await this.blacklistTrackRepository.IsInBlacklistAsync(track.SafePath);
         }
 

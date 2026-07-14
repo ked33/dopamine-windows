@@ -198,7 +198,7 @@ namespace Dopamine.Services.Notification
             {
                 byte[] artworkData = null;
 
-                if (this.playbackService.HasCurrentTrack && !this.IsBackgroundPlaybackMode)
+                if (this.playbackService.HasCurrentTrack && this.playbackService.CurrentTrack.IsLocalFile && !this.IsBackgroundPlaybackMode)
                 {
                     artworkData = await this.metadataService.GetArtworkAsync(
                         this.playbackService.CurrentTrack.Path,

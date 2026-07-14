@@ -8,6 +8,9 @@ using Dopamine.Core.Base;
 using Dopamine.Services.Dialog;
 using Dopamine.Services.Provider;
 using Dopamine.Services.Scrobbling;
+using Dopamine.Services.I18n;
+using Dopamine.Services.Online.Netease;
+using Dopamine.Utils;
 using Dopamine.Views.FullPlayer.Settings;
 using Prism.Commands;
 using Prism.Events;
@@ -17,6 +20,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Threading;
+using System.Security;
+using System.Windows;
+using System.Windows.Media;
 using Prism.Ioc;
 
 namespace Dopamine.ViewModels.FullPlayer.Settings
@@ -41,6 +48,16 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
         private bool checkBoxEnableDiscordRichPresence;
         private ObservableCollection<NameValue> timeouts;
         private NameValue selectedTimeout;
+        private INeteaseSessionService neteaseSessionService;
+        private II18nService i18nService;
+        private CancellationTokenSource neteaseQrCancellationTokenSource;
+        private NeteaseQrSession activeNeteaseQrSession;
+        private ImageSource neteaseQrCodeImage;
+        private string neteaseStatusText;
+        private bool isNeteaseSigningIn;
+        private bool isNeteaseQrExpired;
+        private bool isNeteasePageLoaded;
+        private int selectedNeteaseLoginMethod;
 
         public DelegateCommand AddCommand { get; set; }
         public DelegateCommand EditCommand { get; set; }
@@ -48,6 +65,73 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
         public DelegateCommand LastfmSignInCommand { get; set; }
         public DelegateCommand LastfmSignOutCommand { get; set; }
         public DelegateCommand CreateLastFmAccountCommand { get; set; }
+        public DelegateCommand RefreshNeteaseQrCommand { get; set; }
+        public DelegateCommand NeteaseLogoutCommand { get; set; }
+
+        public bool IsNeteaseSignedIn => this.neteaseSessionService.State == NeteaseSessionState.SignedIn;
+
+        public string NeteaseAccountDisplay
+        {
+            get
+            {
+                if (this.neteaseSessionService.Account == null)
+                {
+                    return string.Empty;
+                }
+
+                return string.IsNullOrWhiteSpace(this.neteaseSessionService.Account.Nickname)
+                    ? this.neteaseSessionService.Account.UserId
+                    : this.neteaseSessionService.Account.Nickname;
+            }
+        }
+
+        public ImageSource NeteaseQrCodeImage
+        {
+            get { return this.neteaseQrCodeImage; }
+            set { SetProperty<ImageSource>(ref this.neteaseQrCodeImage, value); }
+        }
+
+        public string NeteaseStatusText
+        {
+            get { return this.neteaseStatusText; }
+            set { SetProperty<string>(ref this.neteaseStatusText, value); }
+        }
+
+        public bool IsNeteaseSigningIn
+        {
+            get { return this.isNeteaseSigningIn; }
+            set
+            {
+                SetProperty<bool>(ref this.isNeteaseSigningIn, value);
+                this.RefreshNeteaseQrCommand?.RaiseCanExecuteChanged();
+                this.NeteaseLogoutCommand?.RaiseCanExecuteChanged();
+            }
+        }
+
+        public bool IsNeteaseQrExpired
+        {
+            get { return this.isNeteaseQrExpired; }
+            set { SetProperty<bool>(ref this.isNeteaseQrExpired, value); }
+        }
+
+        public int SelectedNeteaseLoginMethod
+        {
+            get { return this.selectedNeteaseLoginMethod; }
+            set
+            {
+                if (!SetProperty<int>(ref this.selectedNeteaseLoginMethod, value))
+                {
+                    return;
+                }
+
+                this.CancelNeteaseQrLogin();
+
+                if (value == 0 && this.isNeteasePageLoaded && !this.IsNeteaseSignedIn)
+                {
+                    this.BeginNeteaseQrLoginAsync();
+                }
+            }
+        }
 
         public ObservableCollection<NameValue> Timeouts
         {
@@ -198,13 +282,28 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             get { return this.scrobblingService.SignInState == SignInState.Error; }
         }
 
-        public SettingsOnlineViewModel(IContainerProvider container, IProviderService providerService, IDialogService dialogService, IScrobblingService scrobblingService, IEventAggregator eventAggregator)
+        public SettingsOnlineViewModel(IContainerProvider container, IProviderService providerService, IDialogService dialogService,
+            IScrobblingService scrobblingService, IEventAggregator eventAggregator, INeteaseSessionService neteaseSessionService,
+            II18nService i18nService)
         {
             this.container = container;
             this.providerService = providerService;
             this.dialogService = dialogService;
             this.scrobblingService = scrobblingService;
             this.eventAggregator = eventAggregator;
+            this.neteaseSessionService = neteaseSessionService;
+            this.i18nService = i18nService;
+
+            this.RefreshNeteaseQrCommand = new DelegateCommand(
+                () => this.BeginNeteaseQrLoginAsync(),
+                () => !this.IsNeteaseSigningIn);
+            this.NeteaseLogoutCommand = new DelegateCommand(
+                () => this.LogoutNeteaseAsync(),
+                () => !this.IsNeteaseSigningIn);
+
+            this.neteaseSessionService.SessionChanged += (_, __) => this.DispatchNeteaseStateUpdate();
+            this.i18nService.LanguageChanged += (_, __) => this.DispatchNeteaseStateUpdate();
+            this.UpdateNeteaseState();
 
             this.scrobblingService.SignInStateChanged += (_) =>
             {
@@ -242,6 +341,250 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
 
             this.GetCheckBoxesAsync();
             this.GetTimeoutsAsync();
+        }
+
+        public Task OnNeteaseLoadedAsync()
+        {
+            this.isNeteasePageLoaded = true;
+            this.UpdateNeteaseState();
+
+            if (!this.IsNeteaseSignedIn && this.SelectedNeteaseLoginMethod == 0 && this.activeNeteaseQrSession == null)
+            {
+                this.BeginNeteaseQrLoginAsync();
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public void OnNeteaseUnloaded()
+        {
+            this.isNeteasePageLoaded = false;
+            this.CancelNeteaseQrLogin();
+        }
+
+        public async Task LoginWithNeteaseCookieAsync(SecureString cookie)
+        {
+            if (cookie == null || cookie.Length == 0 || this.IsNeteaseSigningIn)
+            {
+                return;
+            }
+
+            this.CancelNeteaseQrLogin();
+            this.IsNeteaseSigningIn = true;
+            this.NeteaseStatusText = ResourceUtils.GetString("Language_Netease_Validating_Login");
+
+            try
+            {
+                NeteaseLoginResult result = await this.neteaseSessionService.LoginWithCookieAsync(cookie, CancellationToken.None);
+
+                if (!result.IsSuccess)
+                {
+                    this.NeteaseStatusText = this.GetNeteaseErrorText(result.Error);
+                }
+            }
+            finally
+            {
+                this.IsNeteaseSigningIn = false;
+                this.UpdateNeteaseState(false);
+            }
+        }
+
+        private async void BeginNeteaseQrLoginAsync()
+        {
+            if (this.IsNeteaseSigningIn || this.IsNeteaseSignedIn || !this.isNeteasePageLoaded)
+            {
+                return;
+            }
+
+            this.CancelNeteaseQrLogin();
+            this.IsNeteaseSigningIn = true;
+            this.IsNeteaseQrExpired = false;
+            this.NeteaseQrCodeImage = null;
+            this.NeteaseStatusText = ResourceUtils.GetString("Language_Netease_Creating_Qr_Code");
+            var cancellationTokenSource = new CancellationTokenSource();
+            Interlocked.Exchange(ref this.neteaseQrCancellationTokenSource, cancellationTokenSource);
+            CancellationToken cancellationToken = cancellationTokenSource.Token;
+
+            try
+            {
+                NeteaseResult<NeteaseQrSession> result = await this.neteaseSessionService.BeginQrLoginAsync(cancellationToken);
+
+                if (!result.IsSuccess || cancellationToken.IsCancellationRequested)
+                {
+                    if (!cancellationToken.IsCancellationRequested)
+                    {
+                        this.NeteaseStatusText = this.GetNeteaseErrorText(result.Error);
+                    }
+
+                    return;
+                }
+
+                this.activeNeteaseQrSession = result.Value;
+                this.NeteaseQrCodeImage = QrCodeImageFactory.Create(
+                    "https://music.163.com/login?codekey=" + Uri.EscapeDataString(result.Value.Unikey));
+                this.NeteaseStatusText = ResourceUtils.GetString("Language_Netease_Qr_Waiting_For_Scan");
+                this.IsNeteaseSigningIn = false;
+                await this.PollNeteaseQrLoginAsync(result.Value, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warning("Could not run Netease QR sign-in. ErrorType={0}", ex.GetType().Name);
+                this.NeteaseStatusText = ResourceUtils.GetString("Language_Netease_Service_Unavailable");
+            }
+            finally
+            {
+                this.IsNeteaseSigningIn = false;
+                Interlocked.CompareExchange(ref this.neteaseQrCancellationTokenSource, null, cancellationTokenSource);
+                cancellationTokenSource.Dispose();
+            }
+        }
+
+        private async Task PollNeteaseQrLoginAsync(NeteaseQrSession session, CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested && this.isNeteasePageLoaded &&
+                this.SelectedNeteaseLoginMethod == 0 && !this.IsNeteaseSignedIn)
+            {
+                NeteaseQrPollResult result = await this.neteaseSessionService.PollQrLoginAsync(session, cancellationToken);
+
+                switch (result.State)
+                {
+                    case NeteaseQrState.WaitingForScan:
+                        this.NeteaseStatusText = ResourceUtils.GetString("Language_Netease_Qr_Waiting_For_Scan");
+                        break;
+                    case NeteaseQrState.WaitingForConfirm:
+                        this.NeteaseStatusText = ResourceUtils.GetString("Language_Netease_Qr_Waiting_For_Confirm");
+                        break;
+                    case NeteaseQrState.Authorized:
+                        this.activeNeteaseQrSession = null;
+                        this.NeteaseStatusText = ResourceUtils.GetString("Language_Netease_Signed_In");
+                        this.UpdateNeteaseState();
+                        return;
+                    case NeteaseQrState.Expired:
+                        this.IsNeteaseQrExpired = true;
+                        this.NeteaseStatusText = ResourceUtils.GetString("Language_Netease_Qr_Expired");
+                        return;
+                    case NeteaseQrState.Cancelled:
+                        return;
+                    default:
+                        this.NeteaseStatusText = this.GetNeteaseErrorText(result.Error);
+                        return;
+                }
+
+                await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+            }
+        }
+
+        private async void LogoutNeteaseAsync()
+        {
+            if (!this.dialogService.ShowConfirmation(
+                0xe11b,
+                16,
+                ResourceUtils.GetString("Language_Netease_Music"),
+                ResourceUtils.GetString("Language_Netease_Confirm_Logout"),
+                ResourceUtils.GetString("Language_Yes"),
+                ResourceUtils.GetString("Language_No")))
+            {
+                return;
+            }
+
+            this.IsNeteaseSigningIn = true;
+            bool shouldRestartQr = false;
+
+            try
+            {
+                this.CancelNeteaseQrLogin();
+                await this.neteaseSessionService.LogoutAsync();
+                this.NeteaseQrCodeImage = null;
+                this.NeteaseStatusText = ResourceUtils.GetString("Language_Netease_Signed_Out");
+
+                shouldRestartQr = this.isNeteasePageLoaded && this.SelectedNeteaseLoginMethod == 0;
+            }
+            finally
+            {
+                this.IsNeteaseSigningIn = false;
+                this.UpdateNeteaseState(false);
+            }
+
+            if (shouldRestartQr)
+            {
+                this.BeginNeteaseQrLoginAsync();
+            }
+        }
+
+        private void CancelNeteaseQrLogin()
+        {
+            NeteaseQrSession session = this.activeNeteaseQrSession;
+            this.activeNeteaseQrSession = null;
+
+            CancellationTokenSource cancellationTokenSource = Interlocked.Exchange(
+                ref this.neteaseQrCancellationTokenSource,
+                null);
+            cancellationTokenSource?.Cancel();
+
+            if (session != null)
+            {
+                this.neteaseSessionService.CancelSignIn(session.LoginGeneration);
+            }
+        }
+
+        private void DispatchNeteaseStateUpdate()
+        {
+            if (Application.Current == null || Application.Current.Dispatcher.CheckAccess())
+            {
+                this.UpdateNeteaseState();
+                return;
+            }
+
+            Application.Current.Dispatcher.Invoke(new Action(this.UpdateNeteaseState));
+        }
+
+        private void UpdateNeteaseState()
+        {
+            this.UpdateNeteaseState(true);
+        }
+
+        private void UpdateNeteaseState(bool updateStatusText)
+        {
+            RaisePropertyChanged(nameof(this.IsNeteaseSignedIn));
+            RaisePropertyChanged(nameof(this.NeteaseAccountDisplay));
+
+            if (!updateStatusText)
+            {
+                return;
+            }
+
+            switch (this.neteaseSessionService.State)
+            {
+                case NeteaseSessionState.SignedIn:
+                    this.NeteaseStatusText = ResourceUtils.GetString("Language_Netease_Signed_In");
+                    break;
+                case NeteaseSessionState.Restoring:
+                    this.NeteaseStatusText = ResourceUtils.GetString("Language_Netease_Restoring_Session");
+                    break;
+                case NeteaseSessionState.OfflineUnknown:
+                    this.NeteaseStatusText = ResourceUtils.GetString("Language_Netease_Network_Error");
+                    break;
+                case NeteaseSessionState.Expired:
+                    this.NeteaseStatusText = ResourceUtils.GetString("Language_Netease_Login_Expired");
+                    break;
+                case NeteaseSessionState.Error:
+                    this.NeteaseStatusText = ResourceUtils.GetString("Language_Netease_Service_Unavailable");
+                    break;
+                default:
+                    if (string.IsNullOrWhiteSpace(this.NeteaseStatusText))
+                    {
+                        this.NeteaseStatusText = ResourceUtils.GetString("Language_Netease_Not_Signed_In");
+                    }
+                    break;
+            }
+        }
+
+        private string GetNeteaseErrorText(NeteaseError error)
+        {
+            return ResourceUtils.GetString(error?.MessageKey ?? "Language_Netease_Service_Unavailable");
         }
 
         private async void GetSearchProvidersAsync()

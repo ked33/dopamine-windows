@@ -6,12 +6,62 @@
              xmlns:dc="clr-namespace:Digimezzo.Foundation.WPF.Controls;assembly=Digimezzo.Foundation.WPF"
              xmlns:utils="clr-namespace:Dopamine.Utils"
              xmlns:prismMvvm="clr-namespace:Prism.Mvvm;assembly=Prism.Wpf"
+             Loaded="SettingsOnline_Loaded"
+             Unloaded="SettingsOnline_Unloaded"
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="300"
              prismMvvm:ViewModelLocator.AutoWireViewModel="True">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="5" Padding="15" PanningMode="Both">
         <StackPanel>
+            <Label Style="{StaticResource TitleLabel}" Content="{DynamicResource Language_Netease_Music}" />
+            <TextBlock Margin="0,5,0,0" Text="{DynamicResource Language_Netease_Online_Description}" Foreground="{DynamicResource Brush_PrimaryText}" TextWrapping="Wrap"/>
+            <Grid Margin="0,15,0,0" MaxWidth="620" HorizontalAlignment="Left">
+                <Grid Visibility="{Binding IsNeteaseSignedIn, Converter={StaticResource InvertingBooleanToCollapsedConverter}}">
+                    <dc:Pivot Style="{DynamicResource MenuPivot}" SelectedIndex="{Binding SelectedNeteaseLoginMethod}">
+                        <dc:PivotItem Header="{DynamicResource Language_Netease_Qr_Login}" Style="{StaticResource MenuPivotItem}">
+                            <Grid Margin="0,15,0,0" IsEnabled="{Binding IsNeteaseSigningIn, Converter={StaticResource InvertingBooleanConverter}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Width="180" Height="180" Background="White" Padding="8">
+                                    <Grid>
+                                        <Image Source="{Binding NeteaseQrCodeImage}" Stretch="Uniform"/>
+                                        <dc:ProgressRing Width="48" Height="48" Foreground="{DynamicResource Brush_Accent}" IsActive="{Binding IsNeteaseSigningIn}"/>
+                                    </Grid>
+                                </Border>
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                    <TextBlock Text="{DynamicResource Language_Netease_Scan_With_App}" Foreground="{DynamicResource Brush_PrimaryText}" TextWrapping="Wrap"/>
+                                    <TextBlock Margin="0,10,0,0" Text="{Binding NeteaseStatusText}" Foreground="{DynamicResource Brush_SecondaryText}" TextWrapping="Wrap"/>
+                                    <Button Margin="0,15,0,0" HorizontalAlignment="Left" Style="{StaticResource RegularButton}" Content="{DynamicResource Language_Netease_Refresh_Qr}" Command="{Binding RefreshNeteaseQrCommand}"/>
+                                </StackPanel>
+                            </Grid>
+                        </dc:PivotItem>
+                        <dc:PivotItem Header="{DynamicResource Language_Netease_Cookie_Login}" Style="{StaticResource MenuPivotItem}">
+                            <StackPanel Margin="0,15,0,0" IsEnabled="{Binding IsNeteaseSigningIn, Converter={StaticResource InvertingBooleanConverter}}">
+                                <TextBlock Text="{DynamicResource Language_Netease_Cookie_Description}" Foreground="{DynamicResource Brush_PrimaryText}" TextWrapping="Wrap"/>
+                                <PasswordBox x:Name="NeteaseCookiePasswordBox" Margin="0,12,0,0" MaxWidth="520" HorizontalAlignment="Stretch" Style="{StaticResource MetroPasswordBox}"/>
+                                <StackPanel Margin="0,12,0,0" Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <TextBlock Margin="0,0,15,0" VerticalAlignment="Center" Text="{Binding NeteaseStatusText}" Foreground="{DynamicResource Brush_SecondaryText}" TextWrapping="Wrap"/>
+                                    <Button Style="{StaticResource RegularButtonAccent}" Content="{DynamicResource Language_Netease_Validate_And_Login}" Click="NeteaseCookieLogin_Click"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </dc:PivotItem>
+                    </dc:Pivot>
+                </Grid>
+                <StackPanel Visibility="{Binding IsNeteaseSignedIn, Converter={StaticResource BooleanToCollapsedConverter}}">
+                    <DockPanel>
+                        <TextBlock Text="&#xE8FB;" Style="{StaticResource SegoeAssets}" Foreground="{DynamicResource Brush_Accent}" FontSize="18" VerticalAlignment="Center"/>
+                        <TextBlock Margin="10,0,0,0" Foreground="{DynamicResource Brush_Accent}" VerticalAlignment="Center">
+                            <Run Text="{DynamicResource Language_Netease_Signed_In_As}"/><Run Text=" "/><Run Text="{Binding NeteaseAccountDisplay}"/>
+                        </TextBlock>
+                    </DockPanel>
+                    <TextBlock Margin="0,8,0,0" Text="{DynamicResource Language_Netease_Session_Encrypted}" Foreground="{DynamicResource Brush_SecondaryText}" TextWrapping="Wrap"/>
+                    <Button Margin="0,12,0,0" HorizontalAlignment="Left" Style="{StaticResource RegularButton}" Content="{DynamicResource Language_Sign_Out}" Command="{Binding NeteaseLogoutCommand}"/>
+                </StackPanel>
+            </Grid>
             <Label Style="{StaticResource TitleLabel}" Content="{DynamicResource Language_Search_Online}" />
             <TextBlock Margin="0,5,0,0" Text="{DynamicResource Language_Add_Remove_Online_Search_Providers}" Foreground="{DynamicResource Brush_PrimaryText}"/>
             <StackPanel Orientation="Horizontal" Margin="0,10,0,0">

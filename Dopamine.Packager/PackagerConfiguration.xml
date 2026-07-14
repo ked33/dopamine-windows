@@ -24,6 +24,7 @@
         <File>Dopamine.exe.config</File>
         <File>License.txt</File>
         <File>Changelog.txt</File>
+        <File>THIRD-PARTY-NOTICES.md</File>
         <File>GongSolutions.WPF.DragDrop.dll</File>
         <File>Prism.dll</File>
         <File>Prism.DryIoc.Wpf.dll</File>
@@ -50,6 +51,17 @@
         <File>Newtonsoft.Json.dll</File>
         <File>NVorbis.dll</File>
         <File>DiscordRPC.dll</File>
+        <File>HyPlayer.NeteaseApi.dll</File>
+        <File>QRCoder.dll</File>
+        <File>Microsoft.Bcl.AsyncInterfaces.dll</File>
+        <File>System.Buffers.dll</File>
+        <File>System.IO.Pipelines.dll</File>
+        <File>System.Memory.dll</File>
+        <File>System.Numerics.Vectors.dll</File>
+        <File>System.Runtime.CompilerServices.Unsafe.dll</File>
+        <File>System.Text.Encodings.Web.dll</File>
+        <File>System.Text.Json.dll</File>
+        <File>System.Threading.Tasks.Extensions.dll</File>
       </Files>
     </Portable>
   </Packaging>

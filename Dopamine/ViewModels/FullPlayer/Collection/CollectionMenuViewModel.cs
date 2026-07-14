@@ -36,7 +36,10 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             {
                 if (SettingsClient.Get<bool>("Startup", "ShowLastSelectedPage"))
                 {
-                    this.SelectedPage = (CollectionPage)SettingsClient.Get<int>("FullPlayer", "SelectedCollectionPage");
+                    int savedPage = SettingsClient.Get<int>("FullPlayer", "SelectedCollectionPage");
+                    this.SelectedPage = Enum.IsDefined(typeof(CollectionPage), savedPage)
+                        ? (CollectionPage)savedPage
+                        : CollectionPage.Artists;
                 }
                 else
                 {

@@ -156,6 +156,12 @@ namespace Dopamine.ViewModels.Common
                     return;
                 }
 
+                if (!track.IsLocalFile)
+                {
+                    this.ClearArtwork();
+                    return;
+                }
+
                 // Try to find artwork
                 byte[] artwork = null;
                 int requestedArtworkSize = this.RequestedArtworkSize;

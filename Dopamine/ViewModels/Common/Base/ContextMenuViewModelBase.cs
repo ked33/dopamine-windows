@@ -11,6 +11,7 @@ using Prism.Mvvm;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using Dopamine.Services.Entities;
 
@@ -61,7 +62,8 @@ namespace Dopamine.ViewModels.Common.Base
             // Commands
             this.SearchOnlineCommand = new DelegateCommand<string>((id) => this.SearchOnline(id));
             this.AddPlayingTrackToPlaylistCommand = new DelegateCommand<string>(
-            async (playlistName) => await this.AddPlayingTrackToPlaylistAsync(playlistName), (_) => this.playbackService.HasCurrentTrack);
+            async (playlistName) => await this.AddPlayingTrackToPlaylistAsync(playlistName),
+            (_) => this.playbackService.HasCurrentTrack && this.playbackService.CurrentTrack.IsLocalFile);
 
             // Events
             this.providerService.SearchProvidersChanged += (_, __) => { this.GetSearchProvidersAsync(); };
@@ -82,6 +84,11 @@ namespace Dopamine.ViewModels.Common.Base
         private async Task AddPlayingTrackToPlaylistAsync(string playlistName)
         {
             if (!this.playbackService.HasCurrentTrack)
+            {
+                return;
+            }
+
+            if (!this.playbackService.CurrentTrack.IsLocalFile)
             {
                 return;
             }
@@ -133,6 +140,11 @@ namespace Dopamine.ViewModels.Common.Base
 
         protected async Task AddTracksToPlaylistAsync(string playlistName, IList<TrackViewModel> tracks)
         {
+            if (tracks == null || tracks.Count == 0 || tracks.Any(x => x == null || !x.IsLocalFile))
+            {
+                return;
+            }
+
             CreateNewPlaylistResult addPlaylistResult = CreateNewPlaylistResult.Success; // Default Success
 
             // If no playlist is provided, first create one.

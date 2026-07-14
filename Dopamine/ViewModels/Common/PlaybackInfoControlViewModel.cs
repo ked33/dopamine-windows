@@ -12,6 +12,7 @@ using Prism.Mvvm;
 using System;
 using System.Threading.Tasks;
 using System.Timers;
+using System.Windows;
 
 namespace Dopamine.ViewModels.Common
 {
@@ -29,6 +30,8 @@ namespace Dopamine.ViewModels.Common
         private int refreshTimerIntervalMilliseconds = 250;
         private bool enableRating;
         private bool enableLove;
+        private bool configuredEnableRating;
+        private bool configuredEnableLove;
 
         public int Rating
         {
@@ -38,7 +41,7 @@ namespace Dopamine.ViewModels.Common
             }
             set
             {
-                if (this.track != null)
+                if (this.track != null && this.track.SupportsFileMetadataActions)
                 {
                     this.track.Rating = value;
                     RaisePropertyChanged(nameof(this.Rating));
@@ -55,7 +58,7 @@ namespace Dopamine.ViewModels.Common
             }
             set
             {
-                if (this.track != null)
+                if (this.track != null && this.track.SupportsFileMetadataActions)
                 {
                     // Update the UI
                     this.track.Love = value;
@@ -164,13 +167,15 @@ namespace Dopamine.ViewModels.Common
             {
                 if (SettingsClient.IsSettingChanged(e, "Behaviour", "EnableRating"))
                 {
-                    this.EnableRating = (bool)e.Entry.Value;
+                    this.configuredEnableRating = (bool)e.Entry.Value;
+                    this.UpdateMetadataActionVisibility();
 
                 }
 
                 if (SettingsClient.IsSettingChanged(e, "Behaviour", "EnableLove"))
                 {
-                    this.EnableLove = (bool)e.Entry.Value;
+                    this.configuredEnableLove = (bool)e.Entry.Value;
+                    this.UpdateMetadataActionVisibility();
                 }
             };
 
@@ -178,8 +183,9 @@ namespace Dopamine.ViewModels.Common
             this.SlideDirection = SlideDirection.DownToUp;
             this.ClearPlaybackInfo();
             this.RefreshPlaybackInfoAsync(this.playbackService.CurrentTrack, false);
-            this.EnableRating = SettingsClient.Get<bool>("Behaviour", "EnableRating");
-            this.EnableLove = SettingsClient.Get<bool>("Behaviour", "EnableLove");
+            this.configuredEnableRating = SettingsClient.Get<bool>("Behaviour", "EnableRating");
+            this.configuredEnableLove = SettingsClient.Get<bool>("Behaviour", "EnableLove");
+            this.UpdateMetadataActionVisibility();
         }
 
         private void RefreshTimer_Elapsed(object sender, ElapsedEventArgs e)
@@ -233,6 +239,7 @@ namespace Dopamine.ViewModels.Common
                 }
 
                 this.track = track;
+                this.UpdateMetadataActionVisibility();
 
                 // The track didn't change: leave the previous playback info.
                 if (!allowRefreshingCurrentTrack & this.track.Equals(this.previousTrack)) return;
@@ -276,6 +283,25 @@ namespace Dopamine.ViewModels.Common
 
             this.PlaybackInfoViewModel.CurrentTime = FormatUtils.FormatTime(this.playbackService.GetCurrentTime);
             this.PlaybackInfoViewModel.TotalTime = " / " + FormatUtils.FormatTime(this.playbackService.GetTotalTime);
+        }
+
+        private void UpdateMetadataActionVisibility()
+        {
+            Action update = () =>
+            {
+                bool supportsFileMetadataActions = this.track == null || this.track.SupportsFileMetadataActions;
+                this.EnableRating = this.configuredEnableRating && supportsFileMetadataActions;
+                this.EnableLove = this.configuredEnableLove && supportsFileMetadataActions;
+            };
+
+            if (Application.Current == null || Application.Current.Dispatcher.CheckAccess())
+            {
+                update();
+            }
+            else
+            {
+                Application.Current.Dispatcher.Invoke(update);
+            }
         }
     }
 }

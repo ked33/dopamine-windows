@@ -143,9 +143,9 @@ namespace Dopamine.Services.Notification
             musicProperties.Title = track.TrackTitle;
             uint.TryParse(track.TrackNumber, out var trackNumber);
             musicProperties.TrackNumber = trackNumber;
-            await SetArtworkThumbnailAsync(this.IsBackgroundPlaybackMode ? null : await this.MetadataService.GetArtworkAsync(
-                track.Path,
-                Constants.ArtworkNotificationSize));
+            await SetArtworkThumbnailAsync(this.IsBackgroundPlaybackMode || !track.IsLocalFile
+                ? null
+                : await this.MetadataService.GetArtworkAsync(track.Path, Constants.ArtworkNotificationSize));
             displayUpdater.Update();
         }
 

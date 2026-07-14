@@ -32,6 +32,7 @@
               Margin="0,10,0,0"
               HorizontalAlignment="Left"
               Command="{Binding EditCommand}"
+              IsEnabled="{Binding CanEditLyrics}"
               Content="{DynamicResource Language_Add_Lyrics}"
               Style="{StaticResource LinkButton}" />
                     </StackPanel>
@@ -50,6 +51,7 @@
             Orientation="Horizontal">
                         <Button
               Command="{Binding SaveCommand}"
+              IsEnabled="{Binding CanEditLyrics}"
               Content="{DynamicResource Language_Save_In_Audio_File}"
               Style="{StaticResource RegularButton}" />
                         <Button
@@ -170,9 +172,10 @@
                                 <MenuItem
                   Click="EditMenuItem_Click"
                   Command="{Binding EditCommand}"
+                  IsEnabled="{Binding CanEditLyrics}"
                   Header="{DynamicResource Language_Edit}" />
                                 <Separator />
-                                <MenuItem Command="{Binding SaveIfNotEmptyCommand}" Header="{DynamicResource Language_Save_In_Audio_File}" />
+                                <MenuItem Command="{Binding SaveIfNotEmptyCommand}" IsEnabled="{Binding CanEditLyrics}" Header="{DynamicResource Language_Save_In_Audio_File}" />
                             </ContextMenu>
                         </ListBox.ContextMenu>
                     </ListBox>
