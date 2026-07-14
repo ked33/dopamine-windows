@@ -22,6 +22,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Timers;
+using Timer = System.Timers.Timer;
 using Prism.Ioc;
 using Dopamine.Services.Entities;
 using System.Windows;
