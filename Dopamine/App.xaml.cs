@@ -289,7 +289,7 @@ namespace Dopamine
                 containerRegistry.RegisterSingleton<IRichPresenceService, RichPresenceService>();
                 containerRegistry.RegisterSingleton<IBlacklistService, BlacklistService>();
                 containerRegistry.RegisterSingleton<INeteaseApiClient, NeteaseApiClient>();
-                containerRegistry.RegisterSingleton<INeteaseSessionStore, DpapiNeteaseSessionStore>();
+                containerRegistry.RegisterInstance<INeteaseSessionStore>(new DpapiNeteaseSessionStore());
                 containerRegistry.RegisterSingleton<INeteaseSessionService, NeteaseSessionService>();
                 containerRegistry.RegisterSingleton<INeteaseMusicService, NeteaseMusicService>();
                 containerRegistry.RegisterSingleton<NeteaseTemporaryAudioCache>();
@@ -606,12 +606,33 @@ namespace Dopamine
             // Close the application to prevent further problems
             AppLog.InfoAlways("### FORCED STOP of {0}, version {1} ###", ProductInformation.ApplicationName, ProcessExecutable.AssemblyVersion());
 
-            // Stop playing (This avoids remaining processes in Task Manager)
-            var playbackService = ServiceLocator.Current.GetInstance<IPlaybackService>();
-            playbackService.Stop();
+            // Stop playing when the container finished initializing. Startup failures can happen before
+            // CommonServiceLocator has a provider, so emergency cleanup must not hide the original exception.
+            try
+            {
+                if (ServiceLocator.IsLocationProviderSet)
+                {
+                    ServiceLocator.Current.GetInstance<IPlaybackService>().Stop();
+                }
+                else
+                {
+                    AppLog.WarningAlways("Skipped playback stop during emergency shutdown because the service locator is not initialized.");
+                }
+            }
+            catch (Exception cleanupException)
+            {
+                AppLog.WarningAlways("Could not stop playback during emergency shutdown. ErrorType={0}", cleanupException.GetType().Name);
+            }
 
-            // Emergency save of the settings
-            SettingsClient.Write();
+            // Emergency save of the settings. This can also be unavailable during very early startup.
+            try
+            {
+                SettingsClient.Write();
+            }
+            catch (Exception cleanupException)
+            {
+                AppLog.WarningAlways("Could not save settings during emergency shutdown. ErrorType={0}", cleanupException.GetType().Name);
+            }
 
             Current.Shutdown();
         }

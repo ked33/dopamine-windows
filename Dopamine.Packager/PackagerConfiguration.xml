@@ -20,6 +20,7 @@
         <Directory>FFmpeg\bin\windows\x86</Directory>
       </Directories>
       <Files>
+        <File>BaseSettings.xml</File>
         <File>Dopamine.exe</File>
         <File>Dopamine.exe.config</File>
         <File>License.txt</File>

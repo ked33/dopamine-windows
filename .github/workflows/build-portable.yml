@@ -256,8 +256,122 @@ jobs:
             Copy-Item -LiteralPath $source -Destination $destination -Force
           }
 
+          # Portable packages need the default settings file next to Dopamine.exe. Keep the source
+          # default suitable for installed builds and only switch the staged copy to Portable mode.
+          $baseSettingsPath = Join-Path $stageRoot 'BaseSettings.xml'
+          [xml]$baseSettings = Get-Content -LiteralPath $baseSettingsPath
+          $configurationNamespaces = @(
+            $baseSettings.Settings.Namespace |
+              Where-Object { [string]$_.Name -eq 'Configuration' }
+          )
+
+          if ($configurationNamespaces.Count -ne 1) {
+            throw "BaseSettings.xml must contain exactly one Configuration namespace."
+          }
+
+          $portableSettings = @(
+            $configurationNamespaces[0].Setting |
+              Where-Object { [string]$_.Name -eq 'IsPortable' }
+          )
+
+          if ($portableSettings.Count -ne 1) {
+            throw "BaseSettings.xml must contain exactly one Configuration.IsPortable setting."
+          }
+
+          $portableSettings[0].Value = 'True'
+
+          $xmlWriterSettings = [System.Xml.XmlWriterSettings]::new()
+          $xmlWriterSettings.Encoding = [System.Text.UTF8Encoding]::new($true)
+          $xmlWriterSettings.Indent = $true
+          $xmlWriterSettings.NewLineChars = "`r`n"
+          $xmlWriterSettings.NewLineHandling = [System.Xml.NewLineHandling]::Replace
+          $xmlWriter = [System.Xml.XmlWriter]::Create($baseSettingsPath, $xmlWriterSettings)
+
+          try {
+            $baseSettings.Save($xmlWriter)
+          }
+          finally {
+            $xmlWriter.Dispose()
+          }
+
+          [xml]$stagedBaseSettings = Get-Content -LiteralPath $baseSettingsPath
+          $stagedPortableValue = @(
+            ($stagedBaseSettings.Settings.Namespace |
+              Where-Object { [string]$_.Name -eq 'Configuration' }).Setting |
+              Where-Object { [string]$_.Name -eq 'IsPortable' }
+          )[0].Value
+
+          if (-not [string]::Equals([string]$stagedPortableValue, 'True', [System.StringComparison]::OrdinalIgnoreCase)) {
+            throw "Portable BaseSettings.xml was not configured with IsPortable=True."
+          }
+
           $fileCount = (Get-ChildItem -LiteralPath $stageRoot -Recurse -File | Measure-Object).Count
           Write-Host "Prepared $fileCount files in $stageRoot for artifact upload."
+
+      - name: Smoke test Portable startup
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $workspaceRoot = [System.IO.Path]::GetFullPath($env:GITHUB_WORKSPACE).TrimEnd('\') + '\'
+          $stageRoot = [System.IO.Path]::GetFullPath((Join-Path $env:GITHUB_WORKSPACE $env:ARTIFACTS_STAGE_DIR))
+          $smokeRoot = [System.IO.Path]::GetFullPath((Join-Path $env:GITHUB_WORKSPACE 'artifacts\portable-smoke'))
+
+          if (-not $smokeRoot.StartsWith($workspaceRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+            throw "Portable smoke directory is outside the GitHub workspace: $smokeRoot"
+          }
+
+          if (Test-Path -LiteralPath $smokeRoot) {
+            Remove-Item -LiteralPath $smokeRoot -Recurse -Force
+          }
+
+          Copy-Item -LiteralPath $stageRoot -Destination $smokeRoot -Recurse -Force
+          $executable = Join-Path $smokeRoot 'Dopamine.exe'
+
+          if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) {
+            throw "Portable smoke executable was not found: $executable"
+          }
+
+          $process = $null
+
+          try {
+            $process = Start-Process `
+              -FilePath $executable `
+              -WorkingDirectory $smokeRoot `
+              -WindowStyle Hidden `
+              -PassThru
+
+            Start-Sleep -Seconds 8
+            $process.Refresh()
+
+            if ($process.HasExited) {
+              $exitCode = $process.ExitCode
+              $logs = @(Get-ChildItem -LiteralPath $smokeRoot -Filter Dopamine.log -Recurse -File -ErrorAction SilentlyContinue)
+
+              foreach ($log in $logs) {
+                Write-Host "Portable startup log: $($log.FullName)"
+                Get-Content -LiteralPath $log.FullName -Tail 80
+              }
+
+              throw "Portable startup smoke test failed with exit code $exitCode."
+            }
+
+            Write-Host "Portable startup smoke test passed; Dopamine remained running for 8 seconds."
+          }
+          finally {
+            if ($null -ne $process) {
+              $process.Refresh()
+
+              if (-not $process.HasExited) {
+                Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+                Wait-Process -Id $process.Id -Timeout 10 -ErrorAction SilentlyContinue
+              }
+            }
+
+            if (Test-Path -LiteralPath $smokeRoot) {
+              Remove-Item -LiteralPath $smokeRoot -Recurse -Force
+            }
+          }
 
       - name: Upload Portable artifact
         uses: actions/upload-artifact@v4
