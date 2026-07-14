@@ -55,7 +55,7 @@
                     <DockPanel>
                         <TextBlock Text="&#xE8FB;" Style="{StaticResource SegoeAssets}" Foreground="{DynamicResource Brush_Accent}" FontSize="18" VerticalAlignment="Center"/>
                         <TextBlock Margin="10,0,0,0" Foreground="{DynamicResource Brush_Accent}" VerticalAlignment="Center">
-                            <Run Text="{DynamicResource Language_Netease_Signed_In_As}"/><Run Text=" "/><Run Text="{Binding NeteaseAccountDisplay}"/>
+                            <Run Text="{DynamicResource Language_Netease_Signed_In_As}"/><Run Text=" "/><Run Text="{Binding NeteaseAccountDisplay, Mode=OneWay}"/>
                         </TextBlock>
                     </DockPanel>
                     <TextBlock Margin="0,8,0,0" Text="{DynamicResource Language_Netease_Session_Encrypted}" Foreground="{DynamicResource Brush_SecondaryText}" TextWrapping="Wrap"/>
