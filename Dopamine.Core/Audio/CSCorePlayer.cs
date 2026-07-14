@@ -27,6 +27,7 @@ namespace Dopamine.Core.Audio
 
         // IPlayer
         private string filename;
+        private AudioSource audioSource;
         private bool canPlay;
         private bool canPause;
         private bool canStop;
@@ -120,7 +121,7 @@ namespace Dopamine.Core.Audio
             {
                 TimeSpan oldProgress = this.GetCurrentTime();
                 this.Stop();
-                this.Play(this.filename, audioDevice);
+                this.Play(this.audioSource, audioDevice);
                 this.Skip(Convert.ToInt32(oldProgress.TotalSeconds));
 
                 // The player was paused. Pause it again after switching audio device.
@@ -270,12 +271,18 @@ namespace Dopamine.Core.Audio
             }
         }
 
-        public void Play(string filename, AudioDevice audioDevice)
+        public void Play(AudioSource source, AudioDevice audioDevice)
         {
+            if (source == null || string.IsNullOrWhiteSpace(source.Location))
+            {
+                throw new ArgumentException("Audio source is invalid", nameof(source));
+            }
+
             this.isStoppedBecausePaused = false;
             this.SetSelectedAudioDevice(audioDevice);
 
-            this.filename = filename;
+            this.audioSource = source;
+            this.filename = source.Location;
 
             this.IsPlaying = true;
 
@@ -283,23 +290,24 @@ namespace Dopamine.Core.Audio
             this.canPause = true;
             this.canStop = true;
 
-            this.InitializeSoundOut(this.GetCodec(this.filename));
+            this.InitializeSoundOut(this.GetCodec(source));
             this.ApplyFilter(this.filterValues);
             this.soundOut.Play();
         }
 
-        private IWaveSource GetCodec(string filename)
+        private IWaveSource GetCodec(AudioSource source)
         {
             IWaveSource waveSource = null;
             bool useFfmpegDecoder = true;
 
             // FfmpegDecoder doesn't support WMA lossless. If Windows Media Foundation is available,
             // we can use MediaFoundationDecoder for WMA files, which supports WMA lossless.
-            if (this.hasMediaFoundationSupport && Path.GetExtension(filename).ToLower().Equals(FileFormats.WMA))
+            if (source.Kind == AudioSourceKind.LocalFile && this.hasMediaFoundationSupport &&
+                Path.GetExtension(source.Location).ToLower().Equals(FileFormats.WMA))
             {
                 try
                 {
-                    waveSource = new MediaFoundationDecoder(filename);
+                    waveSource = new MediaFoundationDecoder(source.Location);
                     useFfmpegDecoder = false;
                 }
                 catch (Exception)
@@ -309,6 +317,12 @@ namespace Dopamine.Core.Audio
 
             if (useFfmpegDecoder)
             {
+                if (source.Kind == AudioSourceKind.RemoteUri)
+                {
+                    waveSource = new FfmpegDecoder(source.Location);
+                }
+                else
+                {
                 // waveSource = new FfmpegDecoder(this.filename);
 
                 // On some systems, files with special characters (e.g. "æ", "ø") can't be opened by FfmpegDecoder.
@@ -317,8 +331,9 @@ namespace Dopamine.Core.Audio
                 // This issue can't be reproduced for now, so we're using a stream as it works in all cases.
                 // See: https://github.com/digimezzo/Dopamine/issues/746
                 // And: https://github.com/filoe/cscore/issues/344
-                this.audioStream = File.OpenRead(filename);
-                waveSource = new FfmpegDecoder(this.audioStream);
+                    this.audioStream = File.OpenRead(source.Location);
+                    waveSource = new FfmpegDecoder(this.audioStream);
+                }
             }
 
             // If the SampleRate < 32000, make it 32000. The Equalizer's maximum frequency is 16000Hz.
@@ -489,6 +504,7 @@ namespace Dopamine.Core.Audio
                 try
                 {
                     this.audioStream.Dispose();
+                    this.audioStream = null;
                 }
                 catch (Exception)
                 {

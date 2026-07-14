@@ -103,6 +103,7 @@
     <Compile Include="Audio\CSCorePlayer.cs" />
     <Compile Include="Audio\EqualizerPreset.cs" />
     <Compile Include="Audio\IPlayer.cs" />
+    <Compile Include="Audio\AudioSource.cs" />
     <Compile Include="Audio\IPlayerFactory.cs" />
     <Compile Include="Audio\ISpectrumPlayer.cs" />
     <Compile Include="Audio\AudioDevice.cs" />

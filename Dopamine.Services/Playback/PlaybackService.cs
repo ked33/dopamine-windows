@@ -91,6 +91,12 @@ namespace Dopamine.Services.Playback
 
         private SynchronizationContext context;
         private bool isLoadingTrack;
+        private QueuePersistenceMode queuePersistenceMode = QueuePersistenceMode.Durable;
+        private IPlaybackSourceResolver playbackSourceResolver;
+        private CancellationTokenSource playbackSourceCancellationTokenSource;
+        private long playbackSourceGeneration;
+        private SemaphoreSlim playbackTransitionGate = new SemaphoreSlim(1, 1);
+        private SemaphoreSlim transientQueueGate = new SemaphoreSlim(1, 1);
 
         private AudioDevice audioDevice;
         private const int PlaybackFadeDurationMilliseconds = 1000;
@@ -297,7 +303,8 @@ namespace Dopamine.Services.Playback
         }
 
         public PlaybackService(IFileService fileService, II18nService i18nService, ITrackRepository trackRepository, IBlacklistService blacklistService,
-            IEqualizerService equalizerService, IQueuedTrackRepository queuedTrackRepository, IContainerProvider container, IPlaylistService playlistService)
+            IEqualizerService equalizerService, IQueuedTrackRepository queuedTrackRepository, IContainerProvider container, IPlaylistService playlistService,
+            IPlaybackSourceResolver playbackSourceResolver)
         {
             this.fileService = fileService;
             this.i18nService = i18nService;
@@ -307,6 +314,7 @@ namespace Dopamine.Services.Playback
             this.equalizerService = equalizerService;
             this.playlistService = playlistService;
             this.container = container;
+            this.playbackSourceResolver = playbackSourceResolver;
 
             this.context = SynchronizationContext.Current;
 
@@ -485,6 +493,12 @@ namespace Dopamine.Services.Playback
 
         public async Task SaveQueuedTracksAsync()
         {
+            if (this.queuePersistenceMode == QueuePersistenceMode.Transient)
+            {
+                this.saveQueuedTracksTimer.Stop();
+                return;
+            }
+
             if (!this.isQueueChanged)
             {
                 return;
@@ -545,6 +559,11 @@ namespace Dopamine.Services.Playback
 
         private async Task SaveQueuedTracksNowAsync()
         {
+            if (this.queuePersistenceMode == QueuePersistenceMode.Transient)
+            {
+                return;
+            }
+
             this.saveQueuedTracksTimer.Stop();
             this.isQueueChanged = true;
 
@@ -718,6 +737,7 @@ namespace Dopamine.Services.Playback
         public void Stop()
         {
             this.CancelPlaybackFade();
+            this.CancelPlaybackSourceResolution();
 
             if (this.player != null && this.player.CanStop)
             {
@@ -735,7 +755,7 @@ namespace Dopamine.Services.Playback
         {
             AppLog.Info("Request to play the next track.");
 
-            if (this.HasCurrentTrack)
+            if (this.HasCurrentTrack && this.CurrentTrack.IsLocalFile)
             {
                 try
                 {
@@ -945,6 +965,7 @@ namespace Dopamine.Services.Playback
 
         public async Task<bool> PlaySelectedAsync(IList<TrackViewModel> tracks)
         {
+            this.EnterDurableQueueMode();
             var result = await this.queueManager.ClearQueueAsync();
             if (result)
             {
@@ -954,6 +975,52 @@ namespace Dopamine.Services.Playback
             }
 
             return result;
+        }
+
+        public async Task<bool> PlayTransientQueueAsync(IList<TrackViewModel> tracks, TrackViewModel startTrack, bool preserveShuffleSetting)
+        {
+            if (tracks == null || tracks.Count == 0 || startTrack == null || tracks.Any(x => x == null || x.IsLocalFile))
+            {
+                return false;
+            }
+
+            if (!await this.transientQueueGate.WaitAsync(0))
+            {
+                return false;
+            }
+
+            try
+            {
+                if (this.queuePersistenceMode == QueuePersistenceMode.Durable && this.HasQueue)
+                {
+                    await this.SaveQueuedTracksNowAsync();
+                }
+
+                this.saveQueuedTracksTimer.Stop();
+                this.queuePersistenceMode = QueuePersistenceMode.Transient;
+                this.isQueueChanged = false;
+
+                if (!await this.queueManager.ClearQueueAsync())
+                {
+                    return false;
+                }
+
+                bool useShuffle = preserveShuffleSetting && this.shuffle;
+                EnqueueResult enqueueResult = await this.queueManager.EnqueueAsync(tracks, useShuffle);
+
+                if (!enqueueResult.IsSuccess)
+                {
+                    return false;
+                }
+
+                this.QueueChanged(this, EventArgs.Empty);
+                TrackViewModel queuedStartTrack = this.Queue.FirstOrDefault(x => x.SafePath.Equals(startTrack.SafePath));
+                return await this.TryPlayAsync(queuedStartTrack ?? this.Queue.FirstOrDefault());
+            }
+            finally
+            {
+                this.transientQueueGate.Release();
+            }
         }
 
         public async Task<DequeueResult> DequeueAsync(IList<TrackViewModel> tracks)
@@ -981,6 +1048,11 @@ namespace Dopamine.Services.Playback
 
         public async Task<EnqueueResult> AddToQueueAsync(IList<TrackViewModel> tracks)
         {
+            if (this.queuePersistenceMode == QueuePersistenceMode.Transient || tracks == null || tracks.Any(x => x == null || x.IsOnline))
+            {
+                return new EnqueueResult { IsSuccess = false };
+            }
+
             EnqueueResult result = await this.queueManager.EnqueueAsync(tracks, this.shuffle);
 
             this.QueueChanged(this, new EventArgs());
@@ -997,6 +1069,11 @@ namespace Dopamine.Services.Playback
 
         public async Task<EnqueueResult> AddToQueueNextAsync(IList<TrackViewModel> tracks)
         {
+            if (this.queuePersistenceMode == QueuePersistenceMode.Transient || tracks == null || tracks.Any(x => x == null || x.IsOnline))
+            {
+                return new EnqueueResult { IsSuccess = false };
+            }
+
             EnqueueResult result = await this.queueManager.EnqueueNextAsync(tracks);
 
             this.QueueChanged(this, new EventArgs());
@@ -1280,7 +1357,7 @@ namespace Dopamine.Services.Playback
             {
                 TrackViewModel firstTrack = this.queueManager.FirstTrack();
 
-                if (await this.blacklistService.IsInBlacklistAsync(firstTrack))
+                if (firstTrack.IsLocalFile && await this.blacklistService.IsInBlacklistAsync(firstTrack))
                 {
                     await this.TryPlayNextAsync(false);
                 }
@@ -1306,11 +1383,14 @@ namespace Dopamine.Services.Playback
             }
         }
 
-        private async Task StartPlaybackAsync(TrackViewModel track, bool silent = false)
+        private async Task StartPlaybackAsync(TrackViewModel track, AudioSource audioSource, bool silent = false)
         {
             // If we start playing a track, we need to make sure that
             // queued tracks are saved when the application is closed.
-            this.isQueueChanged = true;
+            if (this.queuePersistenceMode == QueuePersistenceMode.Durable)
+            {
+                this.isQueueChanged = true;
+            }
 
             // Settings
             this.SetPlaybackSettings();
@@ -1328,7 +1408,7 @@ namespace Dopamine.Services.Playback
             this.queueManager.SetCurrentTrack(track);
 
             // Play the Track
-            await Task.Run(() => this.player.Play(track.Path, this.audioDevice));
+            await Task.Run(() => this.player.Play(audioSource, this.audioDevice));
 
             // Start reporting progress
             this.progressTimer.Start();
@@ -1345,20 +1425,68 @@ namespace Dopamine.Services.Playback
                 return false;
             }
 
-            if (this.isLoadingTrack)
-            {
-                // Only load 1 track at a time (just in case)
-                return true;
-            }
-
+            long generation = Interlocked.Increment(ref this.playbackSourceGeneration);
+            var cancellationTokenSource = new CancellationTokenSource();
+            CancellationTokenSource previousCancellationTokenSource = Interlocked.Exchange(
+                ref this.playbackSourceCancellationTokenSource,
+                cancellationTokenSource);
+            previousCancellationTokenSource?.Cancel();
             this.OnLoadingTrack(true);
 
-            bool isPlaybackSuccess = true;
+            bool isPlaybackSuccess = false;
             bool fadeInAfterPlaybackSuccess = false;
             PlaybackFailedEventArgs playbackFailedEventArgs = null;
+            bool transitionGateEntered = false;
+            bool sourceWasForceRefreshed = false;
 
             try
             {
+                PlaybackSourceResolution sourceResolution = await this.playbackSourceResolver.ResolveAsync(
+                    track,
+                    new PlaybackSourceRequest(),
+                    cancellationTokenSource.Token);
+
+                if (generation != Interlocked.Read(ref this.playbackSourceGeneration) || cancellationTokenSource.IsCancellationRequested)
+                {
+                    return false;
+                }
+
+                if (sourceResolution == null || !sourceResolution.IsSuccess)
+                {
+                    if (track.IsOnline && sourceResolution != null &&
+                        sourceResolution.FailureReason == PlaybackFailureReason.TemporaryDownloadFailed)
+                    {
+                        sourceResolution = await this.playbackSourceResolver.ResolveAsync(
+                            track,
+                            new PlaybackSourceRequest { ForceRefresh = true },
+                            cancellationTokenSource.Token);
+                        sourceWasForceRefreshed = true;
+                    }
+
+                    if (generation != Interlocked.Read(ref this.playbackSourceGeneration) || cancellationTokenSource.IsCancellationRequested)
+                    {
+                        return false;
+                    }
+
+                    if (sourceResolution != null && sourceResolution.IsSuccess)
+                    {
+                        // Continue with the single force-refreshed source.
+                    }
+                    else
+                    {
+                        playbackFailedEventArgs = this.CreatePlaybackFailure(sourceResolution);
+                        return this.ReportPlaybackFailure(track, playbackFailedEventArgs);
+                    }
+                }
+
+                await this.playbackTransitionGate.WaitAsync(cancellationTokenSource.Token);
+                transitionGateEntered = true;
+
+                if (generation != Interlocked.Read(ref this.playbackSourceGeneration) || cancellationTokenSource.IsCancellationRequested)
+                {
+                    return false;
+                }
+
                 // If a Track was playing, make sure it is now stopped.
                 if (fadeOutCurrentTrack && this.ShouldUsePlaybackFade() && this.IsPlaying)
                 {
@@ -1371,14 +1499,64 @@ namespace Dopamine.Services.Playback
 
                 this.StopPlayback();
 
-                // Check that the file exists
-                if (!System.IO.File.Exists(track.Path))
+                try
                 {
-                    throw new FileNotFoundException(string.Format("File '{0}' was not found", track.Path));
+                    await this.StartPlaybackAsync(track, sourceResolution.AudioSource, isSilent);
+                }
+                catch (Exception firstOpenException)
+                {
+                    if (!track.IsOnline || cancellationTokenSource.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+
+                    if (sourceWasForceRefreshed)
+                    {
+                        playbackFailedEventArgs = new PlaybackFailedEventArgs
+                        {
+                            FailureReason = PlaybackFailureReason.DecoderUnsupported,
+                            MessageKey = "Language_Netease_Decoder_Unsupported",
+                            Message = firstOpenException.Message,
+                            StackTrace = firstOpenException.StackTrace
+                        };
+
+                        return this.ReportPlaybackFailure(track, playbackFailedEventArgs);
+                    }
+
+                    this.StopPlayback();
+                    PlaybackSourceResolution refreshedResolution = await this.playbackSourceResolver.ResolveAsync(
+                        track,
+                        new PlaybackSourceRequest { ForceRefresh = true },
+                        cancellationTokenSource.Token);
+
+                    if (refreshedResolution == null || !refreshedResolution.IsSuccess)
+                    {
+                        playbackFailedEventArgs = this.CreatePlaybackFailure(refreshedResolution);
+                        return this.ReportPlaybackFailure(track, playbackFailedEventArgs);
+                    }
+
+                    try
+                    {
+                        await this.StartPlaybackAsync(track, refreshedResolution.AudioSource, isSilent);
+                    }
+                    catch (Exception finalOpenException)
+                    {
+                        AppLog.Warning("Netease audio decoder failed after one forced source refresh. ErrorType={0}", finalOpenException.GetType().Name);
+                        playbackFailedEventArgs = new PlaybackFailedEventArgs
+                        {
+                            FailureReason = PlaybackFailureReason.DecoderUnsupported,
+                            MessageKey = "Language_Netease_Decoder_Unsupported",
+                            Message = finalOpenException.Message,
+                            StackTrace = finalOpenException.StackTrace
+                        };
+
+                        return this.ReportPlaybackFailure(track, playbackFailedEventArgs);
+                    }
+
+                    AppLog.Warning("The first Netease audio source open failed and was refreshed once. ErrorType={0}", firstOpenException.GetType().Name);
                 }
 
-                // Start playing
-                await this.StartPlaybackAsync(track, isSilent);
+                isPlaybackSuccess = true;
 
                 // Playing was successful
                 this.PlaybackSuccess(this, new PlaybackSuccessEventArgs()
@@ -1399,44 +1577,103 @@ namespace Dopamine.Services.Playback
 
                 fadeInAfterPlaybackSuccess = this.ShouldUsePlaybackFade(isSilent);
             }
-            catch (FileNotFoundException fnfex)
+            catch (OperationCanceledException)
             {
-                playbackFailedEventArgs = new PlaybackFailedEventArgs { FailureReason = PlaybackFailureReason.FileNotFound, Message = fnfex.Message, StackTrace = fnfex.StackTrace };
-                isPlaybackSuccess = false;
+                return false;
             }
             catch (Exception ex)
             {
-                playbackFailedEventArgs = new PlaybackFailedEventArgs { FailureReason = PlaybackFailureReason.Unknown, Message = ex.Message, StackTrace = ex.StackTrace };
-                isPlaybackSuccess = false;
-            }
+                playbackFailedEventArgs = new PlaybackFailedEventArgs
+                {
+                    FailureReason = ex is FileNotFoundException ? PlaybackFailureReason.FileNotFound : PlaybackFailureReason.Unknown,
+                    Message = ex.Message,
+                    StackTrace = ex.StackTrace
+                };
 
-            if (!isPlaybackSuccess)
+                return this.ReportPlaybackFailure(track, playbackFailedEventArgs);
+            }
+            finally
             {
-                try
+                if (transitionGateEntered)
                 {
-                    if (this.player != null)
-                    {
-                        this.player.Stop();
-                    }
-                }
-                catch (Exception)
-                {
-                    AppLog.Error("Could not stop the Player");
+                    this.playbackTransitionGate.Release();
                 }
 
-                AppLog.Error("Could not play the file {0}. EventMode={1}, ExclusiveMode={2}, LoopMode={3}, Shuffle={4}. Exception: {5}. StackTrace: {6}", track.Path, this.EventMode, this.ExclusiveMode, this.LoopMode, this.shuffle, playbackFailedEventArgs.Message, playbackFailedEventArgs.StackTrace);
+                if (object.ReferenceEquals(
+                    Interlocked.CompareExchange(ref this.playbackSourceCancellationTokenSource, null, cancellationTokenSource),
+                    cancellationTokenSource))
+                {
+                    this.OnLoadingTrack(false);
+                }
 
-                this.PlaybackFailed(this, playbackFailedEventArgs);
+                cancellationTokenSource.Dispose();
             }
 
-            this.OnLoadingTrack(false);
-
-            if (isPlaybackSuccess && fadeInAfterPlaybackSuccess)
+            if (fadeInAfterPlaybackSuccess)
             {
                 await this.FadeCurrentPlayerVolumeAsync(this.Volume);
             }
 
             return isPlaybackSuccess;
+        }
+
+        private PlaybackFailedEventArgs CreatePlaybackFailure(PlaybackSourceResolution resolution)
+        {
+            if (resolution == null)
+            {
+                return new PlaybackFailedEventArgs { FailureReason = PlaybackFailureReason.Unknown };
+            }
+
+            return new PlaybackFailedEventArgs
+            {
+                FailureReason = resolution.FailureReason,
+                MessageKey = resolution.MessageKey
+            };
+        }
+
+        private bool ReportPlaybackFailure(TrackViewModel track, PlaybackFailedEventArgs eventArgs)
+        {
+            try
+            {
+                this.player?.Stop();
+            }
+            catch (Exception)
+            {
+                AppLog.Error("Could not stop the Player");
+            }
+
+            if (eventArgs.FailureReason != PlaybackFailureReason.Cancelled)
+            {
+                AppLog.Error("Could not play track {0}. FailureReason={1}, EventMode={2}, ExclusiveMode={3}, LoopMode={4}, Shuffle={5}, ErrorType={6}",
+                    track.Path,
+                    eventArgs.FailureReason,
+                    this.EventMode,
+                    this.ExclusiveMode,
+                    this.LoopMode,
+                    this.shuffle,
+                    string.IsNullOrWhiteSpace(eventArgs.Message) ? "None" : "Decoder");
+                this.PlaybackFailed(this, eventArgs);
+            }
+
+            return false;
+        }
+
+        private void CancelPlaybackSourceResolution()
+        {
+            Interlocked.Increment(ref this.playbackSourceGeneration);
+            CancellationTokenSource cancellationTokenSource = Interlocked.Exchange(
+                ref this.playbackSourceCancellationTokenSource,
+                null);
+
+            if (cancellationTokenSource != null)
+            {
+                cancellationTokenSource.Cancel();
+            }
+
+            if (this.isLoadingTrack)
+            {
+                this.OnLoadingTrack(false);
+            }
         }
 
         private void OnLoadingTrack(bool isLoadingTrack)
@@ -1461,15 +1698,29 @@ namespace Dopamine.Services.Playback
             // When "loop one" is enabled and ignoreLoopOne is true, act like "loop all".
             LoopMode loopMode = this.LoopMode == LoopMode.One && ignoreLoopOne ? LoopMode.All : this.LoopMode;
 
-            TrackViewModel previousTrack = await this.queueManager.PreviousTrackAsync(loopMode);
+            TrackViewModel traversalAnchor = this.CurrentTrack;
+            int maximumAttempts = Math.Min(3, this.Queue.Count);
 
-            if (previousTrack == null)
+            for (int attempt = 0; attempt < maximumAttempts; attempt++)
             {
-                this.Stop();
-                return true;
+                TrackViewModel previousTrack = await this.queueManager.PreviousTrackAsync(traversalAnchor, loopMode);
+
+                if (previousTrack == null)
+                {
+                    this.Stop();
+                    return true;
+                }
+
+                if (await this.TryPlayAsync(previousTrack))
+                {
+                    return true;
+                }
+
+                traversalAnchor = previousTrack;
             }
 
-            return await this.TryPlayAsync(previousTrack);
+            this.Stop();
+            return true;
         }
 
         private async Task<bool> TryPlayNextAsync(bool userHasRequestedNextTrack)
@@ -1481,50 +1732,38 @@ namespace Dopamine.Services.Playback
             // When "loop one" is enabled and userHasRequestedNextTrack is true, act like "loop all".
             bool returnToStart = SettingsClient.Get<bool>("Playback", "LoopWhenShuffle") & this.shuffle;
 
-            TrackViewModel nextTrack = null;
+            TrackViewModel traversalAnchor = this.CurrentTrack;
+            int maximumAttempts = Math.Min(3, this.Queue.Count);
 
-            if (userHasRequestedNextTrack)
+            for (int attempt = 0; attempt < maximumAttempts; attempt++)
             {
-                nextTrack = await this.queueManager.NextTrackAsync(loopMode, returnToStart, this.shuffle);
+                TrackViewModel nextTrack = await this.queueManager.NextTrackAsync(
+                    traversalAnchor,
+                    loopMode,
+                    returnToStart,
+                    this.shuffle);
 
                 if (nextTrack == null)
                 {
                     this.Stop();
                     return true;
                 }
-            }
-            else
-            {
-                bool shouldGetNextTrack = true;
-                int numberOfSkips = 0;
 
-                while (shouldGetNextTrack)
+                traversalAnchor = nextTrack;
+
+                if (nextTrack.IsLocalFile && await this.blacklistService.IsInBlacklistAsync(nextTrack))
                 {
-                    if (numberOfSkips > this.queueManager.Queue.Count)
-                    {
-                        this.Stop();
-                        return true;
-                    }
+                    continue;
+                }
 
-                    numberOfSkips++;
-                    nextTrack = await this.queueManager.NextTrackAsync(loopMode, returnToStart, this.shuffle);
-
-                    if (nextTrack == null)
-                    {
-                        this.Stop();
-                        return true;
-                    }
-
-                    shouldGetNextTrack = await this.blacklistService.IsInBlacklistAsync(nextTrack);
-
-                    if (shouldGetNextTrack)
-                    {
-                        this.queueManager.SetCurrentTrack(nextTrack);
-                    }
+                if (await this.TryPlayAsync(nextTrack, false, userHasRequestedNextTrack))
+                {
+                    return true;
                 }
             }
 
-            return await this.TryPlayAsync(nextTrack, false, userHasRequestedNextTrack);
+            this.Stop();
+            return true;
         }
 
 
@@ -1551,7 +1790,10 @@ namespace Dopamine.Services.Playback
             this.context.Post(new SendOrPostCallback(async (state) =>
             {
                 AppLog.Info("Track finished: {0}", this.CurrentTrack.Path);
-                await this.UpdatePlaybackCountersAsync(this.CurrentTrack.Path, true, false); // Increase PlayCount
+                if (this.CurrentTrack.IsLocalFile)
+                {
+                    await this.UpdatePlaybackCountersAsync(this.CurrentTrack.Path, true, false); // Increase PlayCount
+                }
                 await this.TryPlayNextAsync(false);
             }), null);
         }
@@ -1704,6 +1946,8 @@ namespace Dopamine.Services.Playback
 
         private async Task EnqueueAlwaysAsync(IList<TrackViewModel> tracks, IList<long> shuffleOrderIDs)
         {
+            this.EnterDurableQueueMode();
+
             if (await this.queueManager.ClearQueueAsync())
             {
                 await this.queueManager.EnqueueRestoredAsync(tracks, shuffleOrderIDs, this.shuffle);
@@ -1715,6 +1959,8 @@ namespace Dopamine.Services.Playback
 
         private async Task EnqueueAsync(IList<TrackViewModel> tracks, bool shuffle)
         {
+            this.EnterDurableQueueMode();
+
             if (await this.queueManager.ClearQueueAsync())
             {
                 await this.queueManager.EnqueueAsync(tracks, shuffle);
@@ -1732,6 +1978,8 @@ namespace Dopamine.Services.Playback
 
         private async Task EnqueueTrackEntitiesAsync(IList<Track> tracks, bool shuffle)
         {
+            this.EnterDurableQueueMode();
+
             if (await this.queueManager.ClearQueueAsync())
             {
                 await this.queueManager.EnqueueAsync(tracks, shuffle, (track) => this.container.ResolveTrackViewModel(track));
@@ -1755,9 +2003,20 @@ namespace Dopamine.Services.Playback
         private void ResetSaveQueuedTracksTimer(double timeoutSeconds)
         {
             this.saveQueuedTracksTimer.Stop();
+
+            if (this.queuePersistenceMode == QueuePersistenceMode.Transient)
+            {
+                return;
+            }
+
             this.saveQueuedTracksTimer.Interval = TimeSpan.FromSeconds(timeoutSeconds).TotalMilliseconds;
             this.isQueueChanged = true;
             this.saveQueuedTracksTimer.Start();
+        }
+
+        private void EnterDurableQueueMode()
+        {
+            this.queuePersistenceMode = QueuePersistenceMode.Durable;
         }
 
         private void ResetSavePlaybackCountersTimer()

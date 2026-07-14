@@ -233,6 +233,11 @@ namespace Dopamine.Services.Playback
 
         public async Task<TrackViewModel> PreviousTrackAsync(LoopMode loopMode)
         {
+            return await this.PreviousTrackAsync(this.currentTrack, loopMode);
+        }
+
+        public async Task<TrackViewModel> PreviousTrackAsync(TrackViewModel currentTrack, LoopMode loopMode)
+        {
             TrackViewModel previousTrack = null;
 
             await Task.Run(() =>
@@ -243,12 +248,12 @@ namespace Dopamine.Services.Playback
                     {
                         if (this.playbackOrder != null && this.playbackOrder.Count > 0)
                         {
-                            int currentTrackIndex = this.FindPlaybackOrderIndex(this.currentTrack);
+                            int currentTrackIndex = this.FindPlaybackOrderIndex(currentTrack);
 
                             if (loopMode == LoopMode.One)
                             {
                                 // Return the current track
-                                previousTrack = this.currentTrack;
+                                previousTrack = currentTrack;
                             }
                             else
                             {
@@ -277,6 +282,15 @@ namespace Dopamine.Services.Playback
 
         public async Task<TrackViewModel> NextTrackAsync(LoopMode loopMode, bool returnToStart, bool startNewShuffleRound)
         {
+            return await this.NextTrackAsync(this.currentTrack, loopMode, returnToStart, startNewShuffleRound);
+        }
+
+        public async Task<TrackViewModel> NextTrackAsync(
+            TrackViewModel currentTrack,
+            LoopMode loopMode,
+            bool returnToStart,
+            bool startNewShuffleRound)
+        {
             TrackViewModel nextTrack = null;
 
             await Task.Run(() =>
@@ -287,7 +301,7 @@ namespace Dopamine.Services.Playback
                     {
                         if (this.playbackOrder != null && this.playbackOrder.Count > 0)
                         {
-                            int currentTrackIndex = this.FindPlaybackOrderIndex(this.currentTrack);
+                            int currentTrackIndex = this.FindPlaybackOrderIndex(currentTrack);
 
                             if (loopMode.Equals(LoopMode.One))
                             {
@@ -304,7 +318,7 @@ namespace Dopamine.Services.Playback
                                     nextTrack = this.queue[this.playbackOrder[currentTrackIndex + increment]];
 
                                     // HACK: voids getting stuck on the same track when the playlist contains the same track multiple times
-                                    while (this.currentTrack.Path.Equals(nextTrack.Path))
+                                    while (currentTrack.Path.Equals(nextTrack.Path))
                                     {
                                         increment++;
                                         nextTrack = this.queue[this.playbackOrder[currentTrackIndex + increment]];
@@ -314,7 +328,7 @@ namespace Dopamine.Services.Playback
                                 {
                                     if (startNewShuffleRound)
                                     {
-                                        this.playbackOrder = this.GetRandomizedQueueIndices(this.FindQueueIndex(this.currentTrack));
+                                        this.playbackOrder = this.GetRandomizedQueueIndices(this.FindQueueIndex(currentTrack));
                                     }
 
                                     // When LoopMode.All is enabled, when we reach the end of the queue, return the first track.

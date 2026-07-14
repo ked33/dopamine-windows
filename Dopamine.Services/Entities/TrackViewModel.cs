@@ -25,6 +25,7 @@ namespace Dopamine.Services.Entities
             this.metadataService = metadataService;
             this.scrobblingService = scrobblingService;
             this.Track = track;
+            this.SourceInfo = TrackSourceInfo.LocalFile();
             this.QueueID = Guid.NewGuid().ToString();
         }
 
@@ -35,6 +36,14 @@ namespace Dopamine.Services.Entities
         public bool IsPlaylistEntry => !string.IsNullOrEmpty(this.PlaylistEntry);
 
         public Track Track { get; private set; }
+
+        public TrackSourceInfo SourceInfo { get; set; }
+
+        public bool IsLocalFile => this.SourceInfo == null || this.SourceInfo.Kind == TrackSourceKind.LocalFile;
+
+        public bool IsOnline => !this.IsLocalFile;
+
+        public bool SupportsFileMetadataActions => this.IsLocalFile;
 
         // SortDuration is used to correctly sort by Length, otherwise sorting goes like this: 1:00, 10:00, 2:00, 20:00.
         public long SortDuration => this.Track.Duration.HasValue ? this.Track.Duration.Value : 0;
@@ -149,6 +158,11 @@ namespace Dopamine.Services.Entities
             get { return NumberUtils.ConvertToInt32(this.Track.Rating); }
             set
             {
+                if (!this.SupportsFileMetadataActions)
+                {
+                    return;
+                }
+
                 // Update the UI
                 this.Track.Rating = (long?)value;
                 this.RaisePropertyChanged(nameof(this.Rating));
@@ -163,6 +177,11 @@ namespace Dopamine.Services.Entities
             get { return this.Track.Love.HasValue && this.Track.Love.Value != 0 ? true : false; }
             set
             {
+                if (!this.SupportsFileMetadataActions)
+                {
+                    return;
+                }
+
                 // Update the UI
                 this.Track.Love = value ? 1 : 0;
                 this.RaisePropertyChanged(nameof(this.Love));
@@ -229,6 +248,7 @@ namespace Dopamine.Services.Entities
         public TrackViewModel DeepCopy(bool preserveQueueID)
         {
             var copy = new TrackViewModel(this.metadataService, this.scrobblingService, this.Track);
+            copy.SourceInfo = this.SourceInfo?.DeepCopy() ?? TrackSourceInfo.LocalFile();
 
             if (preserveQueueID && !string.IsNullOrWhiteSpace(this.QueueID))
             {

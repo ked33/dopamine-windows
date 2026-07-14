@@ -20,7 +20,7 @@ namespace Dopamine.Core.Audio
 
         void Stop();
 
-        void Play(string filename, AudioDevice audioDevice);
+        void Play(AudioSource source, AudioDevice audioDevice);
 
         void Skip(int gotoSeconds);
 

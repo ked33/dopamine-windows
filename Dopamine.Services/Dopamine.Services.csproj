@@ -55,6 +55,14 @@
     <Reference Include="Ionic.Zip">
       <HintPath>..\Dopamine\Libraries\Ionic.Zip.dll</HintPath>
     </Reference>
+    <Reference Include="HyPlayer.NeteaseApi, Version=0.1.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\HyPlayer.NeteaseApi.0.1.2\lib\netstandard2.0\HyPlayer.NeteaseApi.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=10.0.0.3, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.10.0.3\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -82,9 +90,42 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Management" />
+    <Reference Include="System.Buffers, Version=4.0.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Buffers.4.6.1\lib\net462\System.Buffers.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.IO.Pipelines, Version=10.0.0.3, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.IO.Pipelines.10.0.3\lib\net462\System.IO.Pipelines.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Memory, Version=4.0.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Memory.4.6.3\lib\net462\System.Memory.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Numerics.Vectors, Version=4.1.6.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Numerics.Vectors.4.6.1\lib\net462\System.Numerics.Vectors.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Runtime.Caching" />
     <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.6.1.2\lib\net462\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security" />
     <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Text.Encodings.Web, Version=10.0.0.3, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Text.Encodings.Web.10.0.3\lib\net462\System.Text.Encodings.Web.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Text.Json, Version=10.0.0.3, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Text.Json.10.0.3\lib\net462\System.Text.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.4.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.6.3\lib\net462\System.Threading.Tasks.Extensions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Prism.Wpf.7.0.0.336-pre\lib\net45\System.Windows.Interactivity.dll</HintPath>
     </Reference>
@@ -148,6 +189,8 @@
     <Compile Include="Entities\SubfolderBreadCrumbViewModel.cs" />
     <Compile Include="Entities\SubfolderViewModel.cs" />
     <Compile Include="Entities\TrackViewModel.cs" />
+    <Compile Include="Entities\TrackSourceInfo.cs" />
+    <Compile Include="Entities\TrackSourceKind.cs" />
     <Compile Include="Equalizer\EqualizerService.cs" />
     <Compile Include="Equalizer\IEqualizerService.cs" />
     <Compile Include="Extensions\ContainerProviderExtensions.cs" />
@@ -194,6 +237,13 @@
     <Compile Include="Playback\DequeueResult.cs" />
     <Compile Include="Playback\EnqueueResult.cs" />
     <Compile Include="Playback\IPlaybackService.cs" />
+    <Compile Include="Playback\IOnlineAudioFallbackProvider.cs" />
+    <Compile Include="Playback\IPlaybackSourceResolver.cs" />
+    <Compile Include="Playback\NeteasePlaybackSourceResolver.cs" />
+    <Compile Include="Playback\NeteaseTemporaryAudioCache.cs" />
+    <Compile Include="Playback\PlaybackSourceResolution.cs" />
+    <Compile Include="Playback\PlaybackSourceResolver.cs" />
+    <Compile Include="Playback\QueuePersistenceMode.cs" />
     <Compile Include="Playback\PlaybackFailedEventArgs.cs" />
     <Compile Include="Playback\PlaybackFailureReason.cs" />
     <Compile Include="Playback\PlaybackPausedEventArgs.cs" />
@@ -202,6 +252,17 @@
     <Compile Include="Playback\PlaybackVolumeChangedEventArgs.cs" />
     <Compile Include="Playback\QueueManager.cs" />
     <Compile Include="Playback\UpdateQueueMetadataResult.cs" />
+    <Compile Include="Online\Netease\DpapiNeteaseSessionStore.cs" />
+    <Compile Include="Online\Netease\INeteaseApiClient.cs" />
+    <Compile Include="Online\Netease\INeteaseMusicService.cs" />
+    <Compile Include="Online\Netease\INeteaseSessionService.cs" />
+    <Compile Include="Online\Netease\INeteaseSessionStore.cs" />
+    <Compile Include="Online\Netease\NeteaseApiClient.cs" />
+    <Compile Include="Online\Netease\NeteaseCookieHeaderParser.cs" />
+    <Compile Include="Online\Netease\NeteaseError.cs" />
+    <Compile Include="Online\Netease\NeteaseModels.cs" />
+    <Compile Include="Online\Netease\NeteaseMusicService.cs" />
+    <Compile Include="Online\Netease\NeteaseSessionService.cs" />
     <Compile Include="Playlist\Enums.cs" />
     <Compile Include="Playlist\IPlaylistService.cs" />
     <Compile Include="Playlist\PlaylistEventHandlers.cs" />
