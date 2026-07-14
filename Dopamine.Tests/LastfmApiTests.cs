@@ -6,6 +6,8 @@ using NUnit.Framework;
 namespace Dopamine.Tests
 {
     [TestFixture]
+    [Category("ExternalIntegration")]
+    [Explicit("Requires live Last.fm access and real account credentials; run manually.")]
     public class LastfmApiTests
     {
         private readonly string username = "<username>";
