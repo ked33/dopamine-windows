@@ -286,6 +286,16 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             IScrobblingService scrobblingService, IEventAggregator eventAggregator, INeteaseSessionService neteaseSessionService,
             II18nService i18nService)
         {
+            AppLog.InfoAlways(
+                "Settings Online ViewModel construction started. HasContainer={0}, HasProviderService={1}, HasDialogService={2}, HasScrobblingService={3}, HasEventAggregator={4}, HasNeteaseSessionService={5}, HasI18nService={6}",
+                container != null,
+                providerService != null,
+                dialogService != null,
+                scrobblingService != null,
+                eventAggregator != null,
+                neteaseSessionService != null,
+                i18nService != null);
+
             this.container = container;
             this.providerService = providerService;
             this.dialogService = dialogService;
@@ -341,10 +351,16 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
 
             this.GetCheckBoxesAsync();
             this.GetTimeoutsAsync();
+            AppLog.InfoAlways("Settings Online ViewModel construction completed.");
         }
 
         public Task OnNeteaseLoadedAsync()
         {
+            AppLog.InfoAlways(
+                "Settings Online Netease load started. IsSignedIn={0}, LoginMethod={1}, HasActiveQrSession={2}",
+                this.IsNeteaseSignedIn,
+                this.SelectedNeteaseLoginMethod,
+                this.activeNeteaseQrSession != null);
             this.isNeteasePageLoaded = true;
             this.UpdateNeteaseState();
 
@@ -353,13 +369,16 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                 this.BeginNeteaseQrLoginAsync();
             }
 
+            AppLog.InfoAlways("Settings Online Netease load completed.");
             return Task.CompletedTask;
         }
 
         public void OnNeteaseUnloaded()
         {
+            AppLog.InfoAlways("Settings Online Netease unload started.");
             this.isNeteasePageLoaded = false;
             this.CancelNeteaseQrLogin();
+            AppLog.InfoAlways("Settings Online Netease unload completed.");
         }
 
         public async Task LoginWithNeteaseCookieAsync(SecureString cookie)
@@ -391,8 +410,15 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
 
         private async void BeginNeteaseQrLoginAsync()
         {
+            AppLog.InfoAlways(
+                "Netease QR login request evaluated. IsSigningIn={0}, IsSignedIn={1}, IsPageLoaded={2}",
+                this.IsNeteaseSigningIn,
+                this.IsNeteaseSignedIn,
+                this.isNeteasePageLoaded);
+
             if (this.IsNeteaseSigningIn || this.IsNeteaseSignedIn || !this.isNeteasePageLoaded)
             {
+                AppLog.InfoAlways("Netease QR login request skipped because the page state does not allow a new request.");
                 return;
             }
 
@@ -408,6 +434,10 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             try
             {
                 NeteaseResult<NeteaseQrSession> result = await this.neteaseSessionService.BeginQrLoginAsync(cancellationToken);
+                AppLog.InfoAlways(
+                    "Netease QR session request completed. IsSuccess={0}, ErrorCode={1}",
+                    result.IsSuccess,
+                    result.Error?.Code.ToString() ?? "None");
 
                 if (!result.IsSuccess || cancellationToken.IsCancellationRequested)
                 {
@@ -422,6 +452,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                 this.activeNeteaseQrSession = result.Value;
                 this.NeteaseQrCodeImage = QrCodeImageFactory.Create(
                     "https://music.163.com/login?codekey=" + Uri.EscapeDataString(result.Value.Unikey));
+                AppLog.InfoAlways("Netease QR image was created successfully.");
                 this.NeteaseStatusText = ResourceUtils.GetString("Language_Netease_Qr_Waiting_For_Scan");
                 this.IsNeteaseSigningIn = false;
                 await this.PollNeteaseQrLoginAsync(result.Value, cancellationToken);

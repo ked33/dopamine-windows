@@ -1,6 +1,9 @@
-﻿using Dopamine.Services.Scrobbling;
+﻿using Digimezzo.Foundation.Core.Logging;
+using Dopamine.Core.Logging;
+using Dopamine.Services.Scrobbling;
 using CommonServiceLocator;
 using Dopamine.ViewModels.FullPlayer.Settings;
+using System;
 using System.Security;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,11 +16,23 @@ namespace Dopamine.Views.FullPlayer.Settings
 
         public SettingsOnline()
         {
-            InitializeComponent();
+            AppLog.InfoAlways("Settings Online view construction started.");
 
-            this.scrobblingService = ServiceLocator.Current.GetInstance<IScrobblingService>();
-            this.scrobblingService.SignInStateChanged += (_) => this.PasswordBox.Password = scrobblingService.Password;
-            this.PasswordBox.Password = scrobblingService.Password;
+            try
+            {
+                InitializeComponent();
+                AppLog.InfoAlways("Settings Online InitializeComponent completed.");
+
+                this.scrobblingService = ServiceLocator.Current.GetInstance<IScrobblingService>();
+                this.scrobblingService.SignInStateChanged += (_) => this.PasswordBox.Password = scrobblingService.Password;
+                this.PasswordBox.Password = scrobblingService.Password;
+                AppLog.InfoAlways("Settings Online view construction completed.");
+            }
+            catch (Exception ex)
+            {
+                AppLog.ErrorAlways("Settings Online view construction failed. Error={0}", LogClient.GetAllExceptions(ex));
+                throw;
+            }
         }
 
         private void PasswordBox_PasswordChanged(object sender, System.Windows.RoutedEventArgs e)
@@ -28,15 +43,27 @@ namespace Dopamine.Views.FullPlayer.Settings
         private async void SettingsOnline_Loaded(object sender, RoutedEventArgs e)
         {
             var viewModel = this.DataContext as SettingsOnlineViewModel;
+            AppLog.InfoAlways("Settings Online Loaded event started. HasExpectedViewModel={0}", viewModel != null);
 
-            if (viewModel != null)
+            try
             {
-                await viewModel.OnNeteaseLoadedAsync();
+                if (viewModel != null)
+                {
+                    await viewModel.OnNeteaseLoadedAsync();
+                }
+
+                AppLog.InfoAlways("Settings Online Loaded event completed.");
+            }
+            catch (Exception ex)
+            {
+                AppLog.ErrorAlways("Settings Online Loaded event failed. Error={0}", LogClient.GetAllExceptions(ex));
+                throw;
             }
         }
 
         private void SettingsOnline_Unloaded(object sender, RoutedEventArgs e)
         {
+            AppLog.InfoAlways("Settings Online Unloaded event received.");
             (this.DataContext as SettingsOnlineViewModel)?.OnNeteaseUnloaded();
         }
 

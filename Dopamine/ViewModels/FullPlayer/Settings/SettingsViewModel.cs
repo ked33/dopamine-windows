@@ -1,6 +1,8 @@
-﻿using Digimezzo.Foundation.WPF.Controls;
+﻿using Digimezzo.Foundation.Core.Logging;
+using Digimezzo.Foundation.WPF.Controls;
 using Dopamine.Core.Base;
 using Dopamine.Core.Enums;
+using Dopamine.Core.Logging;
 using Dopamine.Core.Prism;
 using Dopamine.Views.FullPlayer.Settings;
 using Prism.Events;
@@ -43,8 +45,22 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                     this.regionManager.RequestNavigate(RegionNames.SettingsRegion, typeof(SettingsBehaviour).FullName);
                     break;
                 case SettingsPage.Online:
-                    this.regionManager.RequestNavigate(RegionNames.SettingsRegion, typeof(SettingsOnline).FullName);
+                {
+                    string onlineTarget = typeof(SettingsOnline).FullName;
+                    AppLog.InfoAlways("Settings Online navigation requested. Region={0}, Target={1}", RegionNames.SettingsRegion, onlineTarget);
+                    this.regionManager.RequestNavigate(RegionNames.SettingsRegion, onlineTarget, result =>
+                    {
+                        if (result.Result == true)
+                        {
+                            AppLog.InfoAlways("Settings Online navigation completed successfully. Target={0}", onlineTarget);
+                            return;
+                        }
+
+                        string error = result.Error == null ? "No exception was provided by Prism." : LogClient.GetAllExceptions(result.Error);
+                        AppLog.ErrorAlways("Settings Online navigation failed. Target={0}, Error={1}", onlineTarget, error);
+                    });
                     break;
+                }
                 case SettingsPage.Playback:
                     this.regionManager.RequestNavigate(RegionNames.SettingsRegion, typeof(SettingsPlayback).FullName);
                     break;
