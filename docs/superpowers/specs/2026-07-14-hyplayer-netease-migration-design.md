@@ -595,7 +595,7 @@ Task<bool> PlayTransientQueueAsync(
 4. 对 API 返回的 HTTP URL 优先升级到 HTTPS；禁止把 HTTPS 主动降级成 HTTP。
 5. 返回不含敏感 URL 的结构化成功或失败结果。
 
-临时文件兼容播放必须把 HTTP 下载字节进度上报给 `PlaybackService`。现有播放进度控件在主进度条底层显示低透明度缓冲条；缓存命中立即显示 100%，取消、失败、停止或切换到本地歌曲时清零并隐藏。缓冲进度是只读 ViewModel 输出，`ProgressBar.Value` 必须显式使用 `Mode=OneWay`，禁止 WPF 默认绑定模式回写只读属性。该缓冲条表示临时音频准备进度，不宣称边下边播。
+临时文件兼容播放必须把 HTTP 下载字节进度上报给 `PlaybackService`。现有播放进度控件在主进度条底层显示低透明度缓冲条；底层 `ProgressBar` 提供普通轨道背景与已缓冲范围，上层播放滑块必须使用完全透明的 `TrackBackground`，只绘制已播放范围和滑块按钮，避免半透明滑块轨道遮住缓冲进度。缓存命中立即显示 100%，取消、失败、停止或切换到本地歌曲时清零并隐藏。缓冲进度是只读 ViewModel 输出，`ProgressBar.Value` 必须显式使用 `Mode=OneWay`，禁止 WPF 默认绑定模式回写只读属性。该缓冲条表示临时音频准备进度，不宣称边下边播。
 
 URL 缓存失败时只允许一次强制刷新：
 

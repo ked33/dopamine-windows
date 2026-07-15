@@ -12,13 +12,14 @@
         <ProgressBar Height="2"
                      VerticalAlignment="Bottom"
                      BorderThickness="0"
-                     Background="Transparent"
+                     Background="{DynamicResource Brush_SliderBackground}"
                      Foreground="{DynamicResource Brush_Accent}"
-                     Opacity="0.35"
+                     Opacity="0.55"
+                     Panel.ZIndex="0"
                      IsHitTestVisible="False"
                      Maximum="1"
                      Value="{Binding BufferingProgressValue,Mode=OneWay}"
                      Visibility="{Binding ShowBufferingProgress, Converter={StaticResource BooleanToCollapsedConverter}}"/>
-        <dc:UWPSliderHorizontalBottom x:Name="ProgressSliderThin" TrackBackground="{DynamicResource Brush_SliderBackground}" ButtonInnerBackground="{DynamicResource Brush_WindowHeaderBackground}" ButtonBackground="{DynamicResource Brush_PrimaryText}" BarBackground="{DynamicResource Brush_Accent}" Value="{Binding ProgressValue,Mode=TwoWay}" Maximum="1" IsHitTestVisible="{Binding CanReportProgress}"/>
+        <dc:UWPSliderHorizontalBottom x:Name="ProgressSliderThin" Panel.ZIndex="1" TrackBackground="Transparent" ButtonInnerBackground="{DynamicResource Brush_WindowHeaderBackground}" ButtonBackground="{DynamicResource Brush_PrimaryText}" BarBackground="{DynamicResource Brush_Accent}" Value="{Binding ProgressValue,Mode=TwoWay}" Maximum="1" IsHitTestVisible="{Binding CanReportProgress}"/>
     </Grid>
 </UserControl>

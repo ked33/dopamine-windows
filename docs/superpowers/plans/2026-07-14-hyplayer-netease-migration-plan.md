@@ -521,7 +521,7 @@ Resolve and play official Netease audio sources
 4. 最大约 512 MiB，最长 24 小时，按最近使用清理。
 5. 缓存只用于播放兼容，不提供“下载”或离线承诺。
 6. 登出、启动和退出进行 best-effort 清理。
-7. 按响应 `Content-Length` 上报下载比例；现有进度控件叠加低透明度缓冲条，缓存命中为 100%，取消/失败/停止时隐藏。
+7. 按响应 `Content-Length` 上报下载比例；现有进度控件叠加低透明度缓冲条，底层缓冲 `ProgressBar` 绘制普通轨道和已缓冲范围，上层播放滑块使用完全透明的 `TrackBackground`，避免滑块轨道遮挡缓冲进度；缓存命中为 100%，取消/失败/停止时隐藏。
 
 ### 9.6 fallback seam
 
