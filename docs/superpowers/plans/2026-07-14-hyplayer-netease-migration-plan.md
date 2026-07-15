@@ -596,6 +596,7 @@ Add daily recommendations collection tab
 5. 监听 SessionChanged；登录成功自动加载，登出立即清空。
 6. Refresh 命令重新读取当日缓存且禁止并发；只有当日尚无成功快照时才联网重试。
 7. PlayAll 调用 `PlayTransientQueueAsync(items, first, PlaybackQueueContext.NeteaseDailyRecommendations)`；该上下文默认顺序播放，并独立持久化随机设置。
+   - `Netease.DailyRecommendationsShuffle` 必须通过 `SettingDefaults.GetOrAdd(..., false)` 读取、通过 `SettingDefaults.SetSafe` 保存，兼容升级前生成且缺少 `Netease` 命名空间的 Portable `Settings.xml`。
 8. 双击/Enter 使用完整列表建立临时队列，从选中项开始。
 9. 搜索按标题、艺术家、专辑过滤；搜索清空后恢复全部。
 10. 后台刷新保留旧列表；首次错误显示内联重试。
@@ -624,6 +625,7 @@ Add daily recommendations collection tab
 - 双击和 Enter 从所选行开始。
 - 播放全部只有一个活动请求，重复点击不建立多队列。
 - 本地随机开启时每日推荐仍默认按列表顺序；在每日推荐中切换随机不会改写本地随机设置。
+- 使用不含 `Netease.DailyRecommendationsShuffle` 的旧 Portable `Settings.xml` 启动每日推荐播放时，设置会自动回填为 `False`，临时队列能够继续建立且不抛出 `NullReferenceException`。
 
 回滚：删除第 7 个 Pivot 和 Region view；保留通用的枚举范围校验，并把已保存的值 `6` 回退到 `Artists`；登录与播放服务仍独立存在。
 

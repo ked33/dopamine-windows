@@ -223,7 +223,7 @@ namespace Dopamine.Services.Playback
 
             if (this.queueContext == PlaybackQueueContext.NeteaseDailyRecommendations)
             {
-                SettingsClient.Set<bool>("Netease", "DailyRecommendationsShuffle", this.shuffle);
+                SettingDefaults.SetSafe<bool>("Netease", "DailyRecommendationsShuffle", this.shuffle);
             }
             else
             {
@@ -2116,7 +2116,7 @@ namespace Dopamine.Services.Playback
         {
             this.queueContext = context;
             bool contextShuffle = context == PlaybackQueueContext.NeteaseDailyRecommendations
-                ? SettingsClient.Get<bool>("Netease", "DailyRecommendationsShuffle")
+                ? SettingDefaults.GetOrAdd<bool>("Netease", "DailyRecommendationsShuffle", false)
                 : this.durableShuffle;
 
             if (this.shuffle != contextShuffle)
@@ -2168,7 +2168,7 @@ namespace Dopamine.Services.Playback
             this.mute = SettingsClient.Get<bool>("Playback", "Mute");
             this.durableShuffle = SettingsClient.Get<bool>("Playback", "Shuffle");
             this.shuffle = this.queueContext == PlaybackQueueContext.NeteaseDailyRecommendations
-                ? SettingsClient.Get<bool>("Netease", "DailyRecommendationsShuffle")
+                ? SettingDefaults.GetOrAdd<bool>("Netease", "DailyRecommendationsShuffle", false)
                 : this.durableShuffle;
             this.EventMode = false;
             //this.EventMode = SettingsClient.Get<bool>("Playback", "WasapiEventMode");

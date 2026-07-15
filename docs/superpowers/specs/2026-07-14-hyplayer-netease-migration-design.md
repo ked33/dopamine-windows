@@ -580,6 +580,7 @@ Task<bool> PlayTransientQueueAsync(
 - 应用在在线队列期间退出，重启后恢复的是最后一次持久化的本地队列，而不是在线队列。
 - 第一阶段不支持把本地歌曲和在线歌曲混合到同一持久化队列；每日推荐页面不显示“添加到本地播放列表”等文件型命令。
 - `NeteaseDailyRecommendations` 上下文从 `Netease.DailyRecommendationsShuffle` 读取并保存随机状态，默认 `False`；播放器中的随机按钮只修改当前上下文，返回本地 Durable 队列时恢复 `Playback.Shuffle`。
+- `Netease.DailyRecommendationsShuffle` 属于可在升级后新增的便携设置，读写必须经过 `SettingDefaults.GetOrAdd` / `SettingDefaults.SetSafe`；旧 `Settings.xml` 缺少整个 `Netease` 命名空间时应自动按 `False` 回填，不能在建立临时队列前因直接 `SettingsClient.Get` 产生空引用。
 - 当前在线临时队列允许“下一曲”和“添加到正在播放”，但只能加入在线曲目，不允许混入本地文件或持久化伪路径。
 - 在线歌曲不更新本地 `PlayCount`、`SkipCount`、`DateLastPlayed`、评分、红心或文件元数据。
 - Last.fm scrobble 和 Discord Rich Presence 可以继续使用在线歌曲已映射的标题、歌手、专辑和时长。
