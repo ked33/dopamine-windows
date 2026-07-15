@@ -105,6 +105,28 @@ namespace Dopamine.Services.Online.Netease
         public bool IsKnownUnavailable { get; set; }
     }
 
+    public sealed class NeteaseRecommendationSnapshot
+    {
+        public int Version { get; set; }
+
+        public string AccountUserId { get; set; }
+
+        public DateTime RecommendationDate { get; set; }
+
+        public List<NeteaseRecommendedSong> Songs { get; set; }
+    }
+
+    public sealed class NeteaseRecommendationLoadResult
+    {
+        public bool Exists { get; set; }
+
+        public bool IsSuccess { get; set; }
+
+        public NeteaseRecommendationSnapshot Snapshot { get; set; }
+
+        public NeteaseError Error { get; set; }
+    }
+
     public sealed class NeteaseAudioResolution
     {
         public bool IsSuccess { get; set; }

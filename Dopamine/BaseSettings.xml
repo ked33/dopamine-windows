@@ -236,6 +236,11 @@
       <Value>False</Value>
     </Setting>
   </Namespace>
+  <Namespace Name="Netease">
+    <Setting Name="DailyRecommendationsShuffle">
+      <Value>False</Value>
+    </Setting>
+  </Namespace>
   <Namespace Name="Ordering">
     <Setting Name="ArtistsArtistType">
       <Value>1</Value>

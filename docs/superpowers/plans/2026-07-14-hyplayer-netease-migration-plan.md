@@ -206,7 +206,7 @@ Add isolated Netease API adapter
 7. 定义结构化错误码，不把第三方异常正文直接变成 UI 文案。
 8. 提供 Cookie 的 replace/snapshot/clear 操作；snapshot 必须复制，不能把内部可变字典直接暴露。
 9. `NeteaseMusicService` 实现：
-   - 每日推荐按会话 generation + 日期缓存。
+   - 每日推荐按会话 generation + 中国时间 06:00 推荐日缓存，并使用 DPAPI CurrentUser 跨重启保存当日有序快照。
    - 播放 URL 按 songId + `standard` + generation 缓存 15 分钟。
    - 歌词按 songId 缓存 24 小时。
    - 登录变化清缓存。
@@ -521,6 +521,7 @@ Resolve and play official Netease audio sources
 4. 最大约 512 MiB，最长 24 小时，按最近使用清理。
 5. 缓存只用于播放兼容，不提供“下载”或离线承诺。
 6. 登出、启动和退出进行 best-effort 清理。
+7. 按响应 `Content-Length` 上报下载比例；现有进度控件叠加低透明度缓冲条，缓存命中为 100%，取消/失败/停止时隐藏。
 
 ### 9.6 fallback seam
 
@@ -588,11 +589,11 @@ Add daily recommendations collection tab
    - IsLoggedIn
    - HasError
    - ErrorMessageKey
-3. Loaded：已登录且今日无缓存时加载。
+3. Loaded：已登录时检查当前中国时间 06:00 推荐日；同日优先读取加密快照，跨日才请求 API。
 4. Unloaded：取消页面请求并阻止旧响应更新 UI。
 5. 监听 SessionChanged；登录成功自动加载，登出立即清空。
-6. Refresh 命令绕过每日缓存，但禁止并发。
-7. PlayAll 调用 `PlayTransientQueueAsync(items, first, preserveShuffleSetting:true)`。
+6. Refresh 命令重新读取当日缓存且禁止并发；只有当日尚无成功快照时才联网重试。
+7. PlayAll 调用 `PlayTransientQueueAsync(items, first, PlaybackQueueContext.NeteaseDailyRecommendations)`；该上下文默认顺序播放，并独立持久化随机设置。
 8. 双击/Enter 使用完整列表建立临时队列，从选中项开始。
 9. 搜索按标题、艺术家、专辑过滤；搜索清空后恢复全部。
 10. 后台刷新保留旧列表；首次错误显示内联重试。
@@ -605,9 +606,10 @@ Add daily recommendations collection tab
 4. `DataGridEx` 开启 Recycling 虚拟化。
 5. 列：歌曲、播放指示器、艺术家、专辑、时长。
 6. 不显示评分、红心、文件计数和本地上下文菜单。
-7. 首次加载显示中心 ProgressRing。
-8. 未登录、空结果、错误各有中心/内联状态。
-9. 不下载远程封面；使用纯表格与默认 Now Playing 封面。
+7. 使用专用右键菜单，仅保留跳转播放歌曲、播放选中项、下一曲、添加到当前在线队列和在线搜索。
+8. 首次加载显示中心 ProgressRing。
+9. 未登录、空结果、错误各有中心/内联状态。
+10. 不下载远程封面；使用纯表格与默认 Now Playing 封面。
 
 ### 10.5 UX 验证
 
@@ -616,9 +618,10 @@ Add daily recommendations collection tab
 - 中文、英文、800/1024/1440 宽度和 100%/150% DPI。
 - 搜索框在每日推荐页面有效。
 - 未登录不会发 RecommendSongs 请求。
-- 同一天重进复用缓存；手动刷新发一个请求。
+- 同一推荐日重进和重启复用 DPAPI 缓存；同日手动刷新不重复请求，跨 06:00 自动更新。
 - 双击和 Enter 从所选行开始。
 - 播放全部只有一个活动请求，重复点击不建立多队列。
+- 本地随机开启时每日推荐仍默认按列表顺序；在每日推荐中切换随机不会改写本地随机设置。
 
 回滚：删除第 7 个 Pivot 和 Region view；保留通用的枚举范围校验，并把已保存的值 `6` 回退到 `Artists`；登录与播放服务仍独立存在。
 

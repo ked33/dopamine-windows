@@ -47,6 +47,7 @@ namespace Dopamine.Services.Playback
             string songId,
             string url,
             string mediaType,
+            IProgress<double> progress,
             CancellationToken cancellationToken)
         {
             try
@@ -61,6 +62,7 @@ namespace Dopamine.Services.Playback
                     if (existing.Length > 0 && DateTime.UtcNow - existing.LastWriteTimeUtc <= MaximumAge)
                     {
                         existing.LastAccessTimeUtc = DateTime.UtcNow;
+                        progress?.Report(1.0);
                         return NeteaseResult<string>.Success(finalPath);
                     }
 
@@ -95,6 +97,8 @@ namespace Dopamine.Services.Playback
                         {
                             var buffer = new byte[81920];
                             long totalBytes = 0;
+                            long? contentLength = response.Content.Headers.ContentLength;
+                            double lastReportedProgress = -1.0;
                             int bytesRead;
 
                             while ((bytesRead = await source.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
@@ -107,6 +111,19 @@ namespace Dopamine.Services.Playback
                                 }
 
                                 await destination.WriteAsync(buffer, 0, bytesRead, cancellationToken);
+
+                                if (contentLength.HasValue && contentLength.Value > 0)
+                                {
+                                    double currentProgress = Math.Min(
+                                        1.0,
+                                        (double)totalBytes / contentLength.Value);
+
+                                    if (currentProgress >= 1.0 || currentProgress - lastReportedProgress >= 0.005)
+                                    {
+                                        lastReportedProgress = currentProgress;
+                                        progress?.Report(currentProgress);
+                                    }
+                                }
                             }
 
                             await destination.FlushAsync(cancellationToken);
@@ -119,6 +136,7 @@ namespace Dopamine.Services.Playback
                     }
 
                     System.IO.File.Move(partialPath, finalPath);
+                    progress?.Report(1.0);
                     this.TryCleanup();
                     return NeteaseResult<string>.Success(finalPath);
                 }

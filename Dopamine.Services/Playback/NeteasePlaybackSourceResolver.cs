@@ -79,6 +79,7 @@ namespace Dopamine.Services.Playback
                 official.SongId,
                 official.Url,
                 official.Type,
+                request?.BufferingProgress,
                 cancellationToken);
 
             if (!cached.IsSuccess)

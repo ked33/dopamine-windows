@@ -47,6 +47,10 @@ namespace Dopamine.Services.Playback
 
         double Progress { get; set; }
 
+        double BufferingProgress { get; }
+
+        bool ShowBufferingProgress { get; }
+
         float Volume { get; set; }
 
         LoopMode LoopMode { get; set; }
@@ -79,7 +83,10 @@ namespace Dopamine.Services.Playback
 
         Task<bool> PlaySelectedAsync(IList<TrackViewModel> tracks);
 
-        Task<bool> PlayTransientQueueAsync(IList<TrackViewModel> tracks, TrackViewModel startTrack, bool preserveShuffleSetting);
+        Task<bool> PlayTransientQueueAsync(
+            IList<TrackViewModel> tracks,
+            TrackViewModel startTrack,
+            PlaybackQueueContext context);
 
         Task EnqueueAsync(IList<TrackViewModel> tracks, TrackViewModel track);
 
@@ -136,6 +143,7 @@ namespace Dopamine.Services.Playback
         event EventHandler PlaybackStopped;
         event EventHandler PlaybackResumed;
         event EventHandler PlaybackProgressChanged;
+        event EventHandler PlaybackBufferingProgressChanged;
         event PlaybackVolumeChangedEventhandler PlaybackVolumeChanged;
         event EventHandler PlaybackMuteChanged;
         event EventHandler PlaybackLoopChanged;

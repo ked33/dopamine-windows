@@ -21,6 +21,17 @@ namespace Dopamine.Views.FullPlayer.Collection
             await this.PlayTrackAsync(row?.Item as TrackViewModel);
         }
 
+        private void DataGridRow_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var row = sender as DataGridRow;
+
+            if (row != null)
+            {
+                row.IsSelected = true;
+                this.DataGridRecommendations.SelectedItem = row.Item;
+            }
+        }
+
         private async void DataGridRecommendations_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
@@ -34,15 +45,25 @@ namespace Dopamine.Views.FullPlayer.Collection
         {
             if (e.Key == Key.J && Keyboard.Modifiers == ModifierKeys.Control)
             {
-                TrackViewModel playing = this.DataGridRecommendations.Items
-                    .OfType<TrackViewModel>()
-                    .FirstOrDefault(x => x.IsPlaying);
+                this.JumpToPlayingTrack();
+            }
+        }
 
-                if (playing != null)
-                {
-                    this.DataGridRecommendations.SelectedItem = playing;
-                    this.DataGridRecommendations.ScrollIntoView(playing);
-                }
+        private void JumpToPlayingMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            this.JumpToPlayingTrack();
+        }
+
+        private void JumpToPlayingTrack()
+        {
+            TrackViewModel playing = this.DataGridRecommendations.Items
+                .OfType<TrackViewModel>()
+                .FirstOrDefault(x => x.IsPlaying);
+
+            if (playing != null)
+            {
+                this.DataGridRecommendations.SelectedItem = playing;
+                this.DataGridRecommendations.ScrollIntoView(playing);
             }
         }
 

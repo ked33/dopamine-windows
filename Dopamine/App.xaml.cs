@@ -290,6 +290,7 @@ namespace Dopamine
                 containerRegistry.RegisterSingleton<IBlacklistService, BlacklistService>();
                 containerRegistry.RegisterSingleton<INeteaseApiClient, NeteaseApiClient>();
                 containerRegistry.RegisterInstance<INeteaseSessionStore>(new DpapiNeteaseSessionStore());
+                containerRegistry.RegisterInstance<INeteaseRecommendationStore>(new DpapiNeteaseRecommendationStore());
                 containerRegistry.RegisterSingleton<INeteaseSessionService, NeteaseSessionService>();
                 containerRegistry.RegisterSingleton<INeteaseMusicService, NeteaseMusicService>();
                 containerRegistry.RegisterSingleton<NeteaseTemporaryAudioCache>();

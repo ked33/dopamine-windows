@@ -17,11 +17,15 @@ namespace Dopamine.Services.Online.Netease
         private readonly object cacheLock = new object();
         private readonly INeteaseApiClient apiClient;
         private readonly INeteaseSessionService sessionService;
+        private readonly INeteaseRecommendationStore recommendationStore;
 
         private long recommendationsGeneration = -1;
         private DateTime recommendationsDate;
         private IReadOnlyList<NeteaseRecommendedSong> recommendations;
-        private Task<NeteaseResult<IReadOnlyList<NeteaseRecommendedSong>>> recommendationsInFlight;
+        private readonly Dictionary<string, Task<NeteaseResult<IReadOnlyList<NeteaseRecommendedSong>>>>
+            recommendationsInFlight =
+                new Dictionary<string, Task<NeteaseResult<IReadOnlyList<NeteaseRecommendedSong>>>>(
+                    StringComparer.Ordinal);
 
         private readonly Dictionary<string, CacheEntry<NeteaseAudioResolution>> audioCache =
             new Dictionary<string, CacheEntry<NeteaseAudioResolution>>(StringComparer.Ordinal);
@@ -33,15 +37,18 @@ namespace Dopamine.Services.Online.Netease
         private readonly Dictionary<string, Task<NeteaseLyricResult>> lyricInFlight =
             new Dictionary<string, Task<NeteaseLyricResult>>(StringComparer.Ordinal);
 
-        public NeteaseMusicService(INeteaseApiClient apiClient, INeteaseSessionService sessionService)
+        public NeteaseMusicService(
+            INeteaseApiClient apiClient,
+            INeteaseSessionService sessionService,
+            INeteaseRecommendationStore recommendationStore)
         {
             this.apiClient = apiClient;
             this.sessionService = sessionService;
-            this.sessionService.SessionChanged += (_, __) => this.ClearSessionCaches();
+            this.recommendationStore = recommendationStore;
+            this.sessionService.SessionChanged += (_, __) => this.HandleSessionChanged();
         }
 
         public async Task<NeteaseResult<IReadOnlyList<NeteaseRecommendedSong>>> GetDailyRecommendationsAsync(
-            bool forceRefresh,
             CancellationToken cancellationToken)
         {
             NeteaseError sessionError = this.GetSessionError();
@@ -52,28 +59,29 @@ namespace Dopamine.Services.Online.Netease
             }
 
             long generation = this.sessionService.SessionGeneration;
-            DateTime today = DateTime.Today;
+            DateTime recommendationDate = NeteaseDailyRecommendationSchedule.GetRecommendationDate(
+                DateTimeOffset.UtcNow);
+            string accountUserId = this.sessionService.Account?.UserId ?? string.Empty;
+            string recommendationKey = generation + "|" + recommendationDate.ToString("yyyyMMdd") + "|" + accountUserId;
             Task<NeteaseResult<IReadOnlyList<NeteaseRecommendedSong>>> task;
 
             lock (this.cacheLock)
             {
-                if (!forceRefresh && this.recommendations != null &&
-                    this.recommendationsGeneration == generation && this.recommendationsDate == today)
+                if (this.recommendations != null && this.recommendationsGeneration == generation &&
+                    this.recommendationsDate == recommendationDate)
                 {
                     return NeteaseResult<IReadOnlyList<NeteaseRecommendedSong>>.Success(this.recommendations);
                 }
 
-                if (forceRefresh)
+                if (!this.recommendationsInFlight.TryGetValue(recommendationKey, out task))
                 {
-                    this.recommendations = null;
+                    task = this.LoadOrFetchRecommendationsAsync(
+                        generation,
+                        recommendationDate,
+                        accountUserId,
+                        cancellationToken);
+                    this.recommendationsInFlight[recommendationKey] = task;
                 }
-
-                if (this.recommendationsInFlight == null)
-                {
-                    this.recommendationsInFlight = this.apiClient.GetDailyRecommendationsAsync(cancellationToken);
-                }
-
-                task = this.recommendationsInFlight;
             }
 
             try
@@ -85,13 +93,15 @@ namespace Dopamine.Services.Online.Netease
                     await this.sessionService.ExpireAsync(generation);
                 }
 
-                if (result.IsSuccess && generation == this.sessionService.SessionGeneration)
+                if (result.IsSuccess && generation == this.sessionService.SessionGeneration &&
+                    recommendationDate == NeteaseDailyRecommendationSchedule.GetRecommendationDate(
+                        DateTimeOffset.UtcNow))
                 {
                     lock (this.cacheLock)
                     {
                         this.recommendations = result.Value;
                         this.recommendationsGeneration = generation;
-                        this.recommendationsDate = today;
+                        this.recommendationsDate = recommendationDate;
                     }
                 }
 
@@ -101,9 +111,12 @@ namespace Dopamine.Services.Online.Netease
             {
                 lock (this.cacheLock)
                 {
-                    if (object.ReferenceEquals(this.recommendationsInFlight, task))
+                    Task<NeteaseResult<IReadOnlyList<NeteaseRecommendedSong>>> current;
+
+                    if (this.recommendationsInFlight.TryGetValue(recommendationKey, out current) &&
+                        object.ReferenceEquals(current, task))
                     {
-                        this.recommendationsInFlight = null;
+                        this.recommendationsInFlight.Remove(recommendationKey);
                     }
                 }
             }
@@ -255,11 +268,65 @@ namespace Dopamine.Services.Online.Netease
             {
                 this.recommendations = null;
                 this.recommendationsGeneration = -1;
-                this.recommendationsInFlight = null;
+                this.recommendationsInFlight.Clear();
                 this.audioCache.Clear();
                 this.audioInFlight.Clear();
                 this.lyricCache.Clear();
                 this.lyricInFlight.Clear();
+            }
+        }
+
+        private async Task<NeteaseResult<IReadOnlyList<NeteaseRecommendedSong>>> LoadOrFetchRecommendationsAsync(
+            long generation,
+            DateTime recommendationDate,
+            string accountUserId,
+            CancellationToken cancellationToken)
+        {
+            NeteaseRecommendationLoadResult stored = await this.recommendationStore.LoadAsync(cancellationToken);
+
+            if (stored.IsSuccess && stored.Exists && stored.Snapshot != null &&
+                stored.Snapshot.RecommendationDate == recommendationDate &&
+                string.Equals(stored.Snapshot.AccountUserId, accountUserId, StringComparison.Ordinal) &&
+                stored.Snapshot.Songs != null)
+            {
+                return NeteaseResult<IReadOnlyList<NeteaseRecommendedSong>>.Success(stored.Snapshot.Songs);
+            }
+
+            if (stored.Exists && !stored.IsSuccess)
+            {
+                await this.recommendationStore.DeleteAsync();
+            }
+
+            NeteaseResult<IReadOnlyList<NeteaseRecommendedSong>> result =
+                await this.apiClient.GetDailyRecommendationsAsync(cancellationToken);
+
+            if (result.IsSuccess && generation == this.sessionService.SessionGeneration &&
+                recommendationDate == NeteaseDailyRecommendationSchedule.GetRecommendationDate(
+                    DateTimeOffset.UtcNow) &&
+                !string.IsNullOrWhiteSpace(accountUserId))
+            {
+                await this.recommendationStore.SaveAsync(
+                    new NeteaseRecommendationSnapshot
+                    {
+                        AccountUserId = accountUserId,
+                        RecommendationDate = recommendationDate,
+                        Songs = new List<NeteaseRecommendedSong>(
+                            result.Value ?? Array.Empty<NeteaseRecommendedSong>())
+                    },
+                    cancellationToken);
+            }
+
+            return result;
+        }
+
+        private void HandleSessionChanged()
+        {
+            this.ClearSessionCaches();
+
+            if (this.sessionService.State == NeteaseSessionState.SignedOut ||
+                this.sessionService.State == NeteaseSessionState.Expired)
+            {
+                this.recommendationStore.DeleteAsync();
             }
         }
 

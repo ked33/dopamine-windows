@@ -9,7 +9,9 @@ namespace Dopamine.ViewModels.Common
         protected IPlaybackService playBackService;
         protected IAppVisibilityService appVisibilityService;
         private double progressValue;
+        private double bufferingProgressValue;
         private bool canReportProgress;
+        private bool showBufferingProgress;
         public double ProgressValue
         {
             get { return this.progressValue; }
@@ -25,6 +27,18 @@ namespace Dopamine.ViewModels.Common
             get { return this.canReportProgress; }
             set { SetProperty<bool>(ref this.canReportProgress, value); }
         }
+
+        public double BufferingProgressValue
+        {
+            get { return this.bufferingProgressValue; }
+            private set { SetProperty<double>(ref this.bufferingProgressValue, value); }
+        }
+
+        public bool ShowBufferingProgress
+        {
+            get { return this.showBufferingProgress; }
+            private set { SetProperty<bool>(ref this.showBufferingProgress, value); }
+        }
    
         public ProgressControlsViewModel(IPlaybackService playBackService, IAppVisibilityService appVisibilityService)
         {
@@ -32,6 +46,7 @@ namespace Dopamine.ViewModels.Common
             this.appVisibilityService = appVisibilityService;
 
             this.playBackService.PlaybackProgressChanged += (sender,e) => this.RefreshFromPlayBackService();
+            this.playBackService.PlaybackBufferingProgressChanged += (_, __) => this.RefreshFromPlayBackService();
             this.playBackService.PlaybackFailed += (_, __) => this.RefreshFromPlayBackService();
             this.playBackService.PlaybackStopped += (_, __) => this.RefreshFromPlayBackService();
             this.playBackService.PlaybackSuccess += (_,__) => this.RefreshFromPlayBackService();
@@ -64,6 +79,8 @@ namespace Dopamine.ViewModels.Common
             // Property, because the ProgressValue Property Setter is empty!
             this.progressValue = this.playBackService.Progress;
             RaisePropertyChanged(nameof(this.ProgressValue));
+            this.BufferingProgressValue = this.playBackService.BufferingProgress;
+            this.ShowBufferingProgress = this.playBackService.ShowBufferingProgress;
 
             // This makes sure the progress bar is not clickable when the player is not playing
             if (!this.playBackService.IsStopped)

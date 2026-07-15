@@ -3,9 +3,39 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:dc="clr-namespace:Digimezzo.Foundation.WPF.Controls;assembly=Digimezzo.Foundation.WPF"
              xmlns:pc="clr-namespace:Dopamine.Controls"
+             xmlns:utils="clr-namespace:Dopamine.Utils"
              xmlns:prismMvvm="clr-namespace:Prism.Mvvm;assembly=Prism.Wpf"
              xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
              prismMvvm:ViewModelLocator.AutoWireViewModel="True">
+    <UserControl.Resources>
+        <utils:BindingProxy x:Key="DailyRecommendationsViewModelProxy" Data="{Binding}"/>
+        <ContextMenu x:Key="DailyRecommendationsContextMenu" x:Shared="False">
+            <MenuItem Header="{DynamicResource Language_Jump_To_Playing_Song}"
+                      InputGestureText="{DynamicResource Language_Ctrl_J}"
+                      Click="JumpToPlayingMenuItem_Click"/>
+            <Separator/>
+            <MenuItem Header="{DynamicResource Language_Play_Selected}"
+                      Command="{Binding Source={StaticResource DailyRecommendationsViewModelProxy}, Path=Data.PlaySelectedCommand}"/>
+            <MenuItem Header="{DynamicResource Language_Play_Next}"
+                      Command="{Binding Source={StaticResource DailyRecommendationsViewModelProxy}, Path=Data.PlayNextCommand}"/>
+            <MenuItem Header="{DynamicResource Language_Add_To_Now_Playing}"
+                      Command="{Binding Source={StaticResource DailyRecommendationsViewModelProxy}, Path=Data.AddToNowPlayingCommand}"/>
+            <Separator/>
+            <MenuItem Header="{DynamicResource Language_Search_Online}"
+                      ItemsSource="{Binding Source={StaticResource DailyRecommendationsViewModelProxy}, Path=Data.ContextMenuSearchProviders}"
+                      DisplayMemberPath="Name"
+                      IsEnabled="{Binding Source={StaticResource DailyRecommendationsViewModelProxy}, Path=Data.HasContextMenuSearchProviders}">
+                <MenuItem.ItemContainerStyle>
+                    <Style TargetType="MenuItem">
+                        <Setter Property="Foreground" Value="{DynamicResource Brush_ContextMenuText}"/>
+                        <Setter Property="Command" Value="{Binding Source={StaticResource DailyRecommendationsViewModelProxy}, Path=Data.SearchOnlineCommand}"/>
+                        <Setter Property="CommandParameter" Value="{Binding Id}"/>
+                    </Style>
+                </MenuItem.ItemContainerStyle>
+            </MenuItem>
+        </ContextMenu>
+    </UserControl.Resources>
+
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <i:InvokeCommandAction Command="{Binding LoadedCommand}"/>
@@ -19,7 +49,7 @@
         <DockPanel DockPanel.Dock="Top" Margin="10,0,10,20">
             <TextBlock Text="{Binding Count}" FontSize="13" Foreground="{DynamicResource Brush_Accent}" DockPanel.Dock="Left"/>
             <Button DockPanel.Dock="Right" Margin="10,0,0,0" Style="{StaticResource RegularButtonAccent}" Content="{DynamicResource Language_Netease_Play_All}" Command="{Binding PlayAllCommand}"/>
-            <Button DockPanel.Dock="Right" Style="{StaticResource TransparentButton}" Command="{Binding RefreshCommand}">
+            <Button DockPanel.Dock="Right" Style="{StaticResource TransparentButton}" Command="{Binding RefreshCommand}" ToolTip="{DynamicResource Language_Netease_Daily_Recommendations_Refresh_Tooltip}">
                 <StackPanel Orientation="Horizontal">
                     <dc:ProgressRing Width="18" Height="18" Margin="0,0,6,0" Foreground="{DynamicResource Brush_Accent}" IsActive="{Binding IsRefreshing}"/>
                     <TextBlock Text="{DynamicResource Language_Refresh}" Foreground="{DynamicResource Brush_SecondaryText}"/>
@@ -39,7 +69,9 @@
                            VirtualizingStackPanel.VirtualizationMode="Recycling">
                 <pc:DataGridEx.Resources>
                     <Style TargetType="{x:Type DataGridRow}" BasedOn="{StaticResource DataGridRowStyle}">
+                        <Setter Property="ContextMenu" Value="{StaticResource DailyRecommendationsContextMenu}"/>
                         <EventSetter Event="MouseDoubleClick" Handler="DataGridRow_MouseDoubleClick"/>
+                        <EventSetter Event="PreviewMouseRightButtonDown" Handler="DataGridRow_PreviewMouseRightButtonDown"/>
                     </Style>
                 </pc:DataGridEx.Resources>
                 <pc:DataGridEx.Columns>

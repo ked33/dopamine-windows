@@ -7,7 +7,6 @@ namespace Dopamine.Services.Online.Netease
     public interface INeteaseMusicService
     {
         Task<NeteaseResult<IReadOnlyList<NeteaseRecommendedSong>>> GetDailyRecommendationsAsync(
-            bool forceRefresh,
             CancellationToken cancellationToken);
 
         Task<NeteaseAudioResolution> ResolveOfficialAudioAsync(

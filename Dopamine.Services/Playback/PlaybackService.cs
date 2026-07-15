@@ -47,6 +47,7 @@ namespace Dopamine.Services.Playback
         private float volume = 0.0f;
         private LoopMode loopMode;
         private bool shuffle;
+        private bool durableShuffle;
         private bool mute;
         private bool isPlayingPreviousTrack;
         private IPlayer player;
@@ -92,6 +93,7 @@ namespace Dopamine.Services.Playback
         private SynchronizationContext context;
         private bool isLoadingTrack;
         private QueuePersistenceMode queuePersistenceMode = QueuePersistenceMode.Durable;
+        private PlaybackQueueContext queueContext = PlaybackQueueContext.Default;
         private IPlaybackSourceResolver playbackSourceResolver;
         private CancellationTokenSource playbackSourceCancellationTokenSource;
         private long playbackSourceGeneration;
@@ -102,6 +104,8 @@ namespace Dopamine.Services.Playback
         private const int PlaybackFadeDurationMilliseconds = 1000;
         private const int PlaybackFadeSteps = 20;
         private int fadeOperationId;
+        private double bufferingProgress;
+        private bool showBufferingProgress;
 
         public bool IsSavingQueuedTracks => this.isSavingQueuedTracks;
 
@@ -152,6 +156,10 @@ namespace Dopamine.Services.Playback
             get { return this.progress; }
             set { this.progress = value; }
         }
+
+        public double BufferingProgress => this.bufferingProgress;
+
+        public bool ShowBufferingProgress => this.showBufferingProgress;
 
         public float Volume
         {
@@ -213,7 +221,15 @@ namespace Dopamine.Services.Playback
 
             }
 
-            SettingsClient.Set<bool>("Playback", "Shuffle", this.shuffle);
+            if (this.queueContext == PlaybackQueueContext.NeteaseDailyRecommendations)
+            {
+                SettingsClient.Set<bool>("Netease", "DailyRecommendationsShuffle", this.shuffle);
+            }
+            else
+            {
+                this.durableShuffle = this.shuffle;
+                SettingsClient.Set<bool>("Playback", "Shuffle", this.shuffle);
+            }
             this.PlaybackShuffleChanged(this, new EventArgs());
             this.WriteSettings();
             this.QueueChanged(this, new EventArgs());
@@ -351,6 +367,7 @@ namespace Dopamine.Services.Playback
         public event PlaybackPausedEventHandler PlaybackPaused = delegate { };
         public event PlaybackFailedEventHandler PlaybackFailed = delegate { };
         public event EventHandler PlaybackProgressChanged = delegate { };
+        public event EventHandler PlaybackBufferingProgressChanged = delegate { };
         public event EventHandler PlaybackResumed = delegate { };
         public event EventHandler PlaybackStopped = delegate { };
         public event PlaybackVolumeChangedEventhandler PlaybackVolumeChanged = delegate { };
@@ -748,6 +765,7 @@ namespace Dopamine.Services.Playback
 
             this.progressTimer.Stop();
             this.Progress = 0.0;
+            this.SetBufferingProgress(false, 0.0);
             this.PlaybackStopped(this, new EventArgs());
         }
 
@@ -837,6 +855,8 @@ namespace Dopamine.Services.Playback
                 return;
             }
 
+            this.EnterDurableQueueMode();
+
             // Shuffle
             if (shuffle)
             {
@@ -865,6 +885,8 @@ namespace Dopamine.Services.Playback
             {
                 return;
             }
+
+            this.EnterDurableQueueMode();
 
             // Shuffle
             if (shuffle)
@@ -906,6 +928,8 @@ namespace Dopamine.Services.Playback
             {
                 return;
             }
+
+            this.EnterDurableQueueMode();
 
             await this.EnqueueAsync(tracks, this.shuffle);
             await this.PlaySelectedAsync(track);
@@ -960,6 +984,11 @@ namespace Dopamine.Services.Playback
 
         public async Task PlaySelectedAsync(TrackViewModel track)
         {
+            if (track != null && track.IsLocalFile)
+            {
+                this.EnterDurableQueueMode();
+            }
+
             await this.TryPlayAsync(track);
         }
 
@@ -977,7 +1006,10 @@ namespace Dopamine.Services.Playback
             return result;
         }
 
-        public async Task<bool> PlayTransientQueueAsync(IList<TrackViewModel> tracks, TrackViewModel startTrack, bool preserveShuffleSetting)
+        public async Task<bool> PlayTransientQueueAsync(
+            IList<TrackViewModel> tracks,
+            TrackViewModel startTrack,
+            PlaybackQueueContext context)
         {
             if (tracks == null || tracks.Count == 0 || startTrack == null || tracks.Any(x => x == null || x.IsLocalFile))
             {
@@ -998,18 +1030,23 @@ namespace Dopamine.Services.Playback
 
                 this.saveQueuedTracksTimer.Stop();
                 this.queuePersistenceMode = QueuePersistenceMode.Transient;
+                this.SetQueueContext(context);
                 this.isQueueChanged = false;
 
                 if (!await this.queueManager.ClearQueueAsync())
                 {
+                    this.queuePersistenceMode = QueuePersistenceMode.Durable;
+                    this.SetQueueContext(PlaybackQueueContext.Default);
                     return false;
                 }
 
-                bool useShuffle = preserveShuffleSetting && this.shuffle;
+                bool useShuffle = this.shuffle;
                 EnqueueResult enqueueResult = await this.queueManager.EnqueueAsync(tracks, useShuffle);
 
                 if (!enqueueResult.IsSuccess)
                 {
+                    this.queuePersistenceMode = QueuePersistenceMode.Durable;
+                    this.SetQueueContext(PlaybackQueueContext.Default);
                     return false;
                 }
 
@@ -1048,7 +1085,7 @@ namespace Dopamine.Services.Playback
 
         public async Task<EnqueueResult> AddToQueueAsync(IList<TrackViewModel> tracks)
         {
-            if (this.queuePersistenceMode == QueuePersistenceMode.Transient || tracks == null || tracks.Any(x => x == null || x.IsOnline))
+            if (!this.CanAddTracksToCurrentQueue(tracks))
             {
                 return new EnqueueResult { IsSuccess = false };
             }
@@ -1069,7 +1106,7 @@ namespace Dopamine.Services.Playback
 
         public async Task<EnqueueResult> AddToQueueNextAsync(IList<TrackViewModel> tracks)
         {
-            if (this.queuePersistenceMode == QueuePersistenceMode.Transient || tracks == null || tracks.Any(x => x == null || x.IsOnline))
+            if (!this.CanAddTracksToCurrentQueue(tracks))
             {
                 return new EnqueueResult { IsSuccess = false };
             }
@@ -1433,6 +1470,25 @@ namespace Dopamine.Services.Playback
             previousCancellationTokenSource?.Cancel();
             this.OnLoadingTrack(true);
 
+            if (track.IsOnline)
+            {
+                this.SetBufferingProgress(true, 0.0);
+            }
+            else
+            {
+                this.SetBufferingProgress(false, 0.0);
+            }
+
+            IProgress<double> bufferingProgress = track.IsOnline
+                ? new Progress<double>(value =>
+                {
+                    if (generation == Interlocked.Read(ref this.playbackSourceGeneration))
+                    {
+                        this.SetBufferingProgress(true, value);
+                    }
+                })
+                : null;
+
             bool isPlaybackSuccess = false;
             bool fadeInAfterPlaybackSuccess = false;
             PlaybackFailedEventArgs playbackFailedEventArgs = null;
@@ -1443,7 +1499,7 @@ namespace Dopamine.Services.Playback
             {
                 PlaybackSourceResolution sourceResolution = await this.playbackSourceResolver.ResolveAsync(
                     track,
-                    new PlaybackSourceRequest(),
+                    new PlaybackSourceRequest { BufferingProgress = bufferingProgress },
                     cancellationTokenSource.Token);
 
                 if (generation != Interlocked.Read(ref this.playbackSourceGeneration) || cancellationTokenSource.IsCancellationRequested)
@@ -1456,9 +1512,14 @@ namespace Dopamine.Services.Playback
                     if (track.IsOnline && sourceResolution != null &&
                         sourceResolution.FailureReason == PlaybackFailureReason.TemporaryDownloadFailed)
                     {
+                        this.RestartBufferingProgress();
                         sourceResolution = await this.playbackSourceResolver.ResolveAsync(
                             track,
-                            new PlaybackSourceRequest { ForceRefresh = true },
+                            new PlaybackSourceRequest
+                            {
+                                ForceRefresh = true,
+                                BufferingProgress = bufferingProgress
+                            },
                             cancellationTokenSource.Token);
                         sourceWasForceRefreshed = true;
                     }
@@ -1477,6 +1538,11 @@ namespace Dopamine.Services.Playback
                         playbackFailedEventArgs = this.CreatePlaybackFailure(sourceResolution);
                         return this.ReportPlaybackFailure(track, playbackFailedEventArgs);
                     }
+                }
+
+                if (track.IsOnline)
+                {
+                    this.SetBufferingProgress(true, 1.0);
                 }
 
                 await this.playbackTransitionGate.WaitAsync(cancellationTokenSource.Token);
@@ -1524,9 +1590,14 @@ namespace Dopamine.Services.Playback
                     }
 
                     this.StopPlayback();
+                    this.RestartBufferingProgress();
                     PlaybackSourceResolution refreshedResolution = await this.playbackSourceResolver.ResolveAsync(
                         track,
-                        new PlaybackSourceRequest { ForceRefresh = true },
+                        new PlaybackSourceRequest
+                        {
+                            ForceRefresh = true,
+                            BufferingProgress = bufferingProgress
+                        },
                         cancellationTokenSource.Token);
 
                     if (refreshedResolution == null || !refreshedResolution.IsSuccess)
@@ -1606,6 +1677,11 @@ namespace Dopamine.Services.Playback
                     this.OnLoadingTrack(false);
                 }
 
+                if (!isPlaybackSuccess && generation == Interlocked.Read(ref this.playbackSourceGeneration))
+                {
+                    this.SetBufferingProgress(false, 0.0);
+                }
+
                 cancellationTokenSource.Dispose();
             }
 
@@ -1674,6 +1750,8 @@ namespace Dopamine.Services.Playback
             {
                 this.OnLoadingTrack(false);
             }
+
+            this.SetBufferingProgress(false, 0.0);
         }
 
         private void OnLoadingTrack(bool isLoadingTrack)
@@ -1964,6 +2042,7 @@ namespace Dopamine.Services.Playback
             if (await this.queueManager.ClearQueueAsync())
             {
                 await this.queueManager.EnqueueAsync(tracks, shuffle);
+                this.durableShuffle = shuffle;
 
                 if (shuffle != this.shuffle)
                 {
@@ -1983,6 +2062,7 @@ namespace Dopamine.Services.Playback
             if (await this.queueManager.ClearQueueAsync())
             {
                 await this.queueManager.EnqueueAsync(tracks, shuffle, (track) => this.container.ResolveTrackViewModel(track));
+                this.durableShuffle = shuffle;
 
                 if (shuffle != this.shuffle)
                 {
@@ -2017,6 +2097,59 @@ namespace Dopamine.Services.Playback
         private void EnterDurableQueueMode()
         {
             this.queuePersistenceMode = QueuePersistenceMode.Durable;
+            this.SetQueueContext(PlaybackQueueContext.Default);
+        }
+
+        private bool CanAddTracksToCurrentQueue(IList<TrackViewModel> tracks)
+        {
+            if (tracks == null || tracks.Count == 0 || tracks.Any(x => x == null))
+            {
+                return false;
+            }
+
+            return this.queuePersistenceMode == QueuePersistenceMode.Transient
+                ? tracks.All(x => x.IsOnline) && this.Queue.All(x => x != null && x.IsOnline)
+                : tracks.All(x => x.IsLocalFile);
+        }
+
+        private void SetQueueContext(PlaybackQueueContext context)
+        {
+            this.queueContext = context;
+            bool contextShuffle = context == PlaybackQueueContext.NeteaseDailyRecommendations
+                ? SettingsClient.Get<bool>("Netease", "DailyRecommendationsShuffle")
+                : this.durableShuffle;
+
+            if (this.shuffle != contextShuffle)
+            {
+                this.shuffle = contextShuffle;
+                this.PlaybackShuffleChanged(this, EventArgs.Empty);
+            }
+        }
+
+        private void SetBufferingProgress(bool show, double progressValue)
+        {
+            double normalized = Math.Max(0.0, Math.Min(1.0, progressValue));
+
+            if (show && this.showBufferingProgress)
+            {
+                normalized = Math.Max(this.bufferingProgress, normalized);
+            }
+
+            if (this.showBufferingProgress == show && Math.Abs(this.bufferingProgress - normalized) < 0.0001)
+            {
+                return;
+            }
+
+            this.showBufferingProgress = show;
+            this.bufferingProgress = normalized;
+            this.PlaybackBufferingProgressChanged(this, EventArgs.Empty);
+        }
+
+        private void RestartBufferingProgress()
+        {
+            this.showBufferingProgress = true;
+            this.bufferingProgress = 0.0;
+            this.PlaybackBufferingProgressChanged(this, EventArgs.Empty);
         }
 
         private void ResetSavePlaybackCountersTimer()
@@ -2033,7 +2166,10 @@ namespace Dopamine.Services.Playback
             this.Latency = SettingsClient.Get<int>("Playback", "AudioLatency");
             this.Volume = SettingsClient.Get<float>("Playback", "Volume");
             this.mute = SettingsClient.Get<bool>("Playback", "Mute");
-            this.shuffle = SettingsClient.Get<bool>("Playback", "Shuffle");
+            this.durableShuffle = SettingsClient.Get<bool>("Playback", "Shuffle");
+            this.shuffle = this.queueContext == PlaybackQueueContext.NeteaseDailyRecommendations
+                ? SettingsClient.Get<bool>("Netease", "DailyRecommendationsShuffle")
+                : this.durableShuffle;
             this.EventMode = false;
             //this.EventMode = SettingsClient.Get<bool>("Playback", "WasapiEventMode");
             //this.ExclusiveMode = false;

@@ -247,6 +247,7 @@
     <Compile Include="Playback\PlaybackFailedEventArgs.cs" />
     <Compile Include="Playback\PlaybackFailureReason.cs" />
     <Compile Include="Playback\PlaybackPausedEventArgs.cs" />
+    <Compile Include="Playback\PlaybackQueueContext.cs" />
     <Compile Include="Playback\PlaybackService.cs" />
     <Compile Include="Playback\PlaybackSuccessEventArgs.cs" />
     <Compile Include="Playback\PlaybackVolumeChangedEventArgs.cs" />
@@ -255,10 +256,13 @@
     <Compile Include="Online\Netease\DpapiNeteaseSessionStore.cs" />
     <Compile Include="Online\Netease\INeteaseApiClient.cs" />
     <Compile Include="Online\Netease\INeteaseMusicService.cs" />
+    <Compile Include="Online\Netease\INeteaseRecommendationStore.cs" />
     <Compile Include="Online\Netease\INeteaseSessionService.cs" />
     <Compile Include="Online\Netease\INeteaseSessionStore.cs" />
     <Compile Include="Online\Netease\NeteaseApiClient.cs" />
     <Compile Include="Online\Netease\NeteaseCookieHeaderParser.cs" />
+    <Compile Include="Online\Netease\DpapiNeteaseRecommendationStore.cs" />
+    <Compile Include="Online\Netease\NeteaseDailyRecommendationSchedule.cs" />
     <Compile Include="Online\Netease\NeteaseError.cs" />
     <Compile Include="Online\Netease\NeteaseLoginContext.cs" />
     <Compile Include="Online\Netease\NeteaseModels.cs" />

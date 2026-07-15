@@ -7,6 +7,7 @@ using Dopamine.Services.Entities;
 using Dopamine.Services.Extensions;
 using Dopamine.Services.Online.Netease;
 using Dopamine.Services.Playback;
+using Dopamine.Services.Provider;
 using Dopamine.Services.Search;
 using Prism.Commands;
 using Prism.Ioc;
@@ -29,6 +30,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         private readonly INeteaseSessionService sessionService;
         private readonly IPlaybackService playbackService;
         private readonly ISearchService searchService;
+        private readonly IProviderService providerService;
 
         private ObservableCollection<TrackViewModel> items = new ObservableCollection<TrackViewModel>();
         private CollectionViewSource itemsCvs;
@@ -41,6 +43,8 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         private CancellationTokenSource loadingCancellationTokenSource;
         private int loadingGeneration;
         private bool isStartingPlayback;
+        private System.Threading.Timer recommendationRefreshTimer;
+        private ObservableCollection<SearchProvider> contextMenuSearchProviders;
 
         public DelegateCommand LoadedCommand { get; private set; }
 
@@ -49,6 +53,27 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         public DelegateCommand RefreshCommand { get; private set; }
 
         public DelegateCommand PlayAllCommand { get; private set; }
+
+        public DelegateCommand PlaySelectedCommand { get; private set; }
+
+        public DelegateCommand PlayNextCommand { get; private set; }
+
+        public DelegateCommand AddToNowPlayingCommand { get; private set; }
+
+        public DelegateCommand<string> SearchOnlineCommand { get; private set; }
+
+        public ObservableCollection<SearchProvider> ContextMenuSearchProviders
+        {
+            get { return this.contextMenuSearchProviders; }
+            private set
+            {
+                SetProperty<ObservableCollection<SearchProvider>>(ref this.contextMenuSearchProviders, value);
+                RaisePropertyChanged(nameof(this.HasContextMenuSearchProviders));
+            }
+        }
+
+        public bool HasContextMenuSearchProviders =>
+            this.ContextMenuSearchProviders != null && this.ContextMenuSearchProviders.Count > 0;
 
         public ObservableCollection<TrackViewModel> Items
         {
@@ -65,7 +90,11 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         public TrackViewModel SelectedItem
         {
             get { return this.selectedItem; }
-            set { SetProperty<TrackViewModel>(ref this.selectedItem, value); }
+            set
+            {
+                SetProperty<TrackViewModel>(ref this.selectedItem, value);
+                this.RaiseSelectionCommandStates();
+            }
         }
 
         public int Count => this.ItemsCvs == null ? 0 : this.ItemsCvs.View.Cast<TrackViewModel>().Count();
@@ -129,20 +158,35 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.sessionService = sessionService;
             this.playbackService = playbackService;
             this.searchService = searchService;
+            this.providerService = container.Resolve<IProviderService>();
 
             this.LoadedCommand = new DelegateCommand(() => this.LoadedAsync());
             this.UnloadedCommand = new DelegateCommand(this.Unloaded);
             this.RefreshCommand = new DelegateCommand(
-                async () => await this.LoadAsync(true),
+                async () => await this.LoadAsync(),
                 () => !this.IsInitialLoading && !this.IsRefreshing);
             this.PlayAllCommand = new DelegateCommand(
                 () => this.PlayAllAsync(),
                 () => this.Items.Count > 0 && !this.isStartingPlayback);
+            this.PlaySelectedCommand = new DelegateCommand(
+                () => this.PlaySelectedAsync(),
+                () => this.SelectedItem != null && !this.isStartingPlayback);
+            this.PlayNextCommand = new DelegateCommand(
+                () => this.PlayNextAsync(),
+                () => this.CanModifyCurrentOnlineQueue());
+            this.AddToNowPlayingCommand = new DelegateCommand(
+                () => this.AddToNowPlayingAsync(),
+                () => this.CanModifyCurrentOnlineQueue());
+            this.SearchOnlineCommand = new DelegateCommand<string>(
+                id => this.SearchOnline(id),
+                _ => this.SelectedItem != null);
 
             this.searchService.DoSearch += (_) => this.DispatchFilterRefresh();
             this.sessionService.SessionChanged += (_, __) => this.DispatchSessionChanged();
             this.playbackService.PlaybackSuccess += (_, __) => this.DispatchPlayingStateRefresh();
             this.playbackService.PlaybackStopped += (_, __) => this.DispatchPlayingStateRefresh();
+            this.playbackService.QueueChanged += (_, __) => this.Dispatch(this.RaiseSelectionCommandStates);
+            this.providerService.SearchProvidersChanged += (_, __) => this.GetSearchProvidersAsync();
             this.playbackService.PlaybackFailed += (_, e) =>
             {
                 this.DispatchPlayingStateRefresh();
@@ -155,6 +199,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             };
 
             this.RebuildCollectionView();
+            this.GetSearchProvidersAsync();
         }
 
         public async Task PlayFromAsync(TrackViewModel track)
@@ -171,10 +216,11 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         {
             this.isLoaded = true;
             this.RaiseStateProperties();
+            this.ScheduleRecommendationRefresh();
 
-            if (this.IsLoggedIn && this.Items.Count == 0)
+            if (this.IsLoggedIn)
             {
-                await this.LoadAsync(false);
+                await this.LoadAsync();
             }
         }
 
@@ -182,6 +228,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         {
             this.isLoaded = false;
             this.CancelLoading();
+            this.DisposeRecommendationRefreshTimer();
         }
 
         private async void PlayAllAsync()
@@ -192,7 +239,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             }
         }
 
-        private async Task LoadAsync(bool forceRefresh)
+        private async Task LoadAsync()
         {
             if (!this.isLoaded || !this.IsLoggedIn || this.IsInitialLoading || this.IsRefreshing)
             {
@@ -215,7 +262,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             try
             {
                 NeteaseResult<IReadOnlyList<NeteaseRecommendedSong>> result =
-                    await this.musicService.GetDailyRecommendationsAsync(forceRefresh, cancellationToken);
+                    await this.musicService.GetDailyRecommendationsAsync(cancellationToken);
 
                 if (generation != this.loadingGeneration || cancellationToken.IsCancellationRequested || !this.isLoaded)
                 {
@@ -259,6 +306,11 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
                 }
 
                 cancellationTokenSource.Dispose();
+
+                if (this.isLoaded)
+                {
+                    this.ScheduleRecommendationRefresh();
+                }
             }
         }
 
@@ -274,7 +326,10 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
 
             try
             {
-                await this.playbackService.PlayTransientQueueAsync(this.Items.ToList(), startTrack, true);
+                await this.playbackService.PlayTransientQueueAsync(
+                    this.ItemsCvs.View.Cast<TrackViewModel>().ToList(),
+                    startTrack,
+                    PlaybackQueueContext.NeteaseDailyRecommendations);
             }
             catch (Exception ex)
             {
@@ -285,7 +340,97 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             {
                 this.isStartingPlayback = false;
                 this.PlayAllCommand.RaiseCanExecuteChanged();
+                this.RaiseSelectionCommandStates();
             }
+        }
+
+        private async void PlaySelectedAsync()
+        {
+            await this.StartPlaybackAsync(this.SelectedItem);
+        }
+
+        private async void PlayNextAsync()
+        {
+            if (this.SelectedItem != null)
+            {
+                await this.playbackService.AddToQueueNextAsync(
+                    new List<TrackViewModel> { this.SelectedItem });
+            }
+        }
+
+        private async void AddToNowPlayingAsync()
+        {
+            if (this.SelectedItem != null)
+            {
+                await this.playbackService.AddToQueueAsync(
+                    new List<TrackViewModel> { this.SelectedItem });
+            }
+        }
+
+        private bool CanModifyCurrentOnlineQueue()
+        {
+            return this.SelectedItem != null && this.playbackService.HasQueue &&
+                this.playbackService.Queue.All(x => x != null && x.IsOnline);
+        }
+
+        private void RaiseSelectionCommandStates()
+        {
+            this.PlaySelectedCommand?.RaiseCanExecuteChanged();
+            this.PlayNextCommand?.RaiseCanExecuteChanged();
+            this.AddToNowPlayingCommand?.RaiseCanExecuteChanged();
+            this.SearchOnlineCommand?.RaiseCanExecuteChanged();
+        }
+
+        private void SearchOnline(string providerId)
+        {
+            if (this.SelectedItem != null)
+            {
+                this.providerService.SearchOnline(
+                    providerId,
+                    new[] { this.SelectedItem.ArtistName, this.SelectedItem.TrackTitle });
+            }
+        }
+
+        private async void GetSearchProvidersAsync()
+        {
+            try
+            {
+                List<SearchProvider> providers = await this.providerService.GetSearchProvidersAsync();
+                this.ContextMenuSearchProviders = new ObservableCollection<SearchProvider>(providers);
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warning(
+                    "Could not load online search providers for Netease recommendations. ErrorType={0}",
+                    ex.GetType().Name);
+                this.ContextMenuSearchProviders = new ObservableCollection<SearchProvider>();
+            }
+        }
+
+        private void ScheduleRecommendationRefresh()
+        {
+            this.DisposeRecommendationRefreshTimer();
+            TimeSpan dueTime = NeteaseDailyRecommendationSchedule.GetDelayUntilNextRefresh(
+                DateTimeOffset.UtcNow);
+            this.recommendationRefreshTimer = new System.Threading.Timer(
+                _ => this.Dispatch(() =>
+                {
+                    if (this.isLoaded && this.IsLoggedIn)
+                    {
+                        this.LoadAsync();
+                    }
+                }),
+                null,
+                dueTime,
+                Timeout.InfiniteTimeSpan);
+        }
+
+        private void DisposeRecommendationRefreshTimer()
+        {
+            System.Threading.Timer timer = Interlocked.Exchange(
+                ref this.recommendationRefreshTimer,
+                null);
+            timer?.Dispose();
         }
 
         private TrackViewModel MapTrack(NeteaseRecommendedSong song)
@@ -374,7 +519,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
                 }
                 else if (this.isLoaded)
                 {
-                    this.LoadAsync(false);
+                    this.LoadAsync();
                 }
 
                 this.RaiseStateProperties();

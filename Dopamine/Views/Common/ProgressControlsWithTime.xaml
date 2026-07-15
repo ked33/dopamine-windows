@@ -12,7 +12,19 @@
 
     <StackPanel Orientation="Horizontal">
         <Label Padding="0" Width="50" Content="{Binding CurrentTime}" HorizontalAlignment="Right" HorizontalContentAlignment="Right" Foreground="{DynamicResource Brush_PrimaryText}" FontSize="{x:Static base:Constants.GlobalFontSize}"/>
-        <dc:UWPSliderHorizontal x:Name="ProgressSlider" Margin="20,0,20,0" Width="{Binding SliderLength,ElementName=ThisControl}" TrackBackground="{DynamicResource Brush_SliderBackground}" ButtonInnerBackground="{DynamicResource Brush_WindowHeaderBackground}" ButtonBackground="{DynamicResource Brush_PrimaryText}" BarBackground="{DynamicResource Brush_Accent}" Value="{Binding ProgressValue,Mode=TwoWay}" Maximum="1" IsHitTestVisible="{Binding CanReportProgress}"/>
+        <Grid Margin="20,0,20,0" Width="{Binding SliderLength,ElementName=ThisControl}">
+            <ProgressBar Height="3"
+                         VerticalAlignment="Center"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         Foreground="{DynamicResource Brush_Accent}"
+                         Opacity="0.35"
+                         IsHitTestVisible="False"
+                         Maximum="1"
+                         Value="{Binding BufferingProgressValue}"
+                         Visibility="{Binding ShowBufferingProgress, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+            <dc:UWPSliderHorizontal x:Name="ProgressSlider" TrackBackground="{DynamicResource Brush_SliderBackground}" ButtonInnerBackground="{DynamicResource Brush_WindowHeaderBackground}" ButtonBackground="{DynamicResource Brush_PrimaryText}" BarBackground="{DynamicResource Brush_Accent}" Value="{Binding ProgressValue,Mode=TwoWay}" Maximum="1" IsHitTestVisible="{Binding CanReportProgress}"/>
+        </Grid>
         <Label Padding="0" Width="50" Content="{Binding TotalTime}" HorizontalAlignment="Left" HorizontalContentAlignment="Left" Foreground="{DynamicResource Brush_PrimaryText}" FontSize="{x:Static base:Constants.GlobalFontSize}"/>
     </StackPanel>
 </UserControl>

@@ -248,8 +248,9 @@ flowchart LR
 - 不显示本地文件的评分、红心、播放次数、路径、文件大小、码率和文件操作。
 - “刷新”使用现有透明按钮样式；“播放全部”使用 `RegularButtonAccent`，形成一个明确主操作。
 - 双击行或在选中行按 Enter：用完整推荐列表建立临时队列，并从该行开始播放。
-- “播放全部”：从第一首开始；若全局随机播放已开启，仍保证用户显式选择的首曲先播放，后续顺序按现有随机逻辑。
+- “播放全部”：从第一首开始；每日推荐使用独立的播放顺序设置，默认按当前可见列表顺序播放，不继承本地音乐的全局随机状态。
 - Ctrl+J 可滚动到当前播放歌曲；不提供 Ctrl+E“在资源管理器中查看”。
+- 每日推荐使用专用右键菜单，只保留跳转到播放歌曲、播放选中项、下一曲、添加到当前在线队列和在线搜索；不显示列配置、资源管理器、编辑、删除、磁盘删除、黑名单、本地播放列表和文件信息。
 - 已知不可播放的条目可降低不透明度并显示原因 ToolTip；最终播放权限仍由 `SongUrlApi` 结果裁决。
 
 ### 7.3 每日推荐页面状态
@@ -411,7 +412,6 @@ Error
 public interface INeteaseMusicService
 {
     Task<IReadOnlyList<NeteaseRecommendedSong>> GetDailyRecommendationsAsync(
-        bool forceRefresh,
         CancellationToken cancellationToken);
 
     Task<NeteaseAudioResolution> ResolveOfficialAudioAsync(
@@ -550,11 +550,12 @@ MUSIC_U=...; __csrf=...; NMTID=...
 
 缓存规则：
 
-- 仅内存缓存。
-- 缓存键包含当前会话 generation 和本地日期。
-- 同一天自动进入页面只请求一次；手动刷新可绕过。
-- 登录账号变化、登出或会话失效立即清除。
-- 不把响应 JSON 或账号推荐写入磁盘。
+- 推荐日以中国标准时间 06:00 为边界；06:00 前仍属于前一推荐日。
+- 内存缓存键包含当前会话 generation 和推荐日。
+- 成功结果按原始顺序写入 DPAPI CurrentUser 加密快照，并绑定账号 ID；同一 Windows 用户重启后可复用当日结果。
+- 同一推荐日最多发起一次成功的数据请求；页面“刷新”只重新读取当日缓存，失败状态允许重试。
+- 页面保持打开时使用一次性计时器跨过 06:00 自动加载；休眠错过计时器时，恢复或重新进入页面也会按新推荐日刷新。
+- 登录账号变化会忽略不匹配快照；登出或会话明确失效删除内存与加密推荐缓存。
 
 每日推荐列表映射成带 `TrackSourceInfo(Netease, songId)` 的 `TrackViewModel`。合成 `Track` 不提交到 `ITrackRepository`，也不参与索引。Mapper 必须为现有 `TrackViewModel` 会直接取 `.Value` 的字段提供安全默认值，例如 `TrackNumber=0`，并用测试遍历每日推荐会用到的显示属性，避免在线 DTO 的 nullable 字段在 Now Playing 或排序路径触发异常。
 
@@ -566,7 +567,7 @@ MUSIC_U=...; __csrf=...; NMTID=...
 Task<bool> PlayTransientQueueAsync(
     IList<TrackViewModel> tracks,
     TrackViewModel startTrack,
-    bool preserveShuffleSetting);
+    PlaybackQueueContext context);
 ```
 
 规则：
@@ -577,6 +578,8 @@ Task<bool> PlayTransientQueueAsync(
 - 用户随后从本地音乐库开始播放时恢复 Durable 模式，并按现有逻辑保存本地队列。
 - 应用在在线队列期间退出，重启后恢复的是最后一次持久化的本地队列，而不是在线队列。
 - 第一阶段不支持把本地歌曲和在线歌曲混合到同一持久化队列；每日推荐页面不显示“添加到本地播放列表”等文件型命令。
+- `NeteaseDailyRecommendations` 上下文从 `Netease.DailyRecommendationsShuffle` 读取并保存随机状态，默认 `False`；播放器中的随机按钮只修改当前上下文，返回本地 Durable 队列时恢复 `Playback.Shuffle`。
+- 当前在线临时队列允许“下一曲”和“添加到正在播放”，但只能加入在线曲目，不允许混入本地文件或持久化伪路径。
 - 在线歌曲不更新本地 `PlayCount`、`SkipCount`、`DateLastPlayed`、评分、红心或文件元数据。
 - Last.fm scrobble 和 Discord Rich Presence 可以继续使用在线歌曲已映射的标题、歌手、专辑和时长。
 
@@ -589,6 +592,8 @@ Task<bool> PlayTransientQueueAsync(
 3. 检查响应对象、首项、code、URL、`FreeTrialInfo`、类型和码率。
 4. 对 API 返回的 HTTP URL 优先升级到 HTTPS；禁止把 HTTPS 主动降级成 HTTP。
 5. 返回不含敏感 URL 的结构化成功或失败结果。
+
+临时文件兼容播放必须把 HTTP 下载字节进度上报给 `PlaybackService`。现有播放进度控件在主进度条底层显示低透明度缓冲条；缓存命中立即显示 100%，取消、失败、停止或切换到本地歌曲时清零并隐藏。该缓冲条表示临时音频准备进度，不宣称边下边播。
 
 URL 缓存失败时只允许一次强制刷新：
 
@@ -702,7 +707,7 @@ Stage 0 必须实际验证当前 `CSCore.Ffmpeg`：
 
 | 数据 | 位置 | TTL | 清除条件 |
 | --- | --- | --- | --- |
-| 每日推荐 | 内存 | 当前本地日期 | 登出、换账号、手动刷新 |
+| 每日推荐 | 内存 + DPAPI 文件 | 中国时间 06:00 划分的推荐日 | 登出、明确失效、换账号覆盖 |
 | 播放 URL | 内存 | 15 分钟 | 播放打开失败、登出、换账号 |
 | 歌词 | 内存 | 24 小时 | 登出、进程退出 |
 | 临时音频 | 磁盘，仅兼容回退 | 24 小时/512 MiB | LRU、登出、启动清理 |
@@ -811,10 +816,11 @@ Stage 0 必须实际验证当前 `CSCore.Ffmpeg`：
 - 二维码 801→802→803 完整流程、过期、刷新和取消。
 - 有效/无效 Cookie、切换账号、退出和重启恢复。
 - 断网启动不删除有效会话。
-- 每日推荐首次加载、同日复用、手动刷新、空结果和失效会话。
+- 每日推荐首次加载、跨重启同日复用、06:00 自动换日、同日手动刷新不重复请求、空结果和失效会话。
 - 双击任意行从该行播放；播放全部从第一首播放。
 - URL 缓存命中、缓存失效强刷一次、无版权、会员和试听歌曲。
 - 播放、暂停、Seek、上一首、下一首、随机、循环和自动下一首。
+- 在线下载缓冲条从 0 增长到 100%，缓存命中立即完成，取消/失败/停止后隐藏。
 - 普通 LRC 高亮、无歌词、快速连续切歌不串歌词。
 - 在线歌曲不出现本地文件编辑/删除/资源管理器操作。
 - 本地 MP3/FLAC/WMA 播放、歌词、封面、评分、队列持久化无回归。
@@ -830,6 +836,7 @@ Stage 0 必须实际验证当前 `CSCore.Ffmpeg`：
 - 重启 Dopamine 后，同一 Windows 用户可恢复登录；`Settings.xml` 中没有 Cookie。
 - 未登录时每日推荐不发起无意义请求，并给出明确入口提示。
 - 登录后能加载每日推荐，双击或播放全部能建立临时队列。
+- 每日推荐默认顺序播放且随机设置与本地音乐独立持久化；专用右键菜单不暴露任何本地文件操作。
 - 每首歌播放前按 ID 懒获取官方 URL，不在推荐加载时批量获取 URL。
 - 缓存 URL 打开失败后最多强制刷新一次，不发生无限重试。
 - 在线歌曲可播放、暂停、Seek、切歌，并能获取和高亮普通 LRC。
