@@ -475,10 +475,22 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
 
         private async Task PollNeteaseQrLoginAsync(NeteaseQrSession session, CancellationToken cancellationToken)
         {
+            NeteaseQrState? lastLoggedState = null;
+
             while (!cancellationToken.IsCancellationRequested && this.isNeteasePageLoaded &&
                 this.SelectedNeteaseLoginMethod == 0 && !this.IsNeteaseSignedIn)
             {
                 NeteaseQrPollResult result = await this.neteaseSessionService.PollQrLoginAsync(session, cancellationToken);
+
+                if (lastLoggedState != result.State)
+                {
+                    AppLog.InfoAlways(
+                        "Netease QR poll state changed. State={0}, ErrorCode={1}, ResponseCode={2}",
+                        result.State,
+                        result.Error?.Code.ToString() ?? "None",
+                        result.Error?.ResponseCode ?? 0);
+                    lastLoggedState = result.State;
+                }
 
                 switch (result.State)
                 {

@@ -70,6 +70,11 @@ namespace Dopamine.Services.Online.Netease
 
                 if (result.IsError)
                 {
+                    if (NeteaseQrStatusMapper.TryGetStatusCode(result.Error, out int statusCode))
+                    {
+                        return NeteaseResult<NeteaseQrCheck>.Success(new NeteaseQrCheck { Code = statusCode });
+                    }
+
                     return NeteaseResult<NeteaseQrCheck>.Failure(this.MapError(method, result.Error, 0, cancellationToken));
                 }
 

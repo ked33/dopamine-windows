@@ -17,16 +17,16 @@
             <Label Style="{StaticResource TitleLabel}" Content="{DynamicResource Language_Netease_Music}" />
             <TextBlock Margin="0,5,0,0" Text="{DynamicResource Language_Netease_Online_Description}" Foreground="{DynamicResource Brush_PrimaryText}" TextWrapping="Wrap"/>
             <Grid Margin="0,15,0,0" MaxWidth="620" HorizontalAlignment="Left">
-                <Grid Visibility="{Binding IsNeteaseSignedIn, Converter={StaticResource InvertingBooleanToCollapsedConverter}}">
-                    <dc:Pivot Style="{DynamicResource MenuPivot}" SelectedIndex="{Binding SelectedNeteaseLoginMethod}">
+                <Grid VerticalAlignment="Top" Visibility="{Binding IsNeteaseSignedIn, Converter={StaticResource InvertingBooleanToCollapsedConverter}}">
+                    <dc:Pivot Style="{DynamicResource MenuPivot}" SelectedIndex="{Binding SelectedNeteaseLoginMethod}" MaxHeight="260" VerticalAlignment="Top" VerticalContentAlignment="Top">
                         <dc:PivotItem Header="{DynamicResource Language_Netease_Qr_Login}" Style="{StaticResource MenuPivotItem}">
-                            <Grid Margin="0,15,0,0" IsEnabled="{Binding IsNeteaseSigningIn, Converter={StaticResource InvertingBooleanConverter}}">
+                            <Grid Margin="0,8,0,0" VerticalAlignment="Top" IsEnabled="{Binding IsNeteaseSigningIn, Converter={StaticResource InvertingBooleanConverter}}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="20"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <Border Width="180" Height="180" Background="White" Padding="8">
+                                <Border Width="180" Height="180" Background="White" Padding="8" VerticalAlignment="Top">
                                     <Grid>
                                         <Image Source="{Binding NeteaseQrCodeImage}" Stretch="Uniform"/>
                                         <dc:ProgressRing Width="48" Height="48" Foreground="{DynamicResource Brush_Accent}" IsActive="{Binding IsNeteaseSigningIn}"/>
@@ -35,7 +35,7 @@
                                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
                                     <TextBlock Text="{DynamicResource Language_Netease_Scan_With_App}" Foreground="{DynamicResource Brush_PrimaryText}" TextWrapping="Wrap"/>
                                     <TextBlock Margin="0,10,0,0" Text="{Binding NeteaseStatusText}" Foreground="{DynamicResource Brush_SecondaryText}" TextWrapping="Wrap"/>
-                                    <Button Margin="0,15,0,0" HorizontalAlignment="Left" Style="{StaticResource RegularButton}" Content="{DynamicResource Language_Netease_Refresh_Qr}" Command="{Binding RefreshNeteaseQrCommand}"/>
+                                    <Button Margin="0,10,0,0" HorizontalAlignment="Left" Style="{StaticResource RegularButton}" Content="{DynamicResource Language_Netease_Refresh_Qr}" Command="{Binding RefreshNeteaseQrCommand}"/>
                                 </StackPanel>
                             </Grid>
                         </dc:PivotItem>

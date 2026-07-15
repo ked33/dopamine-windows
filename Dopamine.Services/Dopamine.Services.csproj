@@ -262,6 +262,7 @@
     <Compile Include="Online\Netease\NeteaseError.cs" />
     <Compile Include="Online\Netease\NeteaseModels.cs" />
     <Compile Include="Online\Netease\NeteaseMusicService.cs" />
+    <Compile Include="Online\Netease\NeteaseQrStatusMapper.cs" />
     <Compile Include="Online\Netease\NeteaseSessionService.cs" />
     <Compile Include="Playlist\Enums.cs" />
     <Compile Include="Playlist\IPlaylistService.cs" />
