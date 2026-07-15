@@ -219,7 +219,9 @@ flowchart LR
 
 - `DailyRecommendations=6` 追加到 `CollectionPage`。
 - `CollectionMenu.xaml` 在“文件夹”后追加 PivotItem。
-- `CollectionViewModel` 在现有 `CollectionRegion` 导航到 `CollectionDailyRecommendations`。
+- `FullPlayerViewModel` 必须先完成 `FullPlayerRegion` 内容导航，再加载对应菜单，避免嵌套 Region 尚未注册时菜单抢先发起子页面导航。
+- `CollectionMenuViewModel` 在现有 `CollectionRegion` 导航到各音乐库页面；`CollectionViewModel` 只负责切换方向动画，不作为内容导航的单点依赖。
+- 导航前等待 `CollectionRegion` 注册；Prism 返回 `false` 且无异常时只允许有限重试，快速连续切换必须丢弃旧 generation，禁止无限轮询或旧页面覆盖最终选择。
 - `CollectionMenuViewModel` 读取 `SelectedCollectionPage` 时校验枚举范围；损坏值或功能回滚后遗留的值 `6` 在不支持该页面的版本中必须回退到 `Artists`，不能导航到空白区域。
 - 保留顶部现有搜索框；每日推荐列表响应同一个搜索条件，按歌曲名、歌手和专辑过滤，避免出现“搜索框可见但无效”的体验。
 - 必须在中文和英文长文本、窗口窄宽度和 100%/150% 缩放下检查 Pivot 是否被搜索框挤压。

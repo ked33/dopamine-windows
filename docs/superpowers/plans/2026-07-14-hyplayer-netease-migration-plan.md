@@ -563,6 +563,7 @@ Add daily recommendations collection tab
 - `Dopamine/Views/FullPlayer/Collection/CollectionMenu.xaml`
 - `Dopamine/ViewModels/FullPlayer/Collection/CollectionMenuViewModel.cs`
 - `Dopamine/ViewModels/FullPlayer/Collection/CollectionViewModel.cs`
+- `Dopamine/ViewModels/FullPlayer/FullPlayerViewModel.cs`
 - `Dopamine/App.xaml.cs`
 - `Dopamine/Dopamine.csproj`
 - `Dopamine/Languages/EN.xml`
@@ -574,8 +575,10 @@ Add daily recommendations collection tab
 2. 在“文件夹”PivotItem 后追加“每日推荐”。
 3. `CollectionMenuViewModel` 读取保存值时使用 `Enum.IsDefined` 校验；未知值回退 `Artists`，让设置损坏和功能回滚不会留下空白页。
 4. 注册 `CollectionDailyRecommendations` Prism view。
-5. `CollectionViewModel` 增加 Region 导航 case。
-6. 不改变 0～5 旧值，不修改数据库或设置迁移。
+5. `FullPlayerViewModel` 顺序执行父内容 Region 和菜单 Region 导航，确保 `Collection` 父视图先完成加载。
+6. `CollectionMenuViewModel` 等待 `CollectionRegion` 注册后直接导航 7 个页面；`CollectionViewModel` 仅保留方向动画。
+7. 对 `false + 无异常` 的瞬态结果进行有限重试，并用 generation 丢弃快速切换产生的旧请求。
+8. 不改变 0～5 旧值，不修改数据库或设置迁移。
 
 ### 10.3 ViewModel 任务
 
