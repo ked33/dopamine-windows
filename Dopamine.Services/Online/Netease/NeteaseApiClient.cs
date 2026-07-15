@@ -2,6 +2,7 @@
 using Dopamine.Core.Logging;
 using HyPlayer.NeteaseApi;
 using HyPlayer.NeteaseApi.ApiContracts;
+using HyPlayer.NeteaseApi.ApiContracts.Playlist;
 using HyPlayer.NeteaseApi.ApiContracts.Song;
 using HyPlayer.NeteaseApi.Bases;
 using System;
@@ -230,6 +231,134 @@ namespace Dopamine.Services.Online.Netease
             }
         }
 
+        public async Task<NeteaseResult<IReadOnlyCollection<string>>> GetLikedSongIdsAsync(
+            string userId,
+            CancellationToken cancellationToken)
+        {
+            const string method = "LikelistApi";
+
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return NeteaseResult<IReadOnlyCollection<string>>.Failure(new NeteaseError(
+                    NeteaseErrorCode.AuthenticationRequired,
+                    "Language_Netease_Login_Expired"));
+            }
+
+            try
+            {
+                var result = await this.handler.RequestAsync(
+                    NeteaseApis.LikelistApi,
+                    new LikelistRequest { Uid = userId },
+                    cancellationToken);
+
+                if (result.IsError)
+                {
+                    return NeteaseResult<IReadOnlyCollection<string>>.Failure(
+                        this.MapError(method, result.Error, 0, cancellationToken));
+                }
+
+                if (result.Value == null || result.Value.Code != 200)
+                {
+                    return NeteaseResult<IReadOnlyCollection<string>>.Failure(
+                        this.MapResponseError(method, result.Value?.Code ?? 0));
+                }
+
+                IReadOnlyCollection<string> songIds = (result.Value.TrackIds ?? Array.Empty<string>())
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray();
+                return NeteaseResult<IReadOnlyCollection<string>>.Success(songIds);
+            }
+            catch (Exception ex)
+            {
+                return NeteaseResult<IReadOnlyCollection<string>>.Failure(
+                    this.MapError(method, ex, 0, cancellationToken));
+            }
+        }
+
+        public async Task<NeteaseResult<bool>> SetSongLikedAsync(
+            string songId,
+            bool isLiked,
+            CancellationToken cancellationToken)
+        {
+            const string method = "NeteaseWebSongLikeApi";
+
+            if (string.IsNullOrWhiteSpace(songId))
+            {
+                return NeteaseResult<bool>.Failure(new NeteaseError(
+                    NeteaseErrorCode.ApiChanged,
+                    "Language_Netease_Service_Unavailable"));
+            }
+
+            try
+            {
+                var result = await this.handler.RequestAsync(
+                    new NeteaseWebSongLikeApi(),
+                    new NeteaseWebSongLikeRequest { SongId = songId, IsLiked = isLiked },
+                    cancellationToken);
+
+                if (result.IsError)
+                {
+                    return NeteaseResult<bool>.Failure(
+                        this.MapError(method, result.Error, 0, cancellationToken));
+                }
+
+                if (result.Value == null || result.Value.Code != 200)
+                {
+                    return NeteaseResult<bool>.Failure(
+                        this.MapResponseError(method, result.Value?.Code ?? 0));
+                }
+
+                return NeteaseResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                return NeteaseResult<bool>.Failure(this.MapError(method, ex, 0, cancellationToken));
+            }
+        }
+
+        public async Task<NeteaseResult<NeteaseRecommendedSong>> DislikeDailyRecommendationAsync(
+            string songId,
+            CancellationToken cancellationToken)
+        {
+            const string method = "NeteaseWebRecommendationDislikeApi";
+
+            if (string.IsNullOrWhiteSpace(songId))
+            {
+                return NeteaseResult<NeteaseRecommendedSong>.Failure(new NeteaseError(
+                    NeteaseErrorCode.ApiChanged,
+                    "Language_Netease_Service_Unavailable"));
+            }
+
+            try
+            {
+                var result = await this.handler.RequestAsync(
+                    new NeteaseWebRecommendationDislikeApi(),
+                    new NeteaseWebRecommendationDislikeRequest { SongId = songId },
+                    cancellationToken);
+
+                if (result.IsError)
+                {
+                    return NeteaseResult<NeteaseRecommendedSong>.Failure(
+                        this.MapError(method, result.Error, 0, cancellationToken));
+                }
+
+                if (result.Value == null || result.Value.Code != 200)
+                {
+                    return NeteaseResult<NeteaseRecommendedSong>.Failure(
+                        this.MapResponseError(method, result.Value?.Code ?? 0));
+                }
+
+                return NeteaseResult<NeteaseRecommendedSong>.Success(
+                    MapReplacementRecommendation(result.Value.Data));
+            }
+            catch (Exception ex)
+            {
+                return NeteaseResult<NeteaseRecommendedSong>.Failure(
+                    this.MapError(method, ex, 0, cancellationToken));
+            }
+        }
+
         public async Task<NeteaseAudioResolution> GetSongUrlAsync(string songId, string level, CancellationToken cancellationToken)
         {
             const string method = "SongUrlApi";
@@ -395,6 +524,36 @@ namespace Dopamine.Services.Online.Netease
             {
                 SongId = songId,
                 Error = new NeteaseError(code, messageKey, responseCode)
+            };
+        }
+
+        private static NeteaseRecommendedSong MapReplacementRecommendation(
+            NeteaseWebRecommendationSong song)
+        {
+            if (song == null || string.IsNullOrWhiteSpace(song.Id))
+            {
+                return null;
+            }
+
+            NeteaseWebRecommendationArtist[] artists = song.Artists ?? song.LegacyArtists ??
+                Array.Empty<NeteaseWebRecommendationArtist>();
+            NeteaseWebRecommendationAlbum album = song.Album ?? song.LegacyAlbum;
+
+            return new NeteaseRecommendedSong
+            {
+                Id = song.Id,
+                Name = song.Name ?? string.Empty,
+                Artists = artists
+                    .Where(x => x != null && !string.IsNullOrWhiteSpace(x.Name))
+                    .Select(x => x.Name)
+                    .ToList(),
+                AlbumId = album?.Id ?? string.Empty,
+                AlbumName = album?.Name ?? string.Empty,
+                DurationMilliseconds = song.DurationMilliseconds > 0
+                    ? song.DurationMilliseconds
+                    : song.LegacyDurationMilliseconds,
+                ArtworkUrl = album?.ArtworkUrl,
+                IsKnownUnavailable = song.Privilege != null && song.Privilege.Status < 0
             };
         }
 

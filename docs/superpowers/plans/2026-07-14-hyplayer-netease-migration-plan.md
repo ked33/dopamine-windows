@@ -600,6 +600,11 @@ Add daily recommendations collection tab
 8. 双击/Enter 使用完整列表建立临时队列，从选中项开始。
 9. 搜索按标题、艺术家、专辑过滤；搜索清空后恢复全部。
 10. 后台刷新保留旧列表；首次错误显示内联重试。
+11. 右键菜单打开时按歌曲 ID 查询网易云喜欢状态；同一账号的喜欢 ID 集缓存 5 分钟并合并并发请求，页面取消只丢弃迟到 UI，不取消共享请求。
+12. 喜欢/取消喜欢成功后更新服务内存缓存，不写 `Track.Love`、SQLite、音频标签或推荐快照。
+13. “不感兴趣”先确认，再串行调用服务端接口；按返回结果在原位置替换或删除，并保存更新后的 DPAPI 快照。
+14. 服务端成功但本地目标已不存在时按成功收敛：删除不可信旧快照并重新加载权威推荐，不向用户误报操作失败。
+15. 不感兴趣后的页面变化不修改已经建立的临时播放队列。
 
 ### 10.4 XAML 任务
 
@@ -609,7 +614,7 @@ Add daily recommendations collection tab
 4. `DataGridEx` 开启 Recycling 虚拟化。
 5. 列：歌曲、播放指示器、艺术家、专辑、时长。
 6. 不显示评分、红心、文件计数和本地上下文菜单。
-7. 使用专用右键菜单，仅保留跳转播放歌曲、播放选中项、下一曲、添加到当前在线队列和在线搜索。
+7. 使用专用右键菜单，仅保留跳转播放歌曲、播放选中项、下一曲、添加到当前在线队列、喜欢/取消喜欢、不感兴趣和在线搜索。
 8. 首次加载显示中心 ProgressRing。
 9. 未登录、空结果、错误各有中心/内联状态。
 10. 不下载远程封面；使用纯表格与默认 Now Playing 封面。
@@ -626,6 +631,30 @@ Add daily recommendations collection tab
 - 播放全部只有一个活动请求，重复点击不建立多队列。
 - 本地随机开启时每日推荐仍默认按列表顺序；在每日推荐中切换随机不会改写本地随机设置。
 - 使用不含 `Netease.DailyRecommendationsShuffle` 的旧 Portable `Settings.xml` 启动每日推荐播放时，设置会自动回填为 `False`，临时队列能够继续建立且不抛出 `NullReferenceException`。
+- 右键不同歌曲时喜欢状态不会被迟到响应串写；5 分钟内重复打开菜单不重复请求喜欢列表。
+- 喜欢/取消喜欢后再次打开菜单立即反映新状态，且本地 `Track.Love` 和文件元数据不变化。
+- 不感兴趣有替换时保持原位置，无替换/相同 ID/重复 ID时删除；服务端成功但本地目标缺失时不误报失败并重新获取权威列表。
+- DPAPI 保存失败时保留服务端和内存成功结果、删除旧快照并提示；重启不会恢复操作前列表。
+- 页面列表替换或删除后，当前每日推荐临时队列的歌曲、当前项和随机顺序保持不变。
+
+### 10.6 交互扩展文件与测试
+
+新增：
+
+- `Dopamine.Services/Online/Netease/NeteaseWebInteractionContracts.cs`
+- `Dopamine.Tests/NeteaseInteractionContractTests.cs`
+- `Dopamine.Tests/NeteaseMusicInteractionTests.cs`
+
+修改：
+
+- `INeteaseApiClient` / `NeteaseApiClient`
+- `INeteaseMusicService` / `NeteaseMusicService`
+- `NeteaseModels.cs`
+- `CollectionDailyRecommendationsViewModel.cs`
+- `CollectionDailyRecommendations.xaml` / `.xaml.cs`
+- EN、ZH-CN 语言资源及旧式项目文件 Include。
+
+测试至少覆盖 WEAPI 路径与参数、替换歌曲两种 DTO 字段形状、喜欢缓存、喜欢后缓存更新、不感兴趣替换/删除/重复保护、本地目标缺失和快照保存失败。
 
 回滚：删除第 7 个 Pivot 和 Region view；保留通用的枚举范围校验，并把已保存的值 `6` 回退到 `Artists`；登录与播放服务仍独立存在。
 

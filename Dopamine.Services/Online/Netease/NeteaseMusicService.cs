@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,6 +19,7 @@ namespace Dopamine.Services.Online.Netease
         private readonly INeteaseApiClient apiClient;
         private readonly INeteaseSessionService sessionService;
         private readonly INeteaseRecommendationStore recommendationStore;
+        private readonly SemaphoreSlim recommendationMutationGate = new SemaphoreSlim(1, 1);
 
         private long recommendationsGeneration = -1;
         private DateTime recommendationsDate;
@@ -36,6 +38,12 @@ namespace Dopamine.Services.Online.Netease
             new Dictionary<string, CacheEntry<NeteaseLyricResult>>(StringComparer.Ordinal);
         private readonly Dictionary<string, Task<NeteaseLyricResult>> lyricInFlight =
             new Dictionary<string, Task<NeteaseLyricResult>>(StringComparer.Ordinal);
+
+        private long likedSongsGeneration = -1;
+        private string likedSongsUserId = string.Empty;
+        private DateTime likedSongsExpiresAtUtc;
+        private HashSet<string> likedSongIds;
+        private Task<NeteaseResult<IReadOnlyCollection<string>>> likedSongsInFlight;
 
         public NeteaseMusicService(
             INeteaseApiClient apiClient,
@@ -119,6 +127,243 @@ namespace Dopamine.Services.Online.Netease
                         this.recommendationsInFlight.Remove(recommendationKey);
                     }
                 }
+            }
+        }
+
+        public async Task<NeteaseResult<bool>> IsSongLikedAsync(
+            string songId,
+            CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(songId))
+            {
+                return NeteaseResult<bool>.Failure(new NeteaseError(
+                    NeteaseErrorCode.ApiChanged,
+                    "Language_Netease_Service_Unavailable"));
+            }
+
+            NeteaseResult<IReadOnlyCollection<string>> result =
+                await this.GetLikedSongIdsAsync(cancellationToken);
+
+            if (!result.IsSuccess)
+            {
+                return NeteaseResult<bool>.Failure(result.Error);
+            }
+
+            return NeteaseResult<bool>.Success(
+                (result.Value ?? Array.Empty<string>()).Contains(songId));
+        }
+
+        public async Task<NeteaseResult<bool>> SetSongLikedAsync(
+            string songId,
+            bool isLiked,
+            CancellationToken cancellationToken)
+        {
+            NeteaseError sessionError = this.GetSessionError();
+
+            if (sessionError != null)
+            {
+                return NeteaseResult<bool>.Failure(sessionError);
+            }
+
+            if (string.IsNullOrWhiteSpace(songId))
+            {
+                return NeteaseResult<bool>.Failure(new NeteaseError(
+                    NeteaseErrorCode.ApiChanged,
+                    "Language_Netease_Service_Unavailable"));
+            }
+
+            long generation = this.sessionService.SessionGeneration;
+            string userId = this.sessionService.Account?.UserId ?? string.Empty;
+            NeteaseResult<bool> result = await this.apiClient.SetSongLikedAsync(
+                songId,
+                isLiked,
+                cancellationToken);
+
+            if (!result.IsSuccess)
+            {
+                if (IsAuthenticationError(result.Error))
+                {
+                    await this.sessionService.ExpireAsync(generation);
+                }
+
+                return result;
+            }
+
+            lock (this.cacheLock)
+            {
+                if (generation == this.sessionService.SessionGeneration &&
+                    this.likedSongIds != null && this.likedSongsGeneration == generation &&
+                    string.Equals(this.likedSongsUserId, userId, StringComparison.Ordinal))
+                {
+                    if (isLiked)
+                    {
+                        this.likedSongIds.Add(songId);
+                    }
+                    else
+                    {
+                        this.likedSongIds.Remove(songId);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public async Task<NeteaseResult<NeteaseRecommendationMutation>> DislikeDailyRecommendationAsync(
+            string songId,
+            CancellationToken cancellationToken)
+        {
+            NeteaseError sessionError = this.GetSessionError();
+
+            if (sessionError != null)
+            {
+                return NeteaseResult<NeteaseRecommendationMutation>.Failure(sessionError);
+            }
+
+            if (string.IsNullOrWhiteSpace(songId))
+            {
+                return NeteaseResult<NeteaseRecommendationMutation>.Failure(new NeteaseError(
+                    NeteaseErrorCode.ApiChanged,
+                    "Language_Netease_Service_Unavailable"));
+            }
+
+            await this.recommendationMutationGate.WaitAsync(cancellationToken);
+
+            try
+            {
+                long generation = this.sessionService.SessionGeneration;
+                string accountUserId = this.sessionService.Account?.UserId ?? string.Empty;
+                DateTime recommendationDate = NeteaseDailyRecommendationSchedule.GetRecommendationDate(
+                    DateTimeOffset.UtcNow);
+
+                NeteaseResult<IReadOnlyList<NeteaseRecommendedSong>> currentResult =
+                    await this.GetDailyRecommendationsAsync(cancellationToken);
+
+                if (!currentResult.IsSuccess)
+                {
+                    return NeteaseResult<NeteaseRecommendationMutation>.Failure(currentResult.Error);
+                }
+
+                NeteaseResult<NeteaseRecommendedSong> apiResult =
+                    await this.apiClient.DislikeDailyRecommendationAsync(songId, cancellationToken);
+
+                if (!apiResult.IsSuccess)
+                {
+                    if (IsAuthenticationError(apiResult.Error))
+                    {
+                        await this.sessionService.ExpireAsync(generation);
+                    }
+
+                    return NeteaseResult<NeteaseRecommendationMutation>.Failure(apiResult.Error);
+                }
+
+                if (generation != this.sessionService.SessionGeneration ||
+                    !string.Equals(
+                        accountUserId,
+                        this.sessionService.Account?.UserId ?? string.Empty,
+                        StringComparison.Ordinal))
+                {
+                    return NeteaseResult<NeteaseRecommendationMutation>.Failure(new NeteaseError(
+                        NeteaseErrorCode.SessionExpired,
+                        "Language_Netease_Login_Expired"));
+                }
+
+                if (recommendationDate != NeteaseDailyRecommendationSchedule.GetRecommendationDate(
+                    DateTimeOffset.UtcNow))
+                {
+                    this.InvalidateRecommendations();
+                    await this.recommendationStore.DeleteAsync();
+                    return NeteaseResult<NeteaseRecommendationMutation>.Success(
+                        new NeteaseRecommendationMutation
+                        {
+                            RemovedSongId = songId,
+                            UpdatedRecommendations = Array.Empty<NeteaseRecommendedSong>(),
+                            PersistenceSucceeded = true,
+                            RequiresRefresh = true
+                        });
+                }
+
+                var updated = new List<NeteaseRecommendedSong>(currentResult.Value ??
+                    Array.Empty<NeteaseRecommendedSong>());
+                int index = updated.FindIndex(x => x != null &&
+                    string.Equals(x.Id, songId, StringComparison.Ordinal));
+
+                if (index < 0)
+                {
+                    NeteaseRecommendedSong unmatchedReplacement = apiResult.Value;
+                    bool canUseUnmatchedReplacement = unmatchedReplacement != null &&
+                        !string.IsNullOrWhiteSpace(unmatchedReplacement.Id) &&
+                        !string.Equals(unmatchedReplacement.Id, songId, StringComparison.Ordinal) &&
+                        !updated.Any(x => x != null && string.Equals(
+                            x.Id,
+                            unmatchedReplacement.Id,
+                            StringComparison.Ordinal));
+
+                    this.InvalidateRecommendations();
+                    await this.recommendationStore.DeleteAsync();
+                    return NeteaseResult<NeteaseRecommendationMutation>.Success(
+                        new NeteaseRecommendationMutation
+                        {
+                            RemovedSongId = songId,
+                            Replacement = canUseUnmatchedReplacement ? unmatchedReplacement : null,
+                            UpdatedRecommendations = updated,
+                            PersistenceSucceeded = true,
+                            RequiresRefresh = true
+                        });
+                }
+
+                NeteaseRecommendedSong replacement = apiResult.Value;
+                bool canInsertReplacement = replacement != null &&
+                    !string.IsNullOrWhiteSpace(replacement.Id) &&
+                    !string.Equals(replacement.Id, songId, StringComparison.Ordinal) &&
+                    !updated.Any(x => x != null && string.Equals(
+                        x.Id,
+                        replacement.Id,
+                        StringComparison.Ordinal));
+
+                if (canInsertReplacement)
+                {
+                    updated[index] = replacement;
+                }
+                else
+                {
+                    replacement = null;
+                    updated.RemoveAt(index);
+                }
+
+                lock (this.cacheLock)
+                {
+                    this.recommendations = updated;
+                    this.recommendationsGeneration = generation;
+                    this.recommendationsDate = recommendationDate;
+                }
+
+                NeteaseResult<bool> saveResult = await this.recommendationStore.SaveAsync(
+                    new NeteaseRecommendationSnapshot
+                    {
+                        AccountUserId = accountUserId,
+                        RecommendationDate = recommendationDate,
+                        Songs = new List<NeteaseRecommendedSong>(updated)
+                    },
+                    CancellationToken.None);
+
+                if (!saveResult.IsSuccess)
+                {
+                    await this.recommendationStore.DeleteAsync();
+                }
+
+                return NeteaseResult<NeteaseRecommendationMutation>.Success(
+                    new NeteaseRecommendationMutation
+                    {
+                        RemovedSongId = songId,
+                        Replacement = replacement,
+                        UpdatedRecommendations = updated,
+                        PersistenceSucceeded = saveResult.IsSuccess
+                    });
+            }
+            finally
+            {
+                this.recommendationMutationGate.Release();
             }
         }
 
@@ -273,6 +518,112 @@ namespace Dopamine.Services.Online.Netease
                 this.audioInFlight.Clear();
                 this.lyricCache.Clear();
                 this.lyricInFlight.Clear();
+                this.likedSongIds = null;
+                this.likedSongsGeneration = -1;
+                this.likedSongsUserId = string.Empty;
+                this.likedSongsExpiresAtUtc = DateTime.MinValue;
+                this.likedSongsInFlight = null;
+            }
+        }
+
+        private async Task<NeteaseResult<IReadOnlyCollection<string>>> GetLikedSongIdsAsync(
+            CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return NeteaseResult<IReadOnlyCollection<string>>.Failure(new NeteaseError(
+                    NeteaseErrorCode.Cancelled,
+                    "Language_Netease_Cancelled"));
+            }
+
+            NeteaseError sessionError = this.GetSessionError();
+
+            if (sessionError != null)
+            {
+                return NeteaseResult<IReadOnlyCollection<string>>.Failure(sessionError);
+            }
+
+            long generation = this.sessionService.SessionGeneration;
+            string userId = this.sessionService.Account?.UserId ?? string.Empty;
+            Task<NeteaseResult<IReadOnlyCollection<string>>> task;
+
+            lock (this.cacheLock)
+            {
+                if (this.likedSongIds != null && this.likedSongsGeneration == generation &&
+                    string.Equals(this.likedSongsUserId, userId, StringComparison.Ordinal) &&
+                    this.likedSongsExpiresAtUtc > DateTime.UtcNow)
+                {
+                    return NeteaseResult<IReadOnlyCollection<string>>.Success(
+                        new HashSet<string>(this.likedSongIds, StringComparer.Ordinal));
+                }
+
+                task = this.likedSongsInFlight;
+
+                if (task == null)
+                {
+                    // A single context menu does not own the shared request. Cancelling one
+                    // lookup must not cancel the in-flight request used by another lookup.
+                    task = this.apiClient.GetLikedSongIdsAsync(userId, CancellationToken.None);
+                    this.likedSongsInFlight = task;
+                }
+            }
+
+            try
+            {
+                NeteaseResult<IReadOnlyCollection<string>> result = await task;
+
+                if (!result.IsSuccess)
+                {
+                    if (IsAuthenticationError(result.Error))
+                    {
+                        await this.sessionService.ExpireAsync(generation);
+                    }
+
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        return NeteaseResult<IReadOnlyCollection<string>>.Failure(new NeteaseError(
+                            NeteaseErrorCode.Cancelled,
+                            "Language_Netease_Cancelled"));
+                    }
+
+                    return result;
+                }
+
+                if (generation == this.sessionService.SessionGeneration &&
+                    string.Equals(
+                        userId,
+                        this.sessionService.Account?.UserId ?? string.Empty,
+                        StringComparison.Ordinal))
+                {
+                    lock (this.cacheLock)
+                    {
+                        this.likedSongIds = new HashSet<string>(
+                            result.Value ?? Array.Empty<string>(),
+                            StringComparer.Ordinal);
+                        this.likedSongsGeneration = generation;
+                        this.likedSongsUserId = userId;
+                        this.likedSongsExpiresAtUtc = DateTime.UtcNow.AddMinutes(5);
+                    }
+                }
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return NeteaseResult<IReadOnlyCollection<string>>.Failure(new NeteaseError(
+                        NeteaseErrorCode.Cancelled,
+                        "Language_Netease_Cancelled"));
+                }
+
+                return result;
+            }
+            finally
+            {
+                lock (this.cacheLock)
+                {
+                    if (object.ReferenceEquals(this.likedSongsInFlight, task))
+                    {
+                        this.likedSongsInFlight = null;
+                    }
+                }
             }
         }
 
@@ -327,6 +678,16 @@ namespace Dopamine.Services.Online.Netease
                 this.sessionService.State == NeteaseSessionState.Expired)
             {
                 this.recommendationStore.DeleteAsync();
+            }
+        }
+
+        private void InvalidateRecommendations()
+        {
+            lock (this.cacheLock)
+            {
+                this.recommendations = null;
+                this.recommendationsGeneration = -1;
+                this.recommendationsDate = default(DateTime);
             }
         }
 

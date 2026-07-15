@@ -9,7 +9,9 @@
              prismMvvm:ViewModelLocator.AutoWireViewModel="True">
     <UserControl.Resources>
         <utils:BindingProxy x:Key="DailyRecommendationsViewModelProxy" Data="{Binding}"/>
-        <ContextMenu x:Key="DailyRecommendationsContextMenu" x:Shared="False">
+        <ContextMenu x:Key="DailyRecommendationsContextMenu"
+                     x:Shared="False"
+                     Opened="DailyRecommendationsContextMenu_Opened">
             <MenuItem Header="{DynamicResource Language_Jump_To_Playing_Song}"
                       InputGestureText="{DynamicResource Language_Ctrl_J}"
                       Click="JumpToPlayingMenuItem_Click"/>
@@ -20,6 +22,11 @@
                       Command="{Binding Source={StaticResource DailyRecommendationsViewModelProxy}, Path=Data.PlayNextCommand}"/>
             <MenuItem Header="{DynamicResource Language_Add_To_Now_Playing}"
                       Command="{Binding Source={StaticResource DailyRecommendationsViewModelProxy}, Path=Data.AddToNowPlayingCommand}"/>
+            <Separator/>
+            <MenuItem Header="{Binding Source={StaticResource DailyRecommendationsViewModelProxy}, Path=Data.LikeMenuHeader}"
+                      Command="{Binding Source={StaticResource DailyRecommendationsViewModelProxy}, Path=Data.ToggleLikeCommand}"/>
+            <MenuItem Header="{DynamicResource Language_Netease_Not_Interested}"
+                      Command="{Binding Source={StaticResource DailyRecommendationsViewModelProxy}, Path=Data.DislikeCommand}"/>
             <Separator/>
             <MenuItem Header="{DynamicResource Language_Search_Online}"
                       ItemsSource="{Binding Source={StaticResource DailyRecommendationsViewModelProxy}, Path=Data.ContextMenuSearchProviders}"

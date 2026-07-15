@@ -116,6 +116,19 @@ namespace Dopamine.Services.Online.Netease
         public List<NeteaseRecommendedSong> Songs { get; set; }
     }
 
+    public sealed class NeteaseRecommendationMutation
+    {
+        public string RemovedSongId { get; set; }
+
+        public NeteaseRecommendedSong Replacement { get; set; }
+
+        public IReadOnlyList<NeteaseRecommendedSong> UpdatedRecommendations { get; set; }
+
+        public bool PersistenceSucceeded { get; set; }
+
+        public bool RequiresRefresh { get; set; }
+    }
+
     public sealed class NeteaseRecommendationLoadResult
     {
         public bool Exists { get; set; }

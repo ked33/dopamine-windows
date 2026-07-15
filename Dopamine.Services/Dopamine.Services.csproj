@@ -270,6 +270,7 @@
     <Compile Include="Online\Netease\NeteaseQrStatusMapper.cs" />
     <Compile Include="Online\Netease\NeteaseSessionService.cs" />
     <Compile Include="Online\Netease\NeteaseWebLoginContracts.cs" />
+    <Compile Include="Online\Netease\NeteaseWebInteractionContracts.cs" />
     <Compile Include="Playlist\Enums.cs" />
     <Compile Include="Playlist\IPlaylistService.cs" />
     <Compile Include="Playlist\PlaylistEventHandlers.cs" />

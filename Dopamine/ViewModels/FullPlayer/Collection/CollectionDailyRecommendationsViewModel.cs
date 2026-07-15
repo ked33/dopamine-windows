@@ -4,6 +4,7 @@ using Dopamine.Core.Logging;
 using Dopamine.Core.Utils;
 using Dopamine.Data.Entities;
 using Dopamine.Services.Entities;
+using Dopamine.Services.Dialog;
 using Dopamine.Services.Extensions;
 using Dopamine.Services.Online.Netease;
 using Dopamine.Services.Playback;
@@ -31,6 +32,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         private readonly IPlaybackService playbackService;
         private readonly ISearchService searchService;
         private readonly IProviderService providerService;
+        private readonly IDialogService dialogService;
 
         private ObservableCollection<TrackViewModel> items = new ObservableCollection<TrackViewModel>();
         private CollectionViewSource itemsCvs;
@@ -45,6 +47,12 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         private bool isStartingPlayback;
         private System.Threading.Timer recommendationRefreshTimer;
         private ObservableCollection<SearchProvider> contextMenuSearchProviders;
+        private CancellationTokenSource likeStatusCancellationTokenSource;
+        private string likeStatusSongId;
+        private bool isLikeStatusLoading;
+        private bool selectedSongIsLiked;
+        private bool isLikeOperationRunning;
+        private bool isDislikeOperationRunning;
 
         public DelegateCommand LoadedCommand { get; private set; }
 
@@ -61,6 +69,10 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         public DelegateCommand AddToNowPlayingCommand { get; private set; }
 
         public DelegateCommand<string> SearchOnlineCommand { get; private set; }
+
+        public DelegateCommand ToggleLikeCommand { get; private set; }
+
+        public DelegateCommand DislikeCommand { get; private set; }
 
         public ObservableCollection<SearchProvider> ContextMenuSearchProviders
         {
@@ -92,10 +104,47 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             get { return this.selectedItem; }
             set
             {
-                SetProperty<TrackViewModel>(ref this.selectedItem, value);
-                this.RaiseSelectionCommandStates();
+                if (SetProperty<TrackViewModel>(ref this.selectedItem, value))
+                {
+                    this.CancelLikeStatusLookup();
+                    this.likeStatusSongId = null;
+                    this.SelectedSongIsLiked = false;
+                    this.RaiseSelectionCommandStates();
+                }
             }
         }
+
+        public bool IsLikeStatusLoading
+        {
+            get { return this.isLikeStatusLoading; }
+            private set
+            {
+                if (SetProperty<bool>(ref this.isLikeStatusLoading, value))
+                {
+                    RaisePropertyChanged(nameof(this.LikeMenuHeader));
+                    this.RaiseSelectionCommandStates();
+                }
+            }
+        }
+
+        public bool SelectedSongIsLiked
+        {
+            get { return this.selectedSongIsLiked; }
+            private set
+            {
+                if (SetProperty<bool>(ref this.selectedSongIsLiked, value))
+                {
+                    RaisePropertyChanged(nameof(this.LikeMenuHeader));
+                    this.RaiseSelectionCommandStates();
+                }
+            }
+        }
+
+        public string LikeMenuHeader => this.IsLikeStatusLoading
+            ? ResourceUtils.GetString("Language_Netease_Like_Status_Loading")
+            : ResourceUtils.GetString(this.SelectedSongIsLiked
+                ? "Language_Netease_Unlike"
+                : "Language_Netease_Like");
 
         public int Count => this.ItemsCvs == null ? 0 : this.ItemsCvs.View.Cast<TrackViewModel>().Count();
 
@@ -151,13 +200,15 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             INeteaseMusicService musicService,
             INeteaseSessionService sessionService,
             IPlaybackService playbackService,
-            ISearchService searchService)
+            ISearchService searchService,
+            IDialogService dialogService)
         {
             this.container = container;
             this.musicService = musicService;
             this.sessionService = sessionService;
             this.playbackService = playbackService;
             this.searchService = searchService;
+            this.dialogService = dialogService;
             this.providerService = container.Resolve<IProviderService>();
 
             this.LoadedCommand = new DelegateCommand(() => this.LoadedAsync());
@@ -180,6 +231,12 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.SearchOnlineCommand = new DelegateCommand<string>(
                 id => this.SearchOnline(id),
                 _ => this.SelectedItem != null);
+            this.ToggleLikeCommand = new DelegateCommand(
+                () => this.ToggleLikeAsync(),
+                () => this.CanToggleLike());
+            this.DislikeCommand = new DelegateCommand(
+                () => this.DislikeSelectedAsync(),
+                () => this.CanDislikeSelected());
 
             this.searchService.DoSearch += (_) => this.DispatchFilterRefresh();
             this.sessionService.SessionChanged += (_, __) => this.DispatchSessionChanged();
@@ -212,6 +269,76 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             await this.StartPlaybackAsync(track);
         }
 
+        public async Task PrepareContextMenuAsync()
+        {
+            TrackViewModel target = this.SelectedItem;
+            string songId = target?.SourceInfo?.RemoteId;
+
+            if (!this.IsLoggedIn || string.IsNullOrWhiteSpace(songId))
+            {
+                return;
+            }
+
+            this.CancelLikeStatusLookup();
+            var cancellationTokenSource = new CancellationTokenSource();
+            this.likeStatusCancellationTokenSource = cancellationTokenSource;
+            long generation = this.sessionService.SessionGeneration;
+            this.likeStatusSongId = songId;
+            this.IsLikeStatusLoading = true;
+
+            try
+            {
+                NeteaseResult<bool> result = await this.musicService.IsSongLikedAsync(
+                    songId,
+                    cancellationTokenSource.Token);
+
+                if (!cancellationTokenSource.IsCancellationRequested &&
+                    generation == this.sessionService.SessionGeneration &&
+                    string.Equals(this.SelectedItem?.SourceInfo?.RemoteId, songId, StringComparison.Ordinal))
+                {
+                    if (result.IsSuccess)
+                    {
+                        this.SelectedSongIsLiked = result.Value;
+                    }
+                    else if (result.Error?.Code != NeteaseErrorCode.Cancelled)
+                    {
+                        this.ShowNeteaseActionError(result.Error);
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warning(
+                    "Could not query the Netease liked-song status. ErrorType={0}",
+                    ex.GetType().Name);
+
+                if (generation == this.sessionService.SessionGeneration && this.isLoaded)
+                {
+                    this.ShowNeteaseActionError(null);
+                }
+            }
+            finally
+            {
+                if (object.ReferenceEquals(
+                    Interlocked.CompareExchange(
+                        ref this.likeStatusCancellationTokenSource,
+                        null,
+                        cancellationTokenSource),
+                    cancellationTokenSource))
+                {
+                    if (string.Equals(this.likeStatusSongId, songId, StringComparison.Ordinal))
+                    {
+                        this.IsLikeStatusLoading = false;
+                    }
+                }
+
+                cancellationTokenSource.Dispose();
+            }
+        }
+
         private async void LoadedAsync()
         {
             this.isLoaded = true;
@@ -228,6 +355,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         {
             this.isLoaded = false;
             this.CancelLoading();
+            this.CancelLikeStatusLookup();
             this.DisposeRecommendationRefreshTimer();
         }
 
@@ -379,6 +507,255 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.PlayNextCommand?.RaiseCanExecuteChanged();
             this.AddToNowPlayingCommand?.RaiseCanExecuteChanged();
             this.SearchOnlineCommand?.RaiseCanExecuteChanged();
+            this.ToggleLikeCommand?.RaiseCanExecuteChanged();
+            this.DislikeCommand?.RaiseCanExecuteChanged();
+        }
+
+        private bool CanToggleLike()
+        {
+            return this.IsLoggedIn && this.SelectedItem?.SourceInfo != null &&
+                !string.IsNullOrWhiteSpace(this.SelectedItem.SourceInfo.RemoteId) &&
+                !this.IsLikeStatusLoading && !this.isLikeOperationRunning &&
+                !this.isDislikeOperationRunning &&
+                string.Equals(
+                    this.likeStatusSongId,
+                    this.SelectedItem.SourceInfo.RemoteId,
+                    StringComparison.Ordinal);
+        }
+
+        private bool CanDislikeSelected()
+        {
+            return this.IsLoggedIn && this.SelectedItem?.SourceInfo != null &&
+                !string.IsNullOrWhiteSpace(this.SelectedItem.SourceInfo.RemoteId) &&
+                !this.isDislikeOperationRunning && !this.isLikeOperationRunning;
+        }
+
+        private async void ToggleLikeAsync()
+        {
+            TrackViewModel target = this.SelectedItem;
+            string songId = target?.SourceInfo?.RemoteId;
+
+            if (!this.CanToggleLike() || string.IsNullOrWhiteSpace(songId))
+            {
+                return;
+            }
+
+            bool desiredState = !this.SelectedSongIsLiked;
+            long generation = this.sessionService.SessionGeneration;
+            this.isLikeOperationRunning = true;
+            this.RaiseSelectionCommandStates();
+
+            try
+            {
+                NeteaseResult<bool> result = await this.musicService.SetSongLikedAsync(
+                    songId,
+                    desiredState,
+                    CancellationToken.None);
+
+                if (result.IsSuccess)
+                {
+                    if (generation == this.sessionService.SessionGeneration &&
+                        string.Equals(
+                            this.SelectedItem?.SourceInfo?.RemoteId,
+                            songId,
+                            StringComparison.Ordinal))
+                    {
+                        this.likeStatusSongId = songId;
+                        this.SelectedSongIsLiked = desiredState;
+                    }
+                }
+                else
+                {
+                    if (this.CanPresentOperationResult(generation))
+                    {
+                        this.ShowNeteaseActionError(result.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warning(
+                    "Could not update the Netease liked-song state. ErrorType={0}",
+                    ex.GetType().Name);
+
+                if (this.CanPresentOperationResult(generation))
+                {
+                    this.ShowNeteaseActionError(null);
+                }
+            }
+            finally
+            {
+                this.isLikeOperationRunning = false;
+                this.RaiseSelectionCommandStates();
+            }
+        }
+
+        private async void DislikeSelectedAsync()
+        {
+            TrackViewModel target = this.SelectedItem;
+            string songId = target?.SourceInfo?.RemoteId;
+
+            if (!this.CanDislikeSelected() || string.IsNullOrWhiteSpace(songId))
+            {
+                return;
+            }
+
+            string confirmation = ResourceUtils.GetString(
+                "Language_Netease_Not_Interested_Confirmation").Replace(
+                    "{song}",
+                    target.TrackTitle ?? string.Empty);
+
+            if (!this.dialogService.ShowConfirmation(
+                0xe11b,
+                16,
+                ResourceUtils.GetString("Language_Netease_Not_Interested"),
+                confirmation,
+                ResourceUtils.GetString("Language_Yes"),
+                ResourceUtils.GetString("Language_No")))
+            {
+                return;
+            }
+
+            long generation = this.sessionService.SessionGeneration;
+            this.CancelLikeStatusLookup();
+            this.likeStatusSongId = null;
+            this.SelectedSongIsLiked = false;
+            this.isDislikeOperationRunning = true;
+            this.RaiseSelectionCommandStates();
+
+            try
+            {
+                NeteaseResult<NeteaseRecommendationMutation> result =
+                    await this.musicService.DislikeDailyRecommendationAsync(
+                        songId,
+                        CancellationToken.None);
+
+                if (!result.IsSuccess)
+                {
+                    if (this.CanPresentOperationResult(generation))
+                    {
+                        this.ShowNeteaseActionError(result.Error);
+                    }
+
+                    return;
+                }
+
+                if (this.CanPresentOperationResult(generation))
+                {
+                    this.ApplyRecommendationMutation(result.Value);
+
+                    if (result.Value != null && result.Value.RequiresRefresh)
+                    {
+                        await this.LoadAsync();
+                    }
+                }
+
+                if (this.CanPresentOperationResult(generation) &&
+                    result.Value != null && !result.Value.PersistenceSucceeded)
+                {
+                    this.dialogService.ShowNotification(
+                        0xe711,
+                        16,
+                        ResourceUtils.GetString("Language_Netease_Music"),
+                        ResourceUtils.GetString("Language_Netease_Recommendation_Cache_Save_Failed"),
+                        ResourceUtils.GetString("Language_Ok"),
+                        false);
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warning(
+                    "Could not mark the Netease daily recommendation as not interested. ErrorType={0}",
+                    ex.GetType().Name);
+
+                if (this.CanPresentOperationResult(generation))
+                {
+                    this.ShowNeteaseActionError(null);
+                }
+            }
+            finally
+            {
+                this.isDislikeOperationRunning = false;
+                this.RaiseSelectionCommandStates();
+            }
+        }
+
+        private void ApplyRecommendationMutation(NeteaseRecommendationMutation mutation)
+        {
+            if (mutation == null || string.IsNullOrWhiteSpace(mutation.RemovedSongId))
+            {
+                return;
+            }
+
+            int index = -1;
+
+            for (int i = 0; i < this.Items.Count; i++)
+            {
+                if (string.Equals(
+                    this.Items[i]?.SourceInfo?.RemoteId,
+                    mutation.RemovedSongId,
+                    StringComparison.Ordinal))
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index < 0)
+            {
+                if (mutation.UpdatedRecommendations != null)
+                {
+                    this.Items = new ObservableCollection<TrackViewModel>(
+                        mutation.UpdatedRecommendations.Select(this.MapTrack));
+                    this.SelectedItem = null;
+                    this.RebuildCollectionView();
+                    this.RefreshPlayingState();
+                }
+
+                return;
+            }
+
+            if (mutation.Replacement == null)
+            {
+                this.Items.RemoveAt(index);
+                this.SelectedItem = null;
+            }
+            else
+            {
+                TrackViewModel replacement = this.MapTrack(mutation.Replacement);
+                this.Items[index] = replacement;
+                this.SelectedItem = replacement;
+            }
+
+            this.ItemsCvs?.View.Refresh();
+            RaisePropertyChanged(nameof(this.Count));
+            this.RefreshPlayingState();
+            this.RaiseStateProperties();
+        }
+
+        private void CancelLikeStatusLookup()
+        {
+            CancellationTokenSource cancellationTokenSource = Interlocked.Exchange(
+                ref this.likeStatusCancellationTokenSource,
+                null);
+            cancellationTokenSource?.Cancel();
+            this.IsLikeStatusLoading = false;
+        }
+
+        private void ShowNeteaseActionError(NeteaseError error)
+        {
+            this.dialogService.ShowNotification(
+                0xe711,
+                16,
+                ResourceUtils.GetString("Language_Error"),
+                ResourceUtils.GetString(error?.MessageKey ?? "Language_Netease_Service_Unavailable"),
+                ResourceUtils.GetString("Language_Ok"),
+                false);
+        }
+
+        private bool CanPresentOperationResult(long generation)
+        {
+            return this.isLoaded && generation == this.sessionService.SessionGeneration;
         }
 
         private void SearchOnline(string providerId)
@@ -509,6 +886,9 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         {
             this.Dispatch(() =>
             {
+                this.CancelLikeStatusLookup();
+                this.likeStatusSongId = null;
+                this.SelectedSongIsLiked = false;
                 RaisePropertyChanged(nameof(this.IsLoggedIn));
 
                 if (!this.IsLoggedIn)
@@ -523,6 +903,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
                 }
 
                 this.RaiseStateProperties();
+                this.RaiseSelectionCommandStates();
             });
         }
 

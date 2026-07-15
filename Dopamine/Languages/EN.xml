@@ -518,4 +518,10 @@
   <Text Key="Netease_No_Copyright">This song is unavailable because of copyright restrictions.</Text>
   <Text Key="Netease_Temporary_Download_Failed">The temporary audio file could not be prepared.</Text>
   <Text Key="Netease_Decoder_Unsupported">The returned audio format could not be decoded.</Text>
+  <Text Key="Netease_Like">Like</Text>
+  <Text Key="Netease_Unlike">Unlike</Text>
+  <Text Key="Netease_Like_Status_Loading">Checking like status…</Text>
+  <Text Key="Netease_Not_Interested">Not interested</Text>
+  <Text Key="Netease_Not_Interested_Confirmation">Mark “{song}” as not interested? Netease will adjust future recommendations and this action cannot currently be undone.</Text>
+  <Text Key="Netease_Recommendation_Cache_Save_Failed">The recommendation was updated online, but the local encrypted cache could not be saved. It will be fetched again next time.</Text>
 </Language>

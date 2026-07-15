@@ -412,7 +412,20 @@ Error
 ```csharp
 public interface INeteaseMusicService
 {
-    Task<IReadOnlyList<NeteaseRecommendedSong>> GetDailyRecommendationsAsync(
+    Task<NeteaseResult<IReadOnlyList<NeteaseRecommendedSong>>> GetDailyRecommendationsAsync(
+        CancellationToken cancellationToken);
+
+    Task<NeteaseResult<bool>> IsSongLikedAsync(
+        string songId,
+        CancellationToken cancellationToken);
+
+    Task<NeteaseResult<bool>> SetSongLikedAsync(
+        string songId,
+        bool isLiked,
+        CancellationToken cancellationToken);
+
+    Task<NeteaseResult<NeteaseRecommendationMutation>> DislikeDailyRecommendationAsync(
+        string songId,
         CancellationToken cancellationToken);
 
     Task<NeteaseAudioResolution> ResolveOfficialAudioAsync(
@@ -560,6 +573,17 @@ MUSIC_U=...; __csrf=...; NMTID=...
 
 每日推荐列表映射成带 `TrackSourceInfo(Netease, songId)` 的 `TrackViewModel`。合成 `Track` 不提交到 `ITrackRepository`，也不参与索引。Mapper 必须为现有 `TrackViewModel` 会直接取 `.Value` 的字段提供安全默认值，例如 `TrackNumber=0`，并用测试遍历每日推荐会用到的显示属性，避免在线 DTO 的 nullable 字段在 Now Playing 或排序路径触发异常。
 
+每日推荐歌曲交互扩展遵守以下规则：
+
+- 专用右键菜单增加“喜欢/取消喜欢”和“不感兴趣”，仍不得重新引入资源管理器、标签编辑、本地删除、本地播放列表、黑名单等文件型命令。
+- 右键菜单打开时通过 `/weapi/song/like/get` 确认所选歌曲是否已喜欢；喜欢 ID 集按 `SessionGeneration + AccountUserId` 缓存 5 分钟，并合并同会话并发查询。单个菜单关闭只能取消自己的 UI 提交，不能取消其他调用方共用的底层请求。
+- 喜欢/取消喜欢调用 `/weapi/radio/like`；成功后直接修改会话内喜欢 ID 集。不得写 `Track.Love`、本地数据库或音频文件元数据，也不得把喜欢状态写入每日推荐 DPAPI 快照。
+- “不感兴趣”调用 `/weapi/v2/discovery/recommend/dislike`，同一进程中的推荐变更串行执行。服务端返回替换歌曲时原位置替换；未返回歌曲、返回相同 ID、返回已有重复 ID或缺失有效 ID时删除原歌曲。
+- 服务端成功后同步更新服务内存列表、页面 `ObservableCollection` 和当日 DPAPI 快照。若服务端成功但本地列表已经不含目标歌曲，不能误报整体失败；应清除无法证明一致的旧快照、返回成功 mutation，并重新获取服务端权威列表。
+- DPAPI 保存失败不回滚已经成功的服务端操作和内存列表；删除旧快照以防重启恢复旧推荐，并显示不阻塞操作结果的缓存提示。
+- 账号切换、登出、页面卸载或迟到响应不得把旧账号状态写回当前菜单，也不得在新会话中弹出旧请求错误。
+- 所有日志只记录操作名、内部错误分类、响应 code 或异常类型；不得记录 Cookie、完整请求/响应正文或用户推荐内容。
+
 ## 12. 队列与持久化边界
 
 第一阶段使用明确的临时在线队列模式：
@@ -582,6 +606,7 @@ Task<bool> PlayTransientQueueAsync(
 - `NeteaseDailyRecommendations` 上下文从 `Netease.DailyRecommendationsShuffle` 读取并保存随机状态，默认 `False`；播放器中的随机按钮只修改当前上下文，返回本地 Durable 队列时恢复 `Playback.Shuffle`。
 - `Netease.DailyRecommendationsShuffle` 属于可在升级后新增的便携设置，读写必须经过 `SettingDefaults.GetOrAdd` / `SettingDefaults.SetSafe`；旧 `Settings.xml` 缺少整个 `Netease` 命名空间时应自动按 `False` 回填，不能在建立临时队列前因直接 `SettingsClient.Get` 产生空引用。
 - 当前在线临时队列允许“下一曲”和“添加到正在播放”，但只能加入在线曲目，不允许混入本地文件或持久化伪路径。
+- “不感兴趣”只更新每日推荐数据源；已经开始播放的临时队列保持建立时的稳定快照，不原地替换、删除或重排，避免破坏当前歌曲、队列身份、随机顺序和上一首/下一首语义。
 - 在线歌曲不更新本地 `PlayCount`、`SkipCount`、`DateLastPlayed`、评分、红心或文件元数据。
 - Last.fm scrobble 和 Discord Rich Presence 可以继续使用在线歌曲已映射的标题、歌手、专辑和时长。
 
@@ -710,6 +735,7 @@ Stage 0 必须实际验证当前 `CSCore.Ffmpeg`：
 | 数据 | 位置 | TTL | 清除条件 |
 | --- | --- | --- | --- |
 | 每日推荐 | 内存 + DPAPI 文件 | 中国时间 06:00 划分的推荐日 | 登出、明确失效、换账号覆盖 |
+| 喜欢歌曲 ID 集 | 内存 | 5 分钟 | 登出、明确失效、换账号 |
 | 播放 URL | 内存 | 15 分钟 | 播放打开失败、登出、换账号 |
 | 歌词 | 内存 | 24 小时 | 登出、进程退出 |
 | 临时音频 | 磁盘，仅兼容回退 | 24 小时/512 MiB | LRU、登出、启动清理 |
@@ -798,6 +824,8 @@ Stage 0 必须实际验证当前 `CSCore.Ffmpeg`：
 - DPAPI 当前用户 round-trip、损坏文件、错误格式版本和登出删除。
 - QR 状态码到内部状态的映射。
 - 推荐 DTO 到合成 Track/TrackSourceInfo 的映射。
+- 喜欢列表请求映射、5 分钟会话缓存、single-flight、喜欢/取消喜欢后的内存更新和换账号清理。
+- 不感兴趣替换、无替换删除、重复替换删除、本地目标缺失后的成功收敛，以及 DPAPI 保存失败删除旧快照。
 - `TrackViewModel.DeepCopy` 保留在线来源信息。
 - URL 空值、code 非 200、试听、会员和无版权映射。
 - URL TTL、强制刷新、换账号清缓存和 single-flight。
@@ -825,6 +853,8 @@ Stage 0 必须实际验证当前 `CSCore.Ffmpeg`：
 - 在线下载缓冲条从 0 增长到 100%，缓存命中立即完成，取消/失败/停止后隐藏。
 - 普通 LRC 高亮、无歌词、快速连续切歌不串歌词。
 - 在线歌曲不出现本地文件编辑/删除/资源管理器操作。
+- 右键打开时正确显示“喜欢”或“取消喜欢”；操作成功后再次打开不重复请求即可反映新状态。
+- “不感兴趣”保持原位置替换或删除，并在异常本地状态下重新加载权威列表；当前正在播放的临时队列不随页面列表变化。
 - 本地 MP3/FLAC/WMA 播放、歌词、封面、评分、队列持久化无回归。
 - Last.fm、Discord、SMTC、通知和托盘控制在在线歌曲上不崩溃。
 - 深色/浅色、中文/英文、窗口缩放和 100%/150% DPI。
@@ -839,6 +869,7 @@ Stage 0 必须实际验证当前 `CSCore.Ffmpeg`：
 - 未登录时每日推荐不发起无意义请求，并给出明确入口提示。
 - 登录后能加载每日推荐，双击或播放全部能建立临时队列。
 - 每日推荐默认顺序播放且随机设置与本地音乐独立持久化；专用右键菜单不暴露任何本地文件操作。
+- 每日推荐可查询并切换网易云喜欢状态；“不感兴趣”按服务端响应替换或删除歌曲，缓存失败不会恢复旧推荐或篡改当前播放队列。
 - 每首歌播放前按 ID 懒获取官方 URL，不在推荐加载时批量获取 URL。
 - 缓存 URL 打开失败后最多强制刷新一次，不发生无限重试。
 - 在线歌曲可播放、暂停、Seek、切歌，并能获取和高亮普通 LRC。

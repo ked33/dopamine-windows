@@ -32,6 +32,16 @@ namespace Dopamine.Views.FullPlayer.Collection
             }
         }
 
+        private async void DailyRecommendationsContextMenu_Opened(object sender, RoutedEventArgs e)
+        {
+            var viewModel = this.DataContext as CollectionDailyRecommendationsViewModel;
+
+            if (viewModel != null)
+            {
+                await viewModel.PrepareContextMenuAsync();
+            }
+        }
+
         private async void DataGridRecommendations_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)

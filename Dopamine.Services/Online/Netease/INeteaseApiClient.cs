@@ -14,6 +14,19 @@ namespace Dopamine.Services.Online.Netease
 
         Task<NeteaseResult<IReadOnlyList<NeteaseRecommendedSong>>> GetDailyRecommendationsAsync(CancellationToken cancellationToken);
 
+        Task<NeteaseResult<IReadOnlyCollection<string>>> GetLikedSongIdsAsync(
+            string userId,
+            CancellationToken cancellationToken);
+
+        Task<NeteaseResult<bool>> SetSongLikedAsync(
+            string songId,
+            bool isLiked,
+            CancellationToken cancellationToken);
+
+        Task<NeteaseResult<NeteaseRecommendedSong>> DislikeDailyRecommendationAsync(
+            string songId,
+            CancellationToken cancellationToken);
+
         Task<NeteaseAudioResolution> GetSongUrlAsync(string songId, string level, CancellationToken cancellationToken);
 
         Task<NeteaseLyricResult> GetLyricsAsync(string songId, CancellationToken cancellationToken);

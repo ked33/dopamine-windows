@@ -153,6 +153,8 @@
     <Compile Include="NeteaseRecommendationStoreTests.cs" />
     <Compile Include="NeteaseDependencySmokeTests.cs" />
     <Compile Include="NeteaseLoginContextTests.cs" />
+    <Compile Include="NeteaseInteractionContractTests.cs" />
+    <Compile Include="NeteaseMusicInteractionTests.cs" />
     <Compile Include="NeteaseSessionStoreTests.cs" />
     <Compile Include="NeteaseWebLoginContractTests.cs" />
     <Compile Include="OnlineTrackViewModelTests.cs" />

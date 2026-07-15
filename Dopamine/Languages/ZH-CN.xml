@@ -518,4 +518,10 @@
   <Text Key="Netease_No_Copyright">该歌曲因版权限制暂时无法播放。</Text>
   <Text Key="Netease_Temporary_Download_Failed">无法准备临时音频文件。</Text>
   <Text Key="Netease_Decoder_Unsupported">播放器无法解码返回的音频格式。</Text>
+  <Text Key="Netease_Like">喜欢</Text>
+  <Text Key="Netease_Unlike">取消喜欢</Text>
+  <Text Key="Netease_Like_Status_Loading">正在查询喜欢状态……</Text>
+  <Text Key="Netease_Not_Interested">不感兴趣</Text>
+  <Text Key="Netease_Not_Interested_Confirmation">确定将“{song}”标记为不感兴趣吗？网易云将调整后续推荐，此操作暂不支持撤销。</Text>
+  <Text Key="Netease_Recommendation_Cache_Save_Failed">网易云推荐已更新，但无法保存本地加密缓存；下次进入时将重新获取。</Text>
 </Language>
