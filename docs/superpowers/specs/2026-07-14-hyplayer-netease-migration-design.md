@@ -110,6 +110,23 @@ HyPlayer 的二维码实现使用以下流程：
 
 HyPlayer 的流式提供者把 URL 缓存 20 分钟，并检查响应 `Code`、空 URL 和 `FreeTrialInfo`。Dopamine 保留这一思路，但使用更保守的 15 分钟内存 TTL，并通过自己的播放源解析层接入。
 
+### 4.3 登录风控兼容修订（参考 NeriPlayer）
+
+2026-07-15 的真实日志证明，旧式 Android EAPI 二维码链路会在手机确认后返回 `8821`。该状态表示网易云要求行为安全验证，不能继续作为普通网络错误处理。Dopamine 的登录适配器改为参考 NeriPlayer 的 Web 登录上下文，但仍复用 `HyPlayer.NeteaseApi 0.1.2` 的 WEAPI 加密和响应处理：
+
+- 二维码 key 和轮询使用 WEAPI、`type=1`、`noCheckToken=true`。
+- 每个二维码会话生成独立的 52 位十六进制 `sDeviceId`、`NMTID` 和 `v1_{sDeviceId}_web_login_{timestamp}` 格式的 `chainId`。
+- 二维码内容使用 `https://music.163.com/st/platform/scanlogin`，携带 `codekey`、`chainId`、`hdw_device=web`、`hdw_appid=web` 和 `hitExp=1`。
+- Web 登录请求使用桌面浏览器 UA，并携带 NeriPlayer 已验证的 `Origin`、`x-os: web`、`x-channelsource` 和 `nm-gcore-status` 等公共头；轮询额外携带 `x-loginmethod: QrCode` 和 `x-login-chain-id`。
+- `ydDeviceToken` 当前保持可选且默认为空，不为此引入 WebView2 或额外浏览器配置目录。
+- `803` 后若响应没有设置 `MUSIC_U`，允许从 `x-refresh-token` 进行一次等价 Cookie 回退，然后仍必须调用账号状态接口验证，不能仅凭 `803` 持久化会话。
+- 二维码和手工 Cookie 最终都通过 Web WEAPI `/w/nuser/account/get` 验证；Cookie 上下文补齐 `os=pc` 和 `appver=8.10.35`，但不覆盖用户已经提供的值。
+- 传给 `NeteaseCloudMusicApiHandler` 的 `HttpClient` 必须显式关闭自动 Cookie，确保只有受控字典中的候选会话参与请求，避免匿名 Cookie 与手工 Cookie 混用。
+- `HyPlayer.NeteaseApi` 默认 JSON 选项只包含包内源码生成类型；创建 Handler 后、第一次请求前必须组合反射元数据回退，否则 Dopamine 自定义 Contract DTO 会在运行时抛出 `NotSupportedException`。
+- `8821` 映射为独立的风控错误并显示可操作提示，不伪造登录成功，也不自动清除此前仍有效的会话。
+
+实现和诊断仍遵守原安全边界：不得记录 Cookie 名值、`MUSIC_U`、`unikey`、`sDeviceId`、`NMTID`、`chainId`、完整二维码 URL 或响应正文。日志最多记录登录方法、Cookie 数量、响应码以及响应是否包含 `profile/account`。
+
 ## 5. 依赖选择与兼容性门禁
 
 ### 5.1 首选方案
@@ -338,7 +355,7 @@ netease://song/{songId}
 public interface INeteaseApiClient
 {
     Task<NeteaseQrKeyResult> CreateQrKeyAsync(CancellationToken cancellationToken);
-    Task<NeteaseQrCheckResult> CheckQrAsync(string unikey, CancellationToken cancellationToken);
+    Task<NeteaseQrCheckResult> CheckQrAsync(NeteaseQrSession session, CancellationToken cancellationToken);
     Task<NeteaseLoginStatus> GetLoginStatusAsync(CancellationToken cancellationToken);
     Task<IReadOnlyList<NeteaseRecommendedSong>> GetDailyRecommendationsAsync(CancellationToken cancellationToken);
     Task<NeteaseSongUrlResult> GetSongUrlAsync(string songId, string level, CancellationToken cancellationToken);
@@ -455,7 +472,7 @@ public interface IOnlineAudioFallbackProvider
 2. 会话服务读取 `SettingsClient.ApplicationFolder()` 下的独立会话文件。
 3. 用 Windows DPAPI `DataProtectionScope.CurrentUser` 解密。
 4. 把 Cookie 写入 API Handler。
-5. 请求 `LoginStatusApi` 验证。
+5. 请求 Web WEAPI 账号状态接口验证。
 6. 成功后进入 `SignedIn`；明确未授权则清理会话；网络失败则进入 `OfflineUnknown` 并保留加密文件。
 
 不得让启动恢复阻塞主窗口。设置页和每日推荐页通过 `SessionChanged` 更新状态。
@@ -468,6 +485,7 @@ public interface IOnlineAudioFallbackProvider
 | 802 | WaitingForConfirm | 请在手机上确认登录 | 2 秒后继续轮询 |
 | 803 | Authorized | 正在验证账号 | 停止轮询，调用 LoginStatus |
 | 800 | Expired | 二维码已过期 | 停止轮询，等待用户刷新 |
+| 8821 | Error | 网易云要求完成安全验证 | 停止轮询，允许稍后重试或改用有效网页 Cookie |
 | 其他 | Error | 登录状态异常 | 停止，允许重试 |
 
 轮询要求：
@@ -476,6 +494,7 @@ public interface IOnlineAudioFallbackProvider
 - 每次新建二维码递增 generation；旧 generation 的响应不得更新 UI 或保存 Cookie。
 - 页面卸载、切换方法、登录成功和应用退出都取消当前 CTS。
 - `803` 后仍必须通过 `LoginStatusApi` 验证，不能仅凭状态码持久化 Cookie。
+- QR key、二维码内容和轮询必须来自同一个会话对象，`chainId` 不得在轮询过程中重新生成。
 
 ### 9.3 Cookie 登录
 
@@ -493,6 +512,7 @@ MUSIC_U=...; __csrf=...; NMTID=...
 - 忽略空段，拒绝空名称、控制字符、CR/LF 和超过 32 KiB 的输入。
 - 同名 Cookie 使用最后一个值，并在内部诊断中只记录“存在重复名称”，不记录名称对应值。
 - 解析后替换而不是叠加旧会话 Cookie，避免两个账号混用。
+- 验证前补齐 PC Web 请求所需的 `os` 和 `appver` 默认值，但保留用户显式提供的值。
 - 最终以 `LoginStatusApi` 是否返回有效账号为准，不把某一个固定 Cookie 名当作唯一判断条件。
 - 验证失败时恢复登录前 Cookie 快照或清空临时候选，不能污染当前有效会话。
 

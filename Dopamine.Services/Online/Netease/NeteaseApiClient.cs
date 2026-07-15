@@ -2,12 +2,12 @@
 using Dopamine.Core.Logging;
 using HyPlayer.NeteaseApi;
 using HyPlayer.NeteaseApi.ApiContracts;
-using HyPlayer.NeteaseApi.ApiContracts.Login;
 using HyPlayer.NeteaseApi.ApiContracts.Song;
 using HyPlayer.NeteaseApi.Bases;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,17 +22,30 @@ namespace Dopamine.Services.Online.Netease
 
         public NeteaseApiClient()
         {
-            this.httpClient = new HttpClient();
+            var httpHandler = new HttpClientHandler
+            {
+                UseCookies = false,
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+            };
+            this.httpClient = new HttpClient(httpHandler);
             this.handler = new NeteaseCloudMusicApiHandler(this.httpClient);
+            NeteaseWebLoginSerializer.EnableCustomContracts(this.handler.Option);
         }
 
         public async Task<NeteaseResult<NeteaseQrKey>> CreateQrKeyAsync(CancellationToken cancellationToken)
         {
-            const string method = "LoginQrCodeUnikeyApi";
+            const string method = "NeteaseWebQrKeyApi";
 
             try
             {
-                var result = await this.handler.RequestAsync(NeteaseApis.LoginQrCodeUnikeyApi, cancellationToken);
+                string sDeviceId = NeteaseLoginContext.CreateSDeviceId();
+                this.ReplaceCookies(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["sDeviceId"] = sDeviceId,
+                    ["NMTID"] = NeteaseLoginContext.CreateNmtid()
+                });
+
+                var result = await this.handler.RequestAsync(new NeteaseWebQrKeyApi(), cancellationToken);
 
                 if (result.IsError)
                 {
@@ -44,7 +57,16 @@ namespace Dopamine.Services.Online.Netease
                     return NeteaseResult<NeteaseQrKey>.Failure(this.MapResponseError(method, result.Value?.Code ?? 0));
                 }
 
-                return NeteaseResult<NeteaseQrKey>.Success(new NeteaseQrKey { Unikey = result.Value.Unikey });
+                string chainId = NeteaseLoginContext.CreateChainId(
+                    sDeviceId,
+                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+
+                return NeteaseResult<NeteaseQrKey>.Success(new NeteaseQrKey
+                {
+                    Unikey = result.Value.Unikey,
+                    ChainId = chainId,
+                    QrContent = NeteaseLoginContext.BuildQrContent(result.Value.Unikey, chainId)
+                });
             }
             catch (Exception ex)
             {
@@ -52,11 +74,14 @@ namespace Dopamine.Services.Online.Netease
             }
         }
 
-        public async Task<NeteaseResult<NeteaseQrCheck>> CheckQrAsync(string unikey, CancellationToken cancellationToken)
+        public async Task<NeteaseResult<NeteaseQrCheck>> CheckQrAsync(
+            NeteaseQrSession session,
+            CancellationToken cancellationToken)
         {
-            const string method = "LoginQrCodeCheckApi";
+            const string method = "NeteaseWebQrCheckApi";
 
-            if (string.IsNullOrWhiteSpace(unikey))
+            if (session == null || string.IsNullOrWhiteSpace(session.Unikey) ||
+                string.IsNullOrWhiteSpace(session.ChainId))
             {
                 return NeteaseResult<NeteaseQrCheck>.Failure(new NeteaseError(
                     NeteaseErrorCode.ApiChanged,
@@ -65,8 +90,13 @@ namespace Dopamine.Services.Online.Netease
 
             try
             {
-                var request = new LoginQrCodeCheckRequest { Unikey = unikey };
-                var result = await this.handler.RequestAsync(NeteaseApis.LoginQrCodeCheckApi, request, cancellationToken);
+                var request = new NeteaseWebQrCheckRequest
+                {
+                    Unikey = session.Unikey,
+                    ChainId = session.ChainId,
+                    YdDeviceToken = session.YdDeviceToken ?? string.Empty
+                };
+                var result = await this.handler.RequestAsync(new NeteaseWebQrCheckApi(), request, cancellationToken);
 
                 if (result.IsError)
                 {
@@ -95,15 +125,25 @@ namespace Dopamine.Services.Online.Netease
 
         public async Task<NeteaseResult<NeteaseAccountProfile>> GetLoginStatusAsync(CancellationToken cancellationToken)
         {
-            const string method = "LoginStatusApi";
+            const string method = "NeteaseWebLoginStatusApi";
 
             try
             {
-                var result = await this.handler.RequestAsync(NeteaseApis.LoginStatusApi, cancellationToken);
+                var result = await this.handler.RequestAsync(new NeteaseWebLoginStatusApi(), cancellationToken);
+                int responseCode = result.Value?.Code ?? result.Error?.ErrorCode ?? 0;
+                bool hasProfile = result.Value?.Profile != null;
+                bool hasAccount = result.Value?.Account != null;
+
+                AppLog.InfoAlways(
+                    "Netease login status completed. ResponseCode={0}, HasProfile={1}, HasAccount={2}",
+                    responseCode,
+                    hasProfile,
+                    hasAccount);
 
                 if (result.IsError)
                 {
-                    return NeteaseResult<NeteaseAccountProfile>.Failure(this.MapError(method, result.Error, 0, cancellationToken));
+                    return NeteaseResult<NeteaseAccountProfile>.Failure(
+                        this.MapError(method, result.Error, responseCode, cancellationToken));
                 }
 
                 if (result.Value == null)
@@ -323,14 +363,10 @@ namespace Dopamine.Services.Online.Netease
         {
             lock (this.cookieLock)
             {
+                Dictionary<string, string> normalized = NeteaseLoginContext.NormalizeCookies(cookies);
                 this.handler.Option.Cookies.Clear();
 
-                if (cookies == null)
-                {
-                    return;
-                }
-
-                foreach (var cookie in cookies)
+                foreach (var cookie in normalized)
                 {
                     this.handler.Option.Cookies[cookie.Key] = cookie.Value;
                 }
@@ -399,6 +435,14 @@ namespace Dopamine.Services.Online.Netease
                 return new NeteaseError(NeteaseErrorCode.RateLimited, "Language_Netease_Rate_Limited", responseCode);
             }
 
+            if (responseCode == 8821)
+            {
+                return new NeteaseError(
+                    NeteaseErrorCode.RiskControlRequired,
+                    "Language_Netease_Risk_Control_Required",
+                    responseCode);
+            }
+
             return new NeteaseError(NeteaseErrorCode.ApiChanged, "Language_Netease_Service_Unavailable", responseCode);
         }
 
@@ -429,6 +473,14 @@ namespace Dopamine.Services.Online.Netease
             if (responseCode == 429)
             {
                 return new NeteaseError(NeteaseErrorCode.RateLimited, "Language_Netease_Rate_Limited", responseCode);
+            }
+
+            if (responseCode == 8821)
+            {
+                return new NeteaseError(
+                    NeteaseErrorCode.RiskControlRequired,
+                    "Language_Netease_Risk_Control_Required",
+                    responseCode);
             }
 
             if (exception is HttpRequestException || exception is TimeoutException || apiError != null)

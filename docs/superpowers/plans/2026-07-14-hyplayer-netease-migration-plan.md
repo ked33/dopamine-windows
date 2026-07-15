@@ -187,9 +187,9 @@ Add isolated Netease API adapter
 1. `NeteaseApiClient` 封装单例 `NeteaseCloudMusicApiHandler`。
 2. 按 HyPlayer 当前入口核对 Handler 构造：复用一个长期存活的 `HttpClient`，不要每次请求创建/释放客户端；默认 AdditionalParameters 保持库默认值，只有固定提交证明必需时才增加参数。
 3. 只实现以下调用：
-   - `LoginQrCodeUnikeyApi`
-   - `LoginQrCodeCheckApi`
-   - `LoginStatusApi`
+   - Web WEAPI 二维码 key Contract
+   - Web WEAPI 二维码轮询 Contract
+   - Web WEAPI 账号状态 Contract
    - `RecommendSongsApi`
    - `SongUrlApi`
    - `LyricApi`
@@ -222,6 +222,21 @@ Add isolated Netease API adapter
 - 强制刷新会跳过 15 分钟 URL 缓存。
 - 切换 session generation 后旧缓存不可见。
 - 代码搜索确认 HyPlayer 命名空间只出现在适配器及适配器测试中。
+
+### 5.5 登录风控兼容补充（2026-07-15）
+
+参考 `D:\D-Download\第三方网易云\NeriPlayer` 的登录实现，按以下顺序修正当前 `802` 后返回 `8821` 和网页 Cookie 被误判失效的问题：
+
+1. 新增 Dopamine 自有的 WEAPI Contract，继续使用固定的 `HyPlayer.NeteaseApi 0.1.2` 加密实现，不引入 WebView2；在第一次请求前为包内源码生成 JSON 类型表组合反射元数据回退，使自定义 DTO 可序列化。
+2. 二维码 key/轮询统一使用 `type=1` 和 `noCheckToken=true`；每次创建会话生成 `sDeviceId`、`NMTID` 和 `chainId`。
+3. ViewModel 只渲染会话返回的 `/st/platform/scanlogin` 二维码内容，不再自行拼接旧的 `/login?codekey=` 地址。
+4. Web 登录请求补齐桌面 UA、`Origin`、`x-os: web`、`x-channelsource` 和 `nm-gcore-status`；轮询额外增加 `x-loginmethod: QrCode` 和 `x-login-chain-id`。`ydDeviceToken` 保留在会话模型中，当前无安全来源时传空值。
+5. `803` 后捕获 `x-refresh-token`，仅在响应没有 `MUSIC_U` 时作为回退写入候选 Cookie；随后必须通过账号状态接口再次验证。
+6. 手工 Cookie 登录使用相同的 PC Web WEAPI 账号状态 Contract，并补齐 `os=pc`、`appver=8.10.35`，但不覆盖用户提供的值。
+7. 自建 `HttpClientHandler` 并设置 `UseCookies=false`，避免系统 Cookie 容器和 Handler 的受控 Cookie 字典产生双重来源。
+8. `8821` 映射成独立风控错误，不能落入网络错误；新增中英文提示。
+9. 单元测试覆盖二维码 URL、chainId、设备标识形状、Cookie 默认值以及 `8821` 不属于正常二维码状态。
+10. 日志只允许记录 Cookie 数量、响应码、`profile/account` 是否存在和错误分类；严禁记录 Cookie 键名或值、设备标识、二维码 key/URL 和响应正文。
 
 回滚：删除适配层和注册，不影响现有 Dopamine 功能。
 

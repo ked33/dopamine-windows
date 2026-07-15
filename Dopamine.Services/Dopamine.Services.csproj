@@ -260,10 +260,12 @@
     <Compile Include="Online\Netease\NeteaseApiClient.cs" />
     <Compile Include="Online\Netease\NeteaseCookieHeaderParser.cs" />
     <Compile Include="Online\Netease\NeteaseError.cs" />
+    <Compile Include="Online\Netease\NeteaseLoginContext.cs" />
     <Compile Include="Online\Netease\NeteaseModels.cs" />
     <Compile Include="Online\Netease\NeteaseMusicService.cs" />
     <Compile Include="Online\Netease\NeteaseQrStatusMapper.cs" />
     <Compile Include="Online\Netease\NeteaseSessionService.cs" />
+    <Compile Include="Online\Netease\NeteaseWebLoginContracts.cs" />
     <Compile Include="Playlist\Enums.cs" />
     <Compile Include="Playlist\IPlaylistService.cs" />
     <Compile Include="Playlist\PlaylistEventHandlers.cs" />

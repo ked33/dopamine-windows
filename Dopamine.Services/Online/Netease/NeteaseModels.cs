@@ -34,6 +34,10 @@ namespace Dopamine.Services.Online.Netease
     public sealed class NeteaseQrKey
     {
         public string Unikey { get; set; }
+
+        public string ChainId { get; set; }
+
+        public string QrContent { get; set; }
     }
 
     public sealed class NeteaseQrCheck
@@ -54,6 +58,12 @@ namespace Dopamine.Services.Online.Netease
     public sealed class NeteaseQrSession
     {
         public string Unikey { get; set; }
+
+        public string ChainId { get; set; }
+
+        public string YdDeviceToken { get; set; }
+
+        public string QrContent { get; set; }
 
         public long LoginGeneration { get; set; }
     }

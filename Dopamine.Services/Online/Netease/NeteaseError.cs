@@ -18,7 +18,8 @@
         StorageFailed = 13,
         DecoderUnsupported = 14,
         TemporaryDownloadFailed = 15,
-        Unknown = 16
+        Unknown = 16,
+        RiskControlRequired = 17
     }
 
     public sealed class NeteaseError

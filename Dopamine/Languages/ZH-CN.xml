@@ -505,6 +505,7 @@
   <Text Key="Netease_Restoring_Session">正在恢复加密登录会话……</Text>
   <Text Key="Netease_Network_Error">无法连接网易云服务，请检查网络后重试。</Text>
   <Text Key="Netease_Login_Expired">网易云登录已失效，请重新登录。</Text>
+  <Text Key="Netease_Risk_Control_Required">网易云要求完成安全验证，请稍后重试或使用有效的网页 Cookie 登录。</Text>
   <Text Key="Netease_Service_Unavailable">网易云服务暂时不可用，或接口已经发生变化。</Text>
   <Text Key="Netease_Rate_Limited">请求过于频繁，请稍后重试。</Text>
   <Text Key="Netease_Cancelled">操作已取消。</Text>

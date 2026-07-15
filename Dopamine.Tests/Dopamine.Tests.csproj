@@ -150,7 +150,9 @@
     <Compile Include="NeteaseApiMappingTests.cs" />
     <Compile Include="NeteaseCookieHeaderParserTests.cs" />
     <Compile Include="NeteaseDependencySmokeTests.cs" />
+    <Compile Include="NeteaseLoginContextTests.cs" />
     <Compile Include="NeteaseSessionStoreTests.cs" />
+    <Compile Include="NeteaseWebLoginContractTests.cs" />
     <Compile Include="OnlineTrackViewModelTests.cs" />
     <Compile Include="TrackPathGeneratorTests.cs" />
   </ItemGroup>

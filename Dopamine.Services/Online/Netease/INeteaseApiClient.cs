@@ -8,7 +8,7 @@ namespace Dopamine.Services.Online.Netease
     {
         Task<NeteaseResult<NeteaseQrKey>> CreateQrKeyAsync(CancellationToken cancellationToken);
 
-        Task<NeteaseResult<NeteaseQrCheck>> CheckQrAsync(string unikey, CancellationToken cancellationToken);
+        Task<NeteaseResult<NeteaseQrCheck>> CheckQrAsync(NeteaseQrSession session, CancellationToken cancellationToken);
 
         Task<NeteaseResult<NeteaseAccountProfile>> GetLoginStatusAsync(CancellationToken cancellationToken);
 

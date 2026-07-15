@@ -450,8 +450,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                 }
 
                 this.activeNeteaseQrSession = result.Value;
-                this.NeteaseQrCodeImage = QrCodeImageFactory.Create(
-                    "https://music.163.com/login?codekey=" + Uri.EscapeDataString(result.Value.Unikey));
+                this.NeteaseQrCodeImage = QrCodeImageFactory.Create(result.Value.QrContent);
                 AppLog.InfoAlways("Netease QR image was created successfully.");
                 this.NeteaseStatusText = ResourceUtils.GetString("Language_Netease_Qr_Waiting_For_Scan");
                 this.IsNeteaseSigningIn = false;

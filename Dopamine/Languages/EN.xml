@@ -505,6 +505,7 @@
   <Text Key="Netease_Restoring_Session">Restoring the encrypted session…</Text>
   <Text Key="Netease_Network_Error">The Netease service could not be reached. Check the network and try again.</Text>
   <Text Key="Netease_Login_Expired">The Netease login has expired. Sign in again.</Text>
+  <Text Key="Netease_Risk_Control_Required">Netease requires an additional security check. Try again later or use a valid web Cookie.</Text>
   <Text Key="Netease_Service_Unavailable">The Netease service is temporarily unavailable or its API has changed.</Text>
   <Text Key="Netease_Rate_Limited">Too many requests. Try again later.</Text>
   <Text Key="Netease_Cancelled">The operation was cancelled.</Text>

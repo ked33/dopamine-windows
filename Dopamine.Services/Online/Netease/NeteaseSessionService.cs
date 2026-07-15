@@ -113,6 +113,9 @@ namespace Dopamine.Services.Online.Netease
                 return NeteaseResult<NeteaseQrSession>.Success(new NeteaseQrSession
                 {
                     Unikey = result.Value.Unikey,
+                    ChainId = result.Value.ChainId,
+                    YdDeviceToken = string.Empty,
+                    QrContent = result.Value.QrContent,
                     LoginGeneration = generation
                 });
             }
@@ -138,7 +141,7 @@ namespace Dopamine.Services.Online.Netease
                     return new NeteaseQrPollResult { State = NeteaseQrState.Cancelled };
                 }
 
-                NeteaseResult<NeteaseQrCheck> result = await this.apiClient.CheckQrAsync(session.Unikey, cancellationToken);
+                NeteaseResult<NeteaseQrCheck> result = await this.apiClient.CheckQrAsync(session, cancellationToken);
 
                 if (!result.IsSuccess)
                 {
@@ -203,18 +206,30 @@ namespace Dopamine.Services.Online.Netease
 
                     if (!parsed.IsSuccess)
                     {
+                        AppLog.Warning(
+                            "Netease cookie login parsing failed. ErrorCode={0}",
+                            parsed.Error?.Code.ToString() ?? "Unknown");
                         this.RestorePreviousSession(previousCookies, previousState, previousAccount);
                         return Failure(parsed.Error);
                     }
 
+                    AppLog.InfoAlways(
+                        "Netease cookie login parsing completed. CookieCount={0}",
+                        parsed.Value.Count);
                     this.apiClient.ReplaceCookies(parsed.Value);
                     NeteaseResult<NeteaseAccountProfile> status = await this.apiClient.GetLoginStatusAsync(cancellationToken);
 
                     if (!status.IsSuccess)
                     {
+                        AppLog.Warning(
+                            "Netease cookie login validation failed. ErrorCode={0}, ResponseCode={1}",
+                            status.Error?.Code.ToString() ?? "Unknown",
+                            status.Error?.ResponseCode ?? 0);
                         this.RestorePreviousSession(previousCookies, previousState, previousAccount);
                         return Failure(status.Error);
                     }
+
+                    AppLog.InfoAlways("Netease cookie login validation succeeded.");
 
                     NeteaseLoginResult persisted = await this.PersistAuthenticatedSessionAsync(status.Value, cancellationToken);
 

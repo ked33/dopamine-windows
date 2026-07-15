@@ -25,6 +25,7 @@ namespace Dopamine.Tests
         [TestCase(200)]
         [TestCase(500)]
         [TestCase(804)]
+        [TestCase(8821)]
         public void RejectsNonQrStatusCodes(int statusCode)
         {
             var exception = new ErrorResultBase(statusCode, "local-test-error");
