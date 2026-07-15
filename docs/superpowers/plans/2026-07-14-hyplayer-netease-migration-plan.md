@@ -576,9 +576,8 @@ Add daily recommendations collection tab
 3. `CollectionMenuViewModel` 读取保存值时使用 `Enum.IsDefined` 校验；未知值回退 `Artists`，让设置损坏和功能回滚不会留下空白页。
 4. 注册 `CollectionDailyRecommendations` Prism view。
 5. `FullPlayerViewModel` 顺序执行父内容 Region 和菜单 Region 导航，确保 `Collection` 父视图先完成加载。
-6. `CollectionMenuViewModel` 等待 `CollectionRegion` 注册后直接导航 7 个页面；`CollectionViewModel` 仅保留方向动画。
-7. 对 `false + 无异常` 的瞬态结果进行有限重试，并用 generation 丢弃快速切换产生的旧请求。
-8. 不改变 0～5 旧值，不修改数据库或设置迁移。
+6. `CollectionViewModel` 增加每日推荐的 Region 导航 case。
+7. 不改变 0～5 旧值，不修改数据库或设置迁移。
 
 ### 10.3 ViewModel 任务
 

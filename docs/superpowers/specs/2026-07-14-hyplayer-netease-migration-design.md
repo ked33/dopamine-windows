@@ -220,8 +220,7 @@ flowchart LR
 - `DailyRecommendations=6` 追加到 `CollectionPage`。
 - `CollectionMenu.xaml` 在“文件夹”后追加 PivotItem。
 - `FullPlayerViewModel` 必须先完成 `FullPlayerRegion` 内容导航，再加载对应菜单，避免嵌套 Region 尚未注册时菜单抢先发起子页面导航。
-- `CollectionMenuViewModel` 在现有 `CollectionRegion` 导航到各音乐库页面；`CollectionViewModel` 只负责切换方向动画，不作为内容导航的单点依赖。
-- 导航前等待 `CollectionRegion` 注册；Prism 返回 `false` 且无异常时只允许有限重试，快速连续切换必须丢弃旧 generation，禁止无限轮询或旧页面覆盖最终选择。
+- `CollectionViewModel` 在现有 `CollectionRegion` 导航到各音乐库页面，包括 `CollectionDailyRecommendations`。
 - `CollectionMenuViewModel` 读取 `SelectedCollectionPage` 时校验枚举范围；损坏值或功能回滚后遗留的值 `6` 在不支持该页面的版本中必须回退到 `Artists`，不能导航到空白区域。
 - 保留顶部现有搜索框；每日推荐列表响应同一个搜索条件，按歌曲名、歌手和专辑过滤，避免出现“搜索框可见但无效”的体验。
 - 必须在中文和英文长文本、窗口窄宽度和 100%/150% 缩放下检查 Pivot 是否被搜索框挤压。
@@ -595,7 +594,7 @@ Task<bool> PlayTransientQueueAsync(
 4. 对 API 返回的 HTTP URL 优先升级到 HTTPS；禁止把 HTTPS 主动降级成 HTTP。
 5. 返回不含敏感 URL 的结构化成功或失败结果。
 
-临时文件兼容播放必须把 HTTP 下载字节进度上报给 `PlaybackService`。现有播放进度控件在主进度条底层显示低透明度缓冲条；缓存命中立即显示 100%，取消、失败、停止或切换到本地歌曲时清零并隐藏。该缓冲条表示临时音频准备进度，不宣称边下边播。
+临时文件兼容播放必须把 HTTP 下载字节进度上报给 `PlaybackService`。现有播放进度控件在主进度条底层显示低透明度缓冲条；缓存命中立即显示 100%，取消、失败、停止或切换到本地歌曲时清零并隐藏。缓冲进度是只读 ViewModel 输出，`ProgressBar.Value` 必须显式使用 `Mode=OneWay`，禁止 WPF 默认绑定模式回写只读属性。该缓冲条表示临时音频准备进度，不宣称边下边播。
 
 URL 缓存失败时只允许一次强制刷新：
 

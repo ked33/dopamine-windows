@@ -17,7 +17,7 @@
                      Opacity="0.35"
                      IsHitTestVisible="False"
                      Maximum="1"
-                     Value="{Binding BufferingProgressValue}"
+                     Value="{Binding BufferingProgressValue,Mode=OneWay}"
                      Visibility="{Binding ShowBufferingProgress, Converter={StaticResource BooleanToCollapsedConverter}}"/>
         <dc:UWPSliderHorizontal x:Name="ProgressSlider"
                                 TrackBackground="{DynamicResource Brush_SliderBackgroundTransparent}"
