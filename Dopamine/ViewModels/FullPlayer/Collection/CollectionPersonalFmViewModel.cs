@@ -1,4 +1,5 @@
-﻿using Dopamine.Core.Base;
+﻿using Digimezzo.Foundation.Core.Utils;
+using Dopamine.Core.Base;
 using Dopamine.Core.Utils;
 using Dopamine.Services.Online.Netease;
 using Prism.Commands;
@@ -34,7 +35,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
                 () => this.IsActive && !this.IsBusy);
             this.DislikeCommand = new DelegateCommand(
                 () => this.DislikeAsync(),
-                () => this.IsActive && !this.IsBusy && this.CurrentTrack != null);
+                () => this.IsActive && !this.IsBusy && this.personalFmService.CurrentTrack != null);
             this.ExitCommand = new DelegateCommand(
                 this.Exit,
                 () => this.IsActive);
