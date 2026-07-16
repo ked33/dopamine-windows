@@ -489,6 +489,7 @@
   <Text Key="Netease_Daily_Recommendations">Daily recommendations</Text>
   <Text Key="Netease_Recommendations">Netease recommendations</Text>
   <Text Key="Netease_Intelligence_Recommendations">Heart recommendations</Text>
+  <Text Key="Netease_Intelligence_Recommendations_Count">heart recommendations</Text>
   <Text Key="Netease_Personal_Fm">Personal FM</Text>
   <Text Key="Netease_Based_On_Liked_Music">Generates a smart playlist from your Liked Music.</Text>
   <Text Key="Netease_Generate_Intelligence">Generate</Text>

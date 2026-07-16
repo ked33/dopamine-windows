@@ -266,6 +266,13 @@ namespace Dopamine.Services.Online.Netease
             return result;
         }
 
+        public Task<NeteaseResult<bool>> DislikeIntelligenceRecommendationAsync(
+            string songId,
+            CancellationToken cancellationToken)
+        {
+            return this.DislikePersonalFmSongAsync(songId, cancellationToken);
+        }
+
         public async Task<NeteaseResult<bool>> DislikePersonalFmSongAsync(
             string songId,
             CancellationToken cancellationToken)

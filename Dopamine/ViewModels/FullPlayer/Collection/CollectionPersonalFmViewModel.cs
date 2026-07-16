@@ -1,5 +1,6 @@
 ﻿using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Base;
+using Dopamine.Core.Logging;
 using Dopamine.Core.Utils;
 using Dopamine.Services.Online.Netease;
 using Prism.Commands;
@@ -15,15 +16,24 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
     {
         private readonly INeteasePersonalFmService personalFmService;
         private readonly INeteaseSessionService sessionService;
+        private readonly INeteaseMusicService musicService;
         private bool isLoaded;
         private CancellationTokenSource operationCancellationTokenSource;
+        private CancellationTokenSource likeStatusCancellationTokenSource;
+        private string likeStatusSongId;
+        private bool isLikeStatusLoading;
+        private bool currentSongIsLiked;
+        private bool isLikeOperationRunning;
+        private string actionErrorMessage;
 
         public CollectionPersonalFmViewModel(
             INeteasePersonalFmService personalFmService,
-            INeteaseSessionService sessionService)
+            INeteaseSessionService sessionService,
+            INeteaseMusicService musicService)
         {
             this.personalFmService = personalFmService;
             this.sessionService = sessionService;
+            this.musicService = musicService;
 
             this.LoadedCommand = new DelegateCommand(this.Loaded);
             this.UnloadedCommand = new DelegateCommand(this.Unloaded);
@@ -36,9 +46,9 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.DislikeCommand = new DelegateCommand(
                 () => this.DislikeAsync(),
                 () => this.IsActive && !this.IsBusy && this.personalFmService.CurrentTrack != null);
-            this.ExitCommand = new DelegateCommand(
-                this.Exit,
-                () => this.IsActive);
+            this.ToggleLikeCommand = new DelegateCommand(
+                () => this.ToggleLikeAsync(),
+                () => this.CanToggleLike());
         }
 
         public DelegateCommand LoadedCommand { get; private set; }
@@ -51,7 +61,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
 
         public DelegateCommand DislikeCommand { get; private set; }
 
-        public DelegateCommand ExitCommand { get; private set; }
+        public DelegateCommand ToggleLikeCommand { get; private set; }
 
         public bool IsLoggedIn => this.sessionService.State == NeteaseSessionState.SignedIn;
 
@@ -82,9 +92,42 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             ResourceUtils.GetString("Language_Netease_Personal_Fm_Buffered"),
             this.personalFmService.BufferedTrackCount);
 
-        public string ErrorMessage => this.personalFmService.Error == null
-            ? string.Empty
-            : ResourceUtils.GetString(this.personalFmService.Error.MessageKey);
+        public string LikeButtonText => ResourceUtils.GetString(this.IsLikeStatusLoading
+            ? "Language_Netease_Like_Status_Loading"
+            : this.CurrentSongIsLiked
+                ? "Language_Netease_Unlike"
+                : "Language_Netease_Like");
+
+        public bool IsLikeStatusLoading
+        {
+            get { return this.isLikeStatusLoading; }
+            private set
+            {
+                if (SetProperty<bool>(ref this.isLikeStatusLoading, value))
+                {
+                    RaisePropertyChanged(nameof(this.LikeButtonText));
+                    this.ToggleLikeCommand.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
+        public bool CurrentSongIsLiked
+        {
+            get { return this.currentSongIsLiked; }
+            private set
+            {
+                if (SetProperty<bool>(ref this.currentSongIsLiked, value))
+                {
+                    RaisePropertyChanged(nameof(this.LikeButtonText));
+                }
+            }
+        }
+
+        public string ErrorMessage => !string.IsNullOrWhiteSpace(this.actionErrorMessage)
+            ? this.actionErrorMessage
+            : this.personalFmService.Error == null
+                ? string.Empty
+                : ResourceUtils.GetString(this.personalFmService.Error.MessageKey);
 
         public bool HasError => !string.IsNullOrWhiteSpace(this.ErrorMessage);
 
@@ -99,6 +142,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.personalFmService.StateChanged += this.PersonalFmService_StateChanged;
             this.sessionService.SessionChanged += this.SessionService_SessionChanged;
             this.RefreshState();
+            this.RefreshLikeStatusAsync();
         }
 
         private void Unloaded()
@@ -112,6 +156,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.personalFmService.StateChanged -= this.PersonalFmService_StateChanged;
             this.sessionService.SessionChanged -= this.SessionService_SessionChanged;
             this.CancelOperation();
+            this.CancelLikeStatusLookup();
         }
 
         private async void StartAsync()
@@ -135,13 +180,6 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.RefreshState();
         }
 
-        private void Exit()
-        {
-            this.CancelOperation();
-            this.personalFmService.Exit();
-            this.RefreshState();
-        }
-
         private CancellationToken BeginOperation()
         {
             this.CancelOperation();
@@ -160,12 +198,165 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
 
         private void PersonalFmService_StateChanged(object sender, EventArgs e)
         {
-            this.Dispatch(this.RefreshState);
+            this.Dispatch(() =>
+            {
+                this.RefreshState();
+                this.RefreshLikeStatusAsync();
+            });
         }
 
         private void SessionService_SessionChanged(object sender, EventArgs e)
         {
-            this.Dispatch(this.RefreshState);
+            this.Dispatch(() =>
+            {
+                if (!this.IsLoggedIn)
+                {
+                    this.CancelLikeStatusLookup();
+                    this.likeStatusSongId = null;
+                    this.CurrentSongIsLiked = false;
+                }
+
+                this.RefreshState();
+            });
+        }
+
+        private async void RefreshLikeStatusAsync()
+        {
+            string songId = this.personalFmService.CurrentTrack?.SourceInfo?.RemoteId;
+
+            if (!this.IsLoggedIn || !this.IsActive || string.IsNullOrWhiteSpace(songId))
+            {
+                this.CancelLikeStatusLookup();
+                this.likeStatusSongId = null;
+                this.CurrentSongIsLiked = false;
+                return;
+            }
+
+            if (string.Equals(this.likeStatusSongId, songId, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            this.CancelLikeStatusLookup();
+            var source = new CancellationTokenSource();
+            this.likeStatusCancellationTokenSource = source;
+            this.likeStatusSongId = songId;
+            this.CurrentSongIsLiked = false;
+            this.actionErrorMessage = null;
+            this.IsLikeStatusLoading = true;
+
+            try
+            {
+                NeteaseResult<bool> result = await this.musicService.IsSongLikedAsync(songId, source.Token);
+
+                if (!source.IsCancellationRequested &&
+                    string.Equals(
+                        this.personalFmService.CurrentTrack?.SourceInfo?.RemoteId,
+                        songId,
+                        StringComparison.Ordinal))
+                {
+                    if (result.IsSuccess)
+                    {
+                        this.CurrentSongIsLiked = result.Value;
+                        this.actionErrorMessage = null;
+                    }
+                    else if (result.Error?.Code != NeteaseErrorCode.Cancelled)
+                    {
+                        this.actionErrorMessage = ResourceUtils.GetString(
+                            result.Error?.MessageKey ?? "Language_Netease_Service_Unavailable");
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warning(
+                    "Could not query the personal FM liked-song status. ErrorType={0}",
+                    ex.GetType().Name);
+                this.actionErrorMessage = ResourceUtils.GetString("Language_Netease_Service_Unavailable");
+            }
+            finally
+            {
+                if (object.ReferenceEquals(
+                    Interlocked.CompareExchange(ref this.likeStatusCancellationTokenSource, null, source),
+                    source))
+                {
+                    source.Dispose();
+                    this.IsLikeStatusLoading = false;
+                    this.RefreshState();
+                }
+            }
+        }
+
+        private bool CanToggleLike()
+        {
+            return this.IsLoggedIn && this.IsActive && !this.IsBusy &&
+                !this.IsLikeStatusLoading && !this.isLikeOperationRunning &&
+                !string.IsNullOrWhiteSpace(this.personalFmService.CurrentTrack?.SourceInfo?.RemoteId) &&
+                string.Equals(
+                    this.likeStatusSongId,
+                    this.personalFmService.CurrentTrack.SourceInfo.RemoteId,
+                    StringComparison.Ordinal);
+        }
+
+        private async void ToggleLikeAsync()
+        {
+            string songId = this.personalFmService.CurrentTrack?.SourceInfo?.RemoteId;
+
+            if (!this.CanToggleLike() || string.IsNullOrWhiteSpace(songId))
+            {
+                return;
+            }
+
+            bool desiredState = !this.CurrentSongIsLiked;
+            this.isLikeOperationRunning = true;
+            this.ToggleLikeCommand.RaiseCanExecuteChanged();
+
+            try
+            {
+                NeteaseResult<bool> result = await this.musicService.SetSongLikedAsync(
+                    songId,
+                    desiredState,
+                    CancellationToken.None);
+
+                if (result.IsSuccess && string.Equals(
+                    this.personalFmService.CurrentTrack?.SourceInfo?.RemoteId,
+                    songId,
+                    StringComparison.Ordinal))
+                {
+                    this.CurrentSongIsLiked = desiredState;
+                    this.actionErrorMessage = null;
+                }
+                else if (!result.IsSuccess)
+                {
+                    this.actionErrorMessage = ResourceUtils.GetString(
+                        result.Error?.MessageKey ?? "Language_Netease_Service_Unavailable");
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warning(
+                    "Could not update the personal FM liked-song state. ErrorType={0}",
+                    ex.GetType().Name);
+                this.actionErrorMessage = ResourceUtils.GetString("Language_Netease_Service_Unavailable");
+            }
+            finally
+            {
+                this.isLikeOperationRunning = false;
+                this.RefreshState();
+            }
+        }
+
+        private void CancelLikeStatusLookup()
+        {
+            CancellationTokenSource source = Interlocked.Exchange(
+                ref this.likeStatusCancellationTokenSource,
+                null);
+            source?.Cancel();
+            source?.Dispose();
+            this.IsLikeStatusLoading = false;
         }
 
         private void RefreshState()
@@ -179,12 +370,13 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             RaisePropertyChanged(nameof(this.CurrentTrackTitle));
             RaisePropertyChanged(nameof(this.CurrentTrackSubtitle));
             RaisePropertyChanged(nameof(this.BufferedText));
+            RaisePropertyChanged(nameof(this.LikeButtonText));
             RaisePropertyChanged(nameof(this.ErrorMessage));
             RaisePropertyChanged(nameof(this.HasError));
             this.StartCommand.RaiseCanExecuteChanged();
             this.SkipCommand.RaiseCanExecuteChanged();
             this.DislikeCommand.RaiseCanExecuteChanged();
-            this.ExitCommand.RaiseCanExecuteChanged();
+            this.ToggleLikeCommand.RaiseCanExecuteChanged();
         }
 
         private void Dispatch(Action action)

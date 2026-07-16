@@ -489,6 +489,7 @@
   <Text Key="Netease_Daily_Recommendations">每日推荐</Text>
   <Text Key="Netease_Recommendations">网易云推荐</Text>
   <Text Key="Netease_Intelligence_Recommendations">心动推荐</Text>
+  <Text Key="Netease_Intelligence_Recommendations_Count">首心动推荐</Text>
   <Text Key="Netease_Personal_Fm">私人 FM</Text>
   <Text Key="Netease_Based_On_Liked_Music">根据“我喜欢的音乐”生成智能推荐列表。</Text>
   <Text Key="Netease_Generate_Intelligence">生成心动推荐</Text>

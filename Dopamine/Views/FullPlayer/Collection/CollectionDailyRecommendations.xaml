@@ -56,12 +56,7 @@
         <DockPanel DockPanel.Dock="Top" Margin="10,0,10,20">
             <TextBlock Text="{Binding Count}" FontSize="13" Foreground="{DynamicResource Brush_Accent}" DockPanel.Dock="Left"/>
             <Button DockPanel.Dock="Right" Margin="10,0,0,0" Style="{StaticResource RegularButtonAccent}" Content="{DynamicResource Language_Netease_Play_All}" Command="{Binding PlayAllCommand}"/>
-            <Button DockPanel.Dock="Right" Style="{StaticResource TransparentButton}" Command="{Binding RefreshCommand}" ToolTip="{DynamicResource Language_Netease_Daily_Recommendations_Refresh_Tooltip}">
-                <StackPanel Orientation="Horizontal">
-                    <dc:ProgressRing Width="18" Height="18" Margin="0,0,6,0" Foreground="{DynamicResource Brush_Accent}" IsActive="{Binding IsRefreshing}"/>
-                    <TextBlock Text="{DynamicResource Language_Refresh}" Foreground="{DynamicResource Brush_SecondaryText}"/>
-                </StackPanel>
-            </Button>
+            <Button DockPanel.Dock="Right" Style="{StaticResource RegularButton}" Content="{DynamicResource Language_Refresh}" Command="{Binding RefreshCommand}" ToolTip="{DynamicResource Language_Netease_Daily_Recommendations_Refresh_Tooltip}"/>
             <TextBlock Text="{DynamicResource Language_Netease_Daily_Recommendations_Count}" FontSize="13" Margin="10,0,0,0" Foreground="{DynamicResource Brush_PrimaryText}"/>
         </DockPanel>
 
