@@ -1,0 +1,60 @@
+﻿<UserControl x:Class="Dopamine.Views.FullPlayer.Collection.CollectionIntelligenceRecommendations"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dc="clr-namespace:Digimezzo.Foundation.WPF.Controls;assembly=Digimezzo.Foundation.WPF"
+             xmlns:pc="clr-namespace:Dopamine.Controls"
+             xmlns:prismMvvm="clr-namespace:Prism.Mvvm;assembly=Prism.Wpf"
+             xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
+             prismMvvm:ViewModelLocator.AutoWireViewModel="True">
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Loaded"><i:InvokeCommandAction Command="{Binding LoadedCommand}"/></i:EventTrigger>
+        <i:EventTrigger EventName="Unloaded"><i:InvokeCommandAction Command="{Binding UnloadedCommand}"/></i:EventTrigger>
+    </i:Interaction.Triggers>
+
+    <DockPanel Margin="10,10,10,26">
+        <DockPanel DockPanel.Dock="Top" Margin="10,0,10,18">
+            <StackPanel DockPanel.Dock="Left">
+                <TextBlock Text="{DynamicResource Language_Netease_Intelligence_Recommendations}" FontSize="18" Foreground="{DynamicResource Brush_PrimaryText}"/>
+                <TextBlock Margin="0,4,0,0" Text="{DynamicResource Language_Netease_Based_On_Liked_Music}" Foreground="{DynamicResource Brush_SecondaryText}"/>
+            </StackPanel>
+            <Button DockPanel.Dock="Right" Margin="10,0,0,0" Style="{StaticResource RegularButtonAccent}" Content="{DynamicResource Language_Netease_Play_All}" Command="{Binding PlayAllCommand}"/>
+            <Button DockPanel.Dock="Right" Margin="10,0,0,0" Style="{StaticResource RegularButton}" Content="{DynamicResource Language_Netease_Play_Selected}" Command="{Binding PlaySelectedCommand}"/>
+            <Button DockPanel.Dock="Right" Style="{StaticResource RegularButton}" Command="{Binding GenerateCommand}">
+                <StackPanel Orientation="Horizontal">
+                    <dc:ProgressRing Width="18" Height="18" Margin="0,0,6,0" IsActive="{Binding IsGenerating}" Foreground="{DynamicResource Brush_Accent}"/>
+                    <TextBlock Text="{DynamicResource Language_Netease_Generate_Intelligence}"/>
+                </StackPanel>
+            </Button>
+        </DockPanel>
+
+        <Grid>
+            <pc:DataGridEx ItemsSource="{Binding ItemsCvs.View}"
+                           SelectedItem="{Binding SelectedItem}"
+                           Visibility="{Binding IsListVisible, Converter={StaticResource BooleanToCollapsedConverter}}"
+                           VirtualizingStackPanel.IsVirtualizing="True"
+                           VirtualizingStackPanel.VirtualizationMode="Recycling">
+                <pc:DataGridEx.Columns>
+                    <DataGridTextColumn Width="3*" IsReadOnly="True" Binding="{Binding TrackTitle}" CellStyle="{StaticResource DataGridCellPrimaryWithEllipsis}">
+                        <DataGridTextColumn.Header><TextBlock Text="{DynamicResource Language_Song}"/></DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Width="2*" IsReadOnly="True" Binding="{Binding ArtistName}" CellStyle="{StaticResource DataGridCellPrimaryWithEllipsis}">
+                        <DataGridTextColumn.Header><TextBlock Text="{DynamicResource Language_Artist}"/></DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Width="2*" IsReadOnly="True" Binding="{Binding AlbumTitle}" CellStyle="{StaticResource DataGridCellPrimaryWithEllipsis}">
+                        <DataGridTextColumn.Header><TextBlock Text="{DynamicResource Language_Album}"/></DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Width="*" IsReadOnly="True" Binding="{Binding Duration}" CellStyle="{StaticResource DataGridCellSecondaryWithEllipsis}">
+                        <DataGridTextColumn.Header><TextBlock Text="{DynamicResource Language_Time}"/></DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+                </pc:DataGridEx.Columns>
+            </pc:DataGridEx>
+
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding IsLoggedOutVisible, Converter={StaticResource BooleanToCollapsedConverter}}">
+                <TextBlock FontSize="18" Text="{DynamicResource Language_Netease_Sign_In_Required}" Foreground="{DynamicResource Brush_PrimaryText}" TextAlignment="Center"/>
+                <TextBlock Margin="0,8,0,0" Text="{DynamicResource Language_Netease_Sign_In_In_Settings}" Foreground="{DynamicResource Brush_SecondaryText}"/>
+            </StackPanel>
+            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" Text="{DynamicResource Language_Netease_Intelligence_Not_Generated}" Foreground="{DynamicResource Brush_SecondaryText}" Visibility="{Binding IsEmptyVisible, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" Text="{Binding ErrorMessage}" Foreground="{DynamicResource Brush_PrimaryText}" TextAlignment="Center" TextWrapping="Wrap" Visibility="{Binding HasError, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+        </Grid>
+    </DockPanel>
+</UserControl>

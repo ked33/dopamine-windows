@@ -153,6 +153,143 @@ namespace Dopamine.Services.Online.Netease
                 (result.Value ?? Array.Empty<string>()).Contains(songId));
         }
 
+        public async Task<NeteaseResult<NeteaseLikedLibrary>> GetLikedLibraryAsync(
+            CancellationToken cancellationToken)
+        {
+            NeteaseError sessionError = this.GetSessionError();
+
+            if (sessionError != null)
+            {
+                return NeteaseResult<NeteaseLikedLibrary>.Failure(sessionError);
+            }
+
+            long generation = this.sessionService.SessionGeneration;
+            string userId = this.sessionService.Account?.UserId ?? string.Empty;
+            NeteaseResult<string> playlistResult = await this.apiClient.GetLikedPlaylistIdAsync(
+                userId,
+                cancellationToken);
+
+            if (!playlistResult.IsSuccess)
+            {
+                if (IsAuthenticationError(playlistResult.Error))
+                {
+                    await this.sessionService.ExpireAsync(generation);
+                }
+
+                return NeteaseResult<NeteaseLikedLibrary>.Failure(playlistResult.Error);
+            }
+
+            NeteaseResult<IReadOnlyCollection<string>> songsResult =
+                await this.GetLikedSongIdsAsync(cancellationToken);
+
+            if (!songsResult.IsSuccess)
+            {
+                return NeteaseResult<NeteaseLikedLibrary>.Failure(songsResult.Error);
+            }
+
+            if (generation != this.sessionService.SessionGeneration)
+            {
+                return NeteaseResult<NeteaseLikedLibrary>.Failure(new NeteaseError(
+                    NeteaseErrorCode.SessionExpired,
+                    "Language_Netease_Login_Expired"));
+            }
+
+            return NeteaseResult<NeteaseLikedLibrary>.Success(new NeteaseLikedLibrary
+            {
+                PlaylistId = playlistResult.Value,
+                SongIds = (songsResult.Value ?? Array.Empty<string>()).ToList()
+            });
+        }
+
+        public async Task<NeteaseResult<IReadOnlyList<NeteaseIntelligenceRecommendation>>> GetIntelligenceRecommendationsAsync(
+            string playlistId,
+            string songId,
+            string startMusicId,
+            int count,
+            CancellationToken cancellationToken)
+        {
+            NeteaseError sessionError = this.GetSessionError();
+
+            if (sessionError != null)
+            {
+                return NeteaseResult<IReadOnlyList<NeteaseIntelligenceRecommendation>>.Failure(sessionError);
+            }
+
+            long generation = this.sessionService.SessionGeneration;
+            NeteaseResult<IReadOnlyList<NeteaseIntelligenceRecommendation>> result =
+                await this.apiClient.GetIntelligenceRecommendationsAsync(
+                    playlistId,
+                    songId,
+                    startMusicId,
+                    count,
+                    cancellationToken);
+
+            if (!result.IsSuccess && IsAuthenticationError(result.Error))
+            {
+                await this.sessionService.ExpireAsync(generation);
+            }
+
+            if (result.IsSuccess && generation != this.sessionService.SessionGeneration)
+            {
+                return NeteaseResult<IReadOnlyList<NeteaseIntelligenceRecommendation>>.Failure(
+                    new NeteaseError(NeteaseErrorCode.SessionExpired, "Language_Netease_Login_Expired"));
+            }
+
+            return result;
+        }
+
+        public async Task<NeteaseResult<IReadOnlyList<NeteasePersonalFmItem>>> GetPersonalFmAsync(
+            CancellationToken cancellationToken)
+        {
+            NeteaseError sessionError = this.GetSessionError();
+
+            if (sessionError != null)
+            {
+                return NeteaseResult<IReadOnlyList<NeteasePersonalFmItem>>.Failure(sessionError);
+            }
+
+            long generation = this.sessionService.SessionGeneration;
+            NeteaseResult<IReadOnlyList<NeteasePersonalFmItem>> result =
+                await this.apiClient.GetPersonalFmAsync(cancellationToken);
+
+            if (!result.IsSuccess && IsAuthenticationError(result.Error))
+            {
+                await this.sessionService.ExpireAsync(generation);
+            }
+
+            if (result.IsSuccess && generation != this.sessionService.SessionGeneration)
+            {
+                return NeteaseResult<IReadOnlyList<NeteasePersonalFmItem>>.Failure(
+                    new NeteaseError(NeteaseErrorCode.SessionExpired, "Language_Netease_Login_Expired"));
+            }
+
+            return result;
+        }
+
+        public async Task<NeteaseResult<bool>> DislikePersonalFmSongAsync(
+            string songId,
+            CancellationToken cancellationToken)
+        {
+            NeteaseError sessionError = this.GetSessionError();
+
+            if (sessionError != null)
+            {
+                return NeteaseResult<bool>.Failure(sessionError);
+            }
+
+            long generation = this.sessionService.SessionGeneration;
+            NeteaseResult<bool> result = await this.apiClient.DislikePersonalFmSongAsync(
+                songId,
+                cancellationToken);
+
+            if (!result.IsSuccess && IsAuthenticationError(result.Error))
+            {
+                await this.sessionService.ExpireAsync(generation);
+            }
+
+            return result;
+        }
+
         public async Task<NeteaseResult<bool>> SetSongLikedAsync(
             string songId,
             bool isLiked,

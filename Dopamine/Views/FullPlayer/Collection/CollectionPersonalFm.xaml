@@ -1,0 +1,50 @@
+﻿<UserControl x:Class="Dopamine.Views.FullPlayer.Collection.CollectionPersonalFm"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dc="clr-namespace:Digimezzo.Foundation.WPF.Controls;assembly=Digimezzo.Foundation.WPF"
+             xmlns:prismMvvm="clr-namespace:Prism.Mvvm;assembly=Prism.Wpf"
+             xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
+             prismMvvm:ViewModelLocator.AutoWireViewModel="True">
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Loaded"><i:InvokeCommandAction Command="{Binding LoadedCommand}"/></i:EventTrigger>
+        <i:EventTrigger EventName="Unloaded"><i:InvokeCommandAction Command="{Binding UnloadedCommand}"/></i:EventTrigger>
+    </i:Interaction.Triggers>
+
+    <Grid Margin="20,10,20,34">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="520">
+            <TextBlock Text="{DynamicResource Language_Netease_Personal_Fm}" FontSize="24" Foreground="{DynamicResource Brush_PrimaryText}" HorizontalAlignment="Center"/>
+            <TextBlock Margin="0,8,0,22" Text="{DynamicResource Language_Netease_Personal_Fm_Description}" Foreground="{DynamicResource Brush_SecondaryText}" TextAlignment="Center" TextWrapping="Wrap"/>
+
+            <StackPanel Visibility="{Binding IsLoggedOutVisible, Converter={StaticResource BooleanToCollapsedConverter}}">
+                <TextBlock FontSize="18" Text="{DynamicResource Language_Netease_Sign_In_Required}" Foreground="{DynamicResource Brush_PrimaryText}" TextAlignment="Center"/>
+                <TextBlock Margin="0,8,0,0" Text="{DynamicResource Language_Netease_Sign_In_In_Settings}" Foreground="{DynamicResource Brush_SecondaryText}" TextAlignment="Center"/>
+            </StackPanel>
+
+            <StackPanel Visibility="{Binding IsIdleVisible, Converter={StaticResource BooleanToCollapsedConverter}}">
+                <Button HorizontalAlignment="Center" MinWidth="170" Style="{StaticResource RegularButtonAccent}" Command="{Binding StartCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <dc:ProgressRing Width="18" Height="18" Margin="0,0,7,0" IsActive="{Binding IsBusy}" Foreground="{DynamicResource Brush_Accent}"/>
+                        <TextBlock Text="{DynamicResource Language_Netease_Start_Personal_Fm}"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+            <StackPanel Visibility="{Binding IsActiveVisible, Converter={StaticResource BooleanToCollapsedConverter}}">
+                <Border Padding="22" Background="{DynamicResource Brush_WindowHeaderBackground}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding CurrentTrackTitle}" FontSize="20" Foreground="{DynamicResource Brush_PrimaryText}" TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Margin="0,6,0,0" Text="{Binding CurrentTrackSubtitle}" Foreground="{DynamicResource Brush_SecondaryText}" TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Margin="0,10,0,0" Text="{Binding BufferedText}" Foreground="{DynamicResource Brush_Accent}" TextAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                <StackPanel Margin="0,18,0,0" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button Margin="0,0,10,0" Style="{StaticResource RegularButton}" Content="{DynamicResource Language_Netease_Personal_Fm_Dislike}" Command="{Binding DislikeCommand}"/>
+                    <Button Margin="0,0,10,0" Style="{StaticResource RegularButtonAccent}" Content="{DynamicResource Language_Netease_Personal_Fm_Skip}" Command="{Binding SkipCommand}"/>
+                    <Button Style="{StaticResource RegularButton}" Content="{DynamicResource Language_Netease_Exit_Personal_Fm}" Command="{Binding ExitCommand}"/>
+                </StackPanel>
+            </StackPanel>
+
+            <TextBlock Margin="0,18,0,0" Text="{Binding ErrorMessage}" Foreground="{DynamicResource Brush_PrimaryText}" TextAlignment="Center" TextWrapping="Wrap" Visibility="{Binding HasError, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -256,6 +256,7 @@
     <Compile Include="Online\Netease\DpapiNeteaseSessionStore.cs" />
     <Compile Include="Online\Netease\INeteaseApiClient.cs" />
     <Compile Include="Online\Netease\INeteaseMusicService.cs" />
+    <Compile Include="Online\Netease\INeteasePersonalFmService.cs" />
     <Compile Include="Online\Netease\INeteaseRecommendationStore.cs" />
     <Compile Include="Online\Netease\INeteaseSessionService.cs" />
     <Compile Include="Online\Netease\INeteaseSessionStore.cs" />
@@ -267,6 +268,8 @@
     <Compile Include="Online\Netease\NeteaseLoginContext.cs" />
     <Compile Include="Online\Netease\NeteaseModels.cs" />
     <Compile Include="Online\Netease\NeteaseMusicService.cs" />
+    <Compile Include="Online\Netease\NeteasePersonalFmService.cs" />
+    <Compile Include="Online\Netease\NeteaseTrackFactory.cs" />
     <Compile Include="Online\Netease\NeteaseQrStatusMapper.cs" />
     <Compile Include="Online\Netease\NeteaseSessionService.cs" />
     <Compile Include="Online\Netease\NeteaseWebLoginContracts.cs" />

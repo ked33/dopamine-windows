@@ -327,6 +327,9 @@
     <Compile Include="ViewModels\FullPlayer\Collection\CollectionTracksColumnsViewModel.cs" />
     <Compile Include="ViewModels\FullPlayer\Collection\CollectionTracksViewModel.cs" />
     <Compile Include="ViewModels\FullPlayer\Collection\CollectionDailyRecommendationsViewModel.cs" />
+    <Compile Include="ViewModels\FullPlayer\Collection\CollectionIntelligenceRecommendationsViewModel.cs" />
+    <Compile Include="ViewModels\FullPlayer\Collection\CollectionNeteaseRecommendationsViewModel.cs" />
+    <Compile Include="ViewModels\FullPlayer\Collection\CollectionPersonalFmViewModel.cs" />
     <Compile Include="ViewModels\FullPlayer\Collection\CollectionViewModel.cs" />
     <Compile Include="ViewModels\FullPlayer\Collection\CollectionUtils.cs" />
     <Compile Include="ViewModels\FullPlayer\FullPlayerAddMusicViewModel.cs" />
@@ -519,6 +522,15 @@
     </Compile>
     <Compile Include="Views\FullPlayer\Collection\CollectionDailyRecommendations.xaml.cs">
       <DependentUpon>CollectionDailyRecommendations.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\FullPlayer\Collection\CollectionIntelligenceRecommendations.xaml.cs">
+      <DependentUpon>CollectionIntelligenceRecommendations.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\FullPlayer\Collection\CollectionNeteaseRecommendations.xaml.cs">
+      <DependentUpon>CollectionNeteaseRecommendations.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\FullPlayer\Collection\CollectionPersonalFm.xaml.cs">
+      <DependentUpon>CollectionPersonalFm.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\FullPlayer\Collection\CollectionTracksColumns.xaml.cs">
       <DependentUpon>CollectionTracksColumns.xaml</DependentUpon>
@@ -1407,6 +1419,18 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\FullPlayer\Collection\CollectionDailyRecommendations.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\FullPlayer\Collection\CollectionIntelligenceRecommendations.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\FullPlayer\Collection\CollectionNeteaseRecommendations.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\FullPlayer\Collection\CollectionPersonalFm.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

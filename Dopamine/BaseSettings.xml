@@ -240,6 +240,9 @@
     <Setting Name="DailyRecommendationsShuffle">
       <Value>False</Value>
     </Setting>
+    <Setting Name="IntelligenceRecommendationsShuffle">
+      <Value>False</Value>
+    </Setting>
   </Namespace>
   <Namespace Name="Ordering">
     <Setting Name="ArtistsArtistType">

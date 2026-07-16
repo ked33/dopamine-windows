@@ -55,7 +55,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
                     this.regionManager.RequestNavigate(RegionNames.CollectionRegion, typeof(CollectionFolders).FullName);
                     break;
                 case CollectionPage.DailyRecommendations:
-                    this.regionManager.RequestNavigate(RegionNames.CollectionRegion, typeof(CollectionDailyRecommendations).FullName);
+                    this.regionManager.RequestNavigate(RegionNames.CollectionRegion, typeof(CollectionNeteaseRecommendations).FullName);
                     break;
                 default:
                     break;

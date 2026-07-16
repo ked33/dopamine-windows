@@ -31,7 +31,7 @@
             <dc:PivotItem Header="{DynamicResource Language_Songs}" Style="{StaticResource MenuPivotItem}"/>
             <dc:PivotItem Header="{DynamicResource Language_Playlists}" Style="{StaticResource MenuPivotItem}"/>
             <dc:PivotItem Header="{DynamicResource Language_Folders}" Style="{StaticResource MenuPivotItem}"/>
-            <dc:PivotItem Header="{DynamicResource Language_Netease_Daily_Recommendations}" Style="{StaticResource MenuPivotItem}"/>
+            <dc:PivotItem Header="{DynamicResource Language_Netease_Recommendations}" Style="{StaticResource MenuPivotItem}"/>
         </dc:Pivot>
     </DockPanel>
 </UserControl>

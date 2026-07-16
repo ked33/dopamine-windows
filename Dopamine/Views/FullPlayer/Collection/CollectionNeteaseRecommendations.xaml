@@ -1,0 +1,23 @@
+﻿<UserControl x:Class="Dopamine.Views.FullPlayer.Collection.CollectionNeteaseRecommendations"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dc="clr-namespace:Digimezzo.Foundation.WPF.Controls;assembly=Digimezzo.Foundation.WPF"
+             xmlns:views="clr-namespace:Dopamine.Views.FullPlayer.Collection"
+             xmlns:prismMvvm="clr-namespace:Prism.Mvvm;assembly=Prism.Wpf"
+             prismMvvm:ViewModelLocator.AutoWireViewModel="True">
+    <Grid Margin="10,8,10,0">
+        <dc:Pivot Margin="10,0,10,4"
+                  Style="{DynamicResource MenuPivot}"
+                  SelectedIndex="{Binding SelectedTabIndex}">
+            <dc:PivotItem Header="{DynamicResource Language_Netease_Daily_Recommendations}" Style="{StaticResource MenuPivotItem}">
+                <views:CollectionDailyRecommendations/>
+            </dc:PivotItem>
+            <dc:PivotItem Header="{DynamicResource Language_Netease_Intelligence_Recommendations}" Style="{StaticResource MenuPivotItem}">
+                <views:CollectionIntelligenceRecommendations/>
+            </dc:PivotItem>
+            <dc:PivotItem Header="{DynamicResource Language_Netease_Personal_Fm}" Style="{StaticResource MenuPivotItem}">
+                <views:CollectionPersonalFm/>
+            </dc:PivotItem>
+        </dc:Pivot>
+    </Grid>
+</UserControl>

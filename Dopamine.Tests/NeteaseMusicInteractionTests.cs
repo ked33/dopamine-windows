@@ -277,6 +277,40 @@ namespace Dopamine.Tests
                 return Task.FromResult(NeteaseResult<IReadOnlyCollection<string>>.Success(this.LikedSongIds));
             }
 
+            public Task<NeteaseResult<string>> GetLikedPlaylistIdAsync(
+                string userId,
+                CancellationToken cancellationToken)
+            {
+                return Task.FromResult(NeteaseResult<string>.Success("liked-playlist"));
+            }
+
+            public Task<NeteaseResult<IReadOnlyList<NeteaseIntelligenceRecommendation>>> GetIntelligenceRecommendationsAsync(
+                string playlistId,
+                string songId,
+                string startMusicId,
+                int count,
+                CancellationToken cancellationToken)
+            {
+                return Task.FromResult(
+                    NeteaseResult<IReadOnlyList<NeteaseIntelligenceRecommendation>>.Success(
+                        new NeteaseIntelligenceRecommendation[0]));
+            }
+
+            public Task<NeteaseResult<IReadOnlyList<NeteasePersonalFmItem>>> GetPersonalFmAsync(
+                CancellationToken cancellationToken)
+            {
+                return Task.FromResult(
+                    NeteaseResult<IReadOnlyList<NeteasePersonalFmItem>>.Success(
+                        new NeteasePersonalFmItem[0]));
+            }
+
+            public Task<NeteaseResult<bool>> DislikePersonalFmSongAsync(
+                string songId,
+                CancellationToken cancellationToken)
+            {
+                return Task.FromResult(NeteaseResult<bool>.Success(true));
+            }
+
             public Task<NeteaseResult<bool>> SetSongLikedAsync(
                 string songId,
                 bool isLiked,

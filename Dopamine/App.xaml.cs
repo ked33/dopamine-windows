@@ -293,6 +293,7 @@ namespace Dopamine
                 containerRegistry.RegisterInstance<INeteaseRecommendationStore>(new DpapiNeteaseRecommendationStore());
                 containerRegistry.RegisterSingleton<INeteaseSessionService, NeteaseSessionService>();
                 containerRegistry.RegisterSingleton<INeteaseMusicService, NeteaseMusicService>();
+                containerRegistry.RegisterSingleton<INeteasePersonalFmService, NeteasePersonalFmService>();
                 containerRegistry.RegisterSingleton<NeteaseTemporaryAudioCache>();
                 containerRegistry.RegisterSingleton<NeteasePlaybackSourceResolver>();
                 containerRegistry.RegisterSingleton<IPlaybackSourceResolver, PlaybackSourceResolver>();
@@ -373,6 +374,7 @@ namespace Dopamine
                 containerRegistry.Register<object, CollectionGenres>(typeof(CollectionGenres).FullName);
                 containerRegistry.Register<object, CollectionTracks>(typeof(CollectionTracks).FullName);
                 containerRegistry.Register<object, CollectionDailyRecommendations>(typeof(CollectionDailyRecommendations).FullName);
+                containerRegistry.Register<object, CollectionNeteaseRecommendations>(typeof(CollectionNeteaseRecommendations).FullName);
 
                 // Settings
                 containerRegistry.Register<object, SettingsMenu>(typeof(SettingsMenu).FullName);

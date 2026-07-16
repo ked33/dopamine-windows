@@ -33,6 +33,8 @@ namespace Dopamine.Services.Playback
 
         IList<TrackViewModel> Queue { get; }
 
+        PlaybackQueueContext QueueContext { get; }
+
         bool Shuffle { get; }
 
         bool Mute { get; }

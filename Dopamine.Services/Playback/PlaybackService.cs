@@ -145,6 +145,8 @@ namespace Dopamine.Services.Playback
 
         public IList<TrackViewModel> Queue => this.queueManager.Queue;
 
+        public PlaybackQueueContext QueueContext => this.queueContext;
+
         public TrackViewModel CurrentTrack => this.queueManager.CurrentTrack();
 
         public bool HasQueue => this.queueManager.Queue != null && this.queueManager.Queue.Count > 0;
@@ -209,6 +211,11 @@ namespace Dopamine.Services.Playback
 
         public async Task SetShuffleAsync(bool isShuffled)
         {
+            if (this.queueContext == PlaybackQueueContext.NeteasePersonalFm)
+            {
+                isShuffled = false;
+            }
+
             this.shuffle = isShuffled;
 
             if (isShuffled)
@@ -224,6 +231,10 @@ namespace Dopamine.Services.Playback
             if (this.queueContext == PlaybackQueueContext.NeteaseDailyRecommendations)
             {
                 SettingDefaults.SetSafe<bool>("Netease", "DailyRecommendationsShuffle", this.shuffle);
+            }
+            else if (this.queueContext == PlaybackQueueContext.NeteaseIntelligenceRecommendations)
+            {
+                SettingDefaults.SetSafe<bool>("Netease", "IntelligenceRecommendationsShuffle", this.shuffle);
             }
             else
             {
@@ -2115,14 +2126,27 @@ namespace Dopamine.Services.Playback
         private void SetQueueContext(PlaybackQueueContext context)
         {
             this.queueContext = context;
-            bool contextShuffle = context == PlaybackQueueContext.NeteaseDailyRecommendations
-                ? SettingDefaults.GetOrAdd<bool>("Netease", "DailyRecommendationsShuffle", false)
-                : this.durableShuffle;
+            bool contextShuffle = this.GetQueueContextShuffle(context);
 
             if (this.shuffle != contextShuffle)
             {
                 this.shuffle = contextShuffle;
                 this.PlaybackShuffleChanged(this, EventArgs.Empty);
+            }
+        }
+
+        private bool GetQueueContextShuffle(PlaybackQueueContext context)
+        {
+            switch (context)
+            {
+                case PlaybackQueueContext.NeteaseDailyRecommendations:
+                    return SettingDefaults.GetOrAdd<bool>("Netease", "DailyRecommendationsShuffle", false);
+                case PlaybackQueueContext.NeteaseIntelligenceRecommendations:
+                    return SettingDefaults.GetOrAdd<bool>("Netease", "IntelligenceRecommendationsShuffle", false);
+                case PlaybackQueueContext.NeteasePersonalFm:
+                    return false;
+                default:
+                    return this.durableShuffle;
             }
         }
 
@@ -2167,9 +2191,7 @@ namespace Dopamine.Services.Playback
             this.Volume = SettingsClient.Get<float>("Playback", "Volume");
             this.mute = SettingsClient.Get<bool>("Playback", "Mute");
             this.durableShuffle = SettingsClient.Get<bool>("Playback", "Shuffle");
-            this.shuffle = this.queueContext == PlaybackQueueContext.NeteaseDailyRecommendations
-                ? SettingDefaults.GetOrAdd<bool>("Netease", "DailyRecommendationsShuffle", false)
-                : this.durableShuffle;
+            this.shuffle = this.GetQueueContextShuffle(this.queueContext);
             this.EventMode = false;
             //this.EventMode = SettingsClient.Get<bool>("Playback", "WasapiEventMode");
             //this.ExclusiveMode = false;
