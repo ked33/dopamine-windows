@@ -1,5 +1,6 @@
 ﻿using Dopamine.Core.Base;
 using Dopamine.Core.Logging;
+using Dopamine.Services.Entities;
 using Dopamine.Services.Playback;
 using Prism.Ioc;
 using System;

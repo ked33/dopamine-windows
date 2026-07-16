@@ -1,5 +1,6 @@
 ﻿using Dopamine.Core.Base;
 using System;
+using Dopamine.Services.Entities;
 using System.Threading;
 using System.Threading.Tasks;
 
