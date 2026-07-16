@@ -691,7 +691,9 @@ namespace Dopamine.Services.Online.Netease
                     IsSuccess = true,
                     Lyric = result.Value.Lyric?.Lyric ?? string.Empty,
                     TranslationLyric = result.Value.TranslationLyric?.Lyric ?? string.Empty,
-                    RomajiLyric = result.Value.RomajiLyric?.Lyric ?? string.Empty
+                    RomajiLyric = result.Value.RomajiLyric?.Lyric ?? string.Empty,
+                    KaraokeLyric = result.Value.YunLyric?.Lyric ?? result.Value.OldKaraokLyric?.Lyric ?? string.Empty,
+                    KaraokeTranslationLyric = result.Value.YunTranslationLyric?.Lyric ?? string.Empty
                 };
             }
             catch (Exception ex)

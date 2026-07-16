@@ -188,6 +188,10 @@ namespace Dopamine.Services.Online.Netease
 
         public string RomajiLyric { get; set; }
 
+        public string KaraokeLyric { get; set; }
+
+        public string KaraokeTranslationLyric { get; set; }
+
         public NeteaseError Error { get; set; }
     }
 

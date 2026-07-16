@@ -222,6 +222,7 @@
     <Compile Include="Controls\IconButton.cs" />
     <Compile Include="Controls\IconMenuButton.cs" />
     <Compile Include="Controls\IconTextButton.cs" />
+    <Compile Include="Controls\KaraokeLyricsControl.cs" />
     <Compile Include="Controls\ListCheckBox.cs" />
     <Compile Include="Controls\Logo.xaml.cs">
       <DependentUpon>Logo.xaml</DependentUpon>

@@ -20,9 +20,14 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         private bool isLoaded;
         private CancellationTokenSource operationCancellationTokenSource;
         private CancellationTokenSource likeStatusCancellationTokenSource;
+        private CancellationTokenSource lyricsCancellationTokenSource;
         private string likeStatusSongId;
+        private string lyricsSongId;
         private bool isLikeStatusLoading;
+        private bool isLyricsLoading;
         private bool currentSongIsLiked;
+        private string karaokeLyrics;
+        private string fallbackLyrics;
         private bool isLikeOperationRunning;
         private string actionErrorMessage;
 
@@ -123,6 +128,36 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             }
         }
 
+        public bool IsLyricsLoading
+        {
+            get { return this.isLyricsLoading; }
+            private set { SetProperty<bool>(ref this.isLyricsLoading, value); }
+        }
+
+        public string KaraokeLyrics
+        {
+            get { return this.karaokeLyrics; }
+            private set { SetProperty<string>(ref this.karaokeLyrics, value); }
+        }
+
+        public string FallbackLyrics
+        {
+            get { return this.fallbackLyrics; }
+            private set
+            {
+                if (SetProperty<string>(ref this.fallbackLyrics, value))
+                {
+                    RaisePropertyChanged(nameof(this.HasLyrics));
+                    RaisePropertyChanged(nameof(this.IsLyricsEmpty));
+                }
+            }
+        }
+
+        public bool HasLyrics => !string.IsNullOrWhiteSpace(this.KaraokeLyrics) ||
+            !string.IsNullOrWhiteSpace(this.FallbackLyrics);
+
+        public bool IsLyricsEmpty => !this.IsLyricsLoading && !this.HasLyrics;
+
         public string ErrorMessage => !string.IsNullOrWhiteSpace(this.actionErrorMessage)
             ? this.actionErrorMessage
             : this.personalFmService.Error == null
@@ -143,6 +178,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.sessionService.SessionChanged += this.SessionService_SessionChanged;
             this.RefreshState();
             this.RefreshLikeStatusAsync();
+            this.RefreshLyricsAsync();
         }
 
         private void Unloaded()
@@ -157,6 +193,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.sessionService.SessionChanged -= this.SessionService_SessionChanged;
             this.CancelOperation();
             this.CancelLikeStatusLookup();
+            this.CancelLyricsLookup();
         }
 
         private async void StartAsync()
@@ -202,6 +239,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             {
                 this.RefreshState();
                 this.RefreshLikeStatusAsync();
+                this.RefreshLyricsAsync();
             });
         }
 
@@ -214,6 +252,8 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
                     this.CancelLikeStatusLookup();
                     this.likeStatusSongId = null;
                     this.CurrentSongIsLiked = false;
+                    this.CancelLyricsLookup();
+                    this.ClearLyrics();
                 }
 
                 this.RefreshState();
@@ -357,6 +397,89 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             source?.Cancel();
             source?.Dispose();
             this.IsLikeStatusLoading = false;
+        }
+
+        private async void RefreshLyricsAsync()
+        {
+            string songId = this.personalFmService.CurrentTrack?.SourceInfo?.RemoteId;
+
+            if (!this.IsLoggedIn || !this.IsActive || string.IsNullOrWhiteSpace(songId))
+            {
+                this.CancelLyricsLookup();
+                this.ClearLyrics();
+                return;
+            }
+
+            if (string.Equals(this.lyricsSongId, songId, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            this.CancelLyricsLookup();
+            var source = new CancellationTokenSource();
+            this.lyricsCancellationTokenSource = source;
+            this.lyricsSongId = songId;
+            this.KaraokeLyrics = string.Empty;
+            this.FallbackLyrics = string.Empty;
+            this.IsLyricsLoading = true;
+            RaisePropertyChanged(nameof(this.IsLyricsEmpty));
+
+            try
+            {
+                NeteaseLyricResult result = await this.musicService.GetLyricsAsync(songId, source.Token);
+
+                if (!source.IsCancellationRequested && string.Equals(
+                    this.personalFmService.CurrentTrack?.SourceInfo?.RemoteId,
+                    songId,
+                    StringComparison.Ordinal))
+                {
+                    if (result.IsSuccess)
+                    {
+                        this.KaraokeLyrics = result.KaraokeLyric ?? string.Empty;
+                        this.FallbackLyrics = result.Lyric ?? string.Empty;
+                    }
+                    else if (result.Error?.Code != NeteaseErrorCode.Cancelled)
+                    {
+                        AppLog.Warning("Could not load personal FM lyrics. ErrorCode={0}", result.Error?.Code);
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warning("Could not load personal FM lyrics. ErrorType={0}", ex.GetType().Name);
+            }
+            finally
+            {
+                if (object.ReferenceEquals(
+                    Interlocked.CompareExchange(ref this.lyricsCancellationTokenSource, null, source),
+                    source))
+                {
+                    source.Dispose();
+                    this.IsLyricsLoading = false;
+                    RaisePropertyChanged(nameof(this.IsLyricsEmpty));
+                }
+            }
+        }
+
+        private void CancelLyricsLookup()
+        {
+            CancellationTokenSource source = Interlocked.Exchange(
+                ref this.lyricsCancellationTokenSource,
+                null);
+            source?.Cancel();
+            source?.Dispose();
+            this.IsLyricsLoading = false;
+        }
+
+        private void ClearLyrics()
+        {
+            this.lyricsSongId = null;
+            this.KaraokeLyrics = string.Empty;
+            this.FallbackLyrics = string.Empty;
+            RaisePropertyChanged(nameof(this.IsLyricsEmpty));
         }
 
         private void RefreshState()
