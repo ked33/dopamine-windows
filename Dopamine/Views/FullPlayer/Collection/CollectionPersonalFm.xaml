@@ -32,7 +32,7 @@
 
         <Border Grid.Row="1"
                 Padding="16"
-                Background="{DynamicResource Brush_WindowHeaderBackground}"
+                Background="#1a1a1a"
                 Visibility="{Binding IsActiveVisible, Converter={StaticResource BooleanToCollapsedConverter}}">
             <Grid>
                 <controls:KaraokeLyricsControl

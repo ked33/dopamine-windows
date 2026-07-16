@@ -17,7 +17,7 @@ namespace Dopamine.Controls
         private static readonly Regex YrcLineRegex = new Regex(@"^\[(\d+),(\d+)\](.*)$", RegexOptions.Compiled);
         private static readonly Regex YrcWordRegex = new Regex(@"\((\d+),(\d+),\d+\)([^\(]*)", RegexOptions.Compiled);
         private static readonly Regex LrcLineRegex = new Regex(@"^\[(\d{1,3}):(\d{1,2})(?:[\.:](\d{1,3}))?\](.*)$", RegexOptions.Compiled);
-        private static readonly Regex MetadataTimeRegex = new Regex(@"[\""']t[\""']\s*:\s*(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex MetadataTimeRegex = new Regex(@"[\""']t[\""']\s*:\s*([0-9oO]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static readonly Regex MetadataTextRegex = new Regex(@"[\""']tx[\""']\s*:\s*[\""']([^\""']*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private readonly IPlaybackService playbackService;
@@ -39,6 +39,10 @@ namespace Dopamine.Controls
         public static readonly DependencyProperty HighlightBrushProperty = DependencyProperty.Register(
             nameof(HighlightBrush), typeof(Brush), typeof(KaraokeLyricsControl),
             new FrameworkPropertyMetadata(Brushes.White, FrameworkPropertyMetadataOptions.AffectsRender, OnRenderingPropertyChanged));
+
+        public static readonly DependencyProperty LyricsFontSizeProperty = DependencyProperty.Register(
+            nameof(LyricsFontSize), typeof(double), typeof(KaraokeLyricsControl),
+            new FrameworkPropertyMetadata(18.0, FrameworkPropertyMetadataOptions.AffectsRender, OnRenderingPropertyChanged));
 
         public KaraokeLyricsControl()
         {
@@ -77,6 +81,12 @@ namespace Dopamine.Controls
             set { this.SetValue(HighlightBrushProperty, value); }
         }
 
+        public double LyricsFontSize
+        {
+            get { return (double)this.GetValue(LyricsFontSizeProperty); }
+            set { this.SetValue(LyricsFontSizeProperty, value); }
+        }
+
         protected override void OnRender(DrawingContext drawingContext)
         {
             base.OnRender(drawingContext);
@@ -88,7 +98,8 @@ namespace Dopamine.Controls
 
             double currentMilliseconds = this.playbackService.GetCurrentTime.TotalMilliseconds;
             int currentIndex = FindCurrentLine(this.lines, currentMilliseconds);
-            int visibleRadius = Math.Max(2, (int)Math.Ceiling(this.ActualHeight / LineHeight / 2.0));
+            double lineHeight = Math.Max(LineHeight, this.LyricsFontSize + 16.0);
+            int visibleRadius = Math.Max(2, (int)Math.Ceiling(this.ActualHeight / lineHeight / 2.0));
             int first = Math.Max(0, currentIndex - visibleRadius);
             int last = Math.Min(this.lines.Count - 1, currentIndex + visibleRadius);
             double centerY = this.ActualHeight / 2.0;
@@ -100,7 +111,7 @@ namespace Dopamine.Controls
                 double opacity = Math.Max(0.28, 1.0 - distance * 0.18);
                 FormattedText text = line.GetText(this, index == currentIndex, false);
                 double x = Math.Max(0, (this.ActualWidth - text.WidthIncludingTrailingWhitespace) / 2.0);
-                double y = centerY + (index - currentIndex) * LineHeight - text.Height / 2.0;
+                double y = centerY + (index - currentIndex) * lineHeight - text.Height / 2.0;
                 drawingContext.PushOpacity(opacity);
                 drawingContext.DrawText(text, new Point(x, y));
                 drawingContext.Pop();
@@ -206,13 +217,28 @@ namespace Dopamine.Controls
         private static void TryAddMetadataLine(List<LyricLine> lines, string rawLine)
         {
             if (string.IsNullOrWhiteSpace(rawLine) || (!rawLine.Contains("\"tx\"") && !rawLine.Contains("'tx'"))) return;
-            MatchCollection texts = MetadataTextRegex.Matches(rawLine);
-            if (texts.Count == 0) return;
-            string text = string.Concat(texts.Cast<Match>().Select(x => x.Groups[1].Value));
-            Match time = MetadataTimeRegex.Match(rawLine);
-            double start = time.Success ? ParseDouble(time.Groups[1].Value) : 0;
-            text = NormalizeText(text);
-            if (!string.IsNullOrWhiteSpace(text)) lines.Add(new LyricLine(start, 3000, text, Array.Empty<LyricWord>()));
+            MatchCollection timeMatches = MetadataTimeRegex.Matches(rawLine);
+            if (timeMatches.Count == 0) return;
+
+            for (int index = 0; index < timeMatches.Count; index++)
+            {
+                int startIndex = timeMatches[index].Index;
+                int endIndex = index + 1 < timeMatches.Count ? timeMatches[index + 1].Index : rawLine.Length;
+                string metadataObject = rawLine.Substring(startIndex, endIndex - startIndex);
+                MatchCollection texts = MetadataTextRegex.Matches(metadataObject);
+                if (texts.Count == 0) continue;
+                string[] parts = texts.Cast<Match>().Select(x => x.Groups[1].Value).ToArray();
+                string separator = parts.Length > 1 && (parts[0].EndsWith(":") || parts[0].EndsWith("：")) ? " " : string.Empty;
+                string text = string.Join(separator, parts);
+                double start = ParseMetadataTime(timeMatches[index].Groups[1].Value);
+                text = NormalizeText(text);
+                if (!string.IsNullOrWhiteSpace(text)) lines.Add(new LyricLine(start, 3000, text, Array.Empty<LyricWord>()));
+            }
+        }
+
+        private static double ParseMetadataTime(string value)
+        {
+            return ParseDouble((value ?? string.Empty).Replace('o', '0').Replace('O', '0'));
         }
 
         private static string NormalizeText(string text)
@@ -304,8 +330,7 @@ namespace Dopamine.Controls
 
         private bool ShouldAnimate()
         {
-            return this.IsLoaded && this.IsVisible && this.lines.Count > 0 && this.playbackService.IsPlaying &&
-                this.playbackService.QueueContext == PlaybackQueueContext.NeteasePersonalFm;
+            return this.IsLoaded && this.IsVisible && this.lines.Count > 0 && this.playbackService.IsPlaying;
         }
 
         private sealed class LyricLine
@@ -329,13 +354,13 @@ namespace Dopamine.Controls
             {
                 if (isHighlight)
                 {
-                    return this.highlightText ?? (this.highlightText = owner.CreateText(this.Text, 25.0, owner.HighlightBrush));
+                    return this.highlightText ?? (this.highlightText = owner.CreateText(this.Text, owner.LyricsFontSize + 7.0, owner.HighlightBrush));
                 }
                 if (isActive)
                 {
-                    return this.activeText ?? (this.activeText = owner.CreateText(this.Text, 25.0, owner.BaseBrush));
+                    return this.activeText ?? (this.activeText = owner.CreateText(this.Text, owner.LyricsFontSize + 7.0, owner.BaseBrush));
                 }
-                return this.normalText ?? (this.normalText = owner.CreateText(this.Text, 18.0, owner.BaseBrush));
+                return this.normalText ?? (this.normalText = owner.CreateText(this.Text, owner.LyricsFontSize, owner.BaseBrush));
             }
 
             public void ClearTextCache()

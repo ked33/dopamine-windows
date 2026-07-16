@@ -5,6 +5,7 @@
              xmlns:animation="clr-namespace:Dopamine.Core.Settings;assembly=Dopamine.Core"
   xmlns:commonviewmodels="clr-namespace:Dopamine.ViewModels.Common"
   xmlns:commonviews="clr-namespace:Dopamine.Views.Common"
+  xmlns:controls="clr-namespace:Dopamine.Controls"
   xmlns:cp="clr-namespace:Dopamine.Core.Prism;assembly=Dopamine.Core"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:dc="clr-namespace:Digimezzo.Foundation.WPF.Controls;assembly=Digimezzo.Foundation.WPF"
@@ -73,6 +74,15 @@
                     </Border>
                 </DockPanel>
                 <Grid Panel.ZIndex="0">
+                    <controls:KaraokeLyricsControl
+            Panel.ZIndex="1"
+            IsHitTestVisible="False"
+            KaraokeLyrics="{Binding KaraokeLyrics}"
+            FallbackLyrics="{Binding FallbackLyrics}"
+            LyricsFontSize="{Binding FontSize}"
+            BaseBrush="{DynamicResource Brush_SecondaryText}"
+            HighlightBrush="{DynamicResource Brush_Accent}"
+            Visibility="{Binding IsEditing, Converter={StaticResource InvertingBooleanToCollapsedConverter}}" />
                     <ListBox
             x:Name="LyricsListBox"
             Padding="0,0,10,0"
@@ -84,6 +94,7 @@
             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
             ScrollViewer.VerticalScrollBarVisibility="Auto"
             Visibility="{Binding IsEditing, Converter={StaticResource InvertingBooleanToCollapsedConverter}}">
+                        <ListBox.Opacity>0</ListBox.Opacity>
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid Margin="0,0,10,0">

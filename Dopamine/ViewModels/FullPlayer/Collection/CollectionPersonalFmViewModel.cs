@@ -3,6 +3,7 @@ using Dopamine.Core.Base;
 using Dopamine.Core.Logging;
 using Dopamine.Core.Utils;
 using Dopamine.Services.Online.Netease;
+using Dopamine.Services.Playback;
 using Prism.Commands;
 using Prism.Mvvm;
 using System;
@@ -17,7 +18,9 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         private readonly INeteasePersonalFmService personalFmService;
         private readonly INeteaseSessionService sessionService;
         private readonly INeteaseMusicService musicService;
+        private readonly IPlaybackService playbackService;
         private bool isLoaded;
+        private bool currentTrackRefreshPending;
         private CancellationTokenSource operationCancellationTokenSource;
         private CancellationTokenSource likeStatusCancellationTokenSource;
         private CancellationTokenSource lyricsCancellationTokenSource;
@@ -34,11 +37,13 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         public CollectionPersonalFmViewModel(
             INeteasePersonalFmService personalFmService,
             INeteaseSessionService sessionService,
-            INeteaseMusicService musicService)
+            INeteaseMusicService musicService,
+            IPlaybackService playbackService)
         {
             this.personalFmService = personalFmService;
             this.sessionService = sessionService;
             this.musicService = musicService;
+            this.playbackService = playbackService;
 
             this.LoadedCommand = new DelegateCommand(this.Loaded);
             this.UnloadedCommand = new DelegateCommand(this.Unloaded);
@@ -176,9 +181,9 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.isLoaded = true;
             this.personalFmService.StateChanged += this.PersonalFmService_StateChanged;
             this.sessionService.SessionChanged += this.SessionService_SessionChanged;
-            this.RefreshState();
-            this.RefreshLikeStatusAsync();
-            this.RefreshLyricsAsync();
+            this.playbackService.PlayingTrackChanged += this.PlaybackService_PlayingTrackChanged;
+            this.playbackService.PlaybackSuccess += this.PlaybackService_PlaybackSuccess;
+            this.RefreshCurrentTrackData();
         }
 
         private void Unloaded()
@@ -191,6 +196,9 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.isLoaded = false;
             this.personalFmService.StateChanged -= this.PersonalFmService_StateChanged;
             this.sessionService.SessionChanged -= this.SessionService_SessionChanged;
+            this.playbackService.PlayingTrackChanged -= this.PlaybackService_PlayingTrackChanged;
+            this.playbackService.PlaybackSuccess -= this.PlaybackService_PlaybackSuccess;
+            this.currentTrackRefreshPending = false;
             this.CancelOperation();
             this.CancelLikeStatusLookup();
             this.CancelLyricsLookup();
@@ -235,12 +243,50 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
 
         private void PersonalFmService_StateChanged(object sender, EventArgs e)
         {
-            this.Dispatch(() =>
+            this.ScheduleCurrentTrackRefresh();
+        }
+
+        private void PlaybackService_PlayingTrackChanged(object sender, EventArgs e)
+        {
+            this.ScheduleCurrentTrackRefresh();
+        }
+
+        private void PlaybackService_PlaybackSuccess(object sender, PlaybackSuccessEventArgs e)
+        {
+            this.ScheduleCurrentTrackRefresh();
+        }
+
+        private void ScheduleCurrentTrackRefresh()
+        {
+            if (!this.isLoaded || this.currentTrackRefreshPending)
             {
-                this.RefreshState();
-                this.RefreshLikeStatusAsync();
-                this.RefreshLyricsAsync();
-            });
+                return;
+            }
+
+            this.currentTrackRefreshPending = true;
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher == null)
+            {
+                this.currentTrackRefreshPending = false;
+                this.RefreshCurrentTrackData();
+                return;
+            }
+
+            dispatcher.BeginInvoke(new Action(() =>
+            {
+                this.currentTrackRefreshPending = false;
+                if (this.isLoaded)
+                {
+                    this.RefreshCurrentTrackData();
+                }
+            }));
+        }
+
+        private void RefreshCurrentTrackData()
+        {
+            this.RefreshState();
+            this.RefreshLikeStatusAsync();
+            this.RefreshLyricsAsync();
         }
 
         private void SessionService_SessionChanged(object sender, EventArgs e)
