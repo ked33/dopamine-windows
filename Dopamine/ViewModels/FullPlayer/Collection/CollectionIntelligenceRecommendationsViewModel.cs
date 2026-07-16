@@ -432,7 +432,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             }
         }
 
-        private async void StartPlaybackAsync(TrackViewModel startTrack)
+        private async Task StartPlaybackAsync(TrackViewModel startTrack)
         {
             if (startTrack == null || this.isStartingPlayback)
             {
