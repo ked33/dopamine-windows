@@ -38,6 +38,8 @@
                 <controls:KaraokeLyricsControl
                     KaraokeLyrics="{Binding KaraokeLyrics}"
                     FallbackLyrics="{Binding FallbackLyrics}"
+                    KaraokeTranslationLyrics="{Binding KaraokeTranslationLyrics}"
+                    FallbackTranslationLyrics="{Binding FallbackTranslationLyrics}"
                     BaseBrush="{DynamicResource Brush_SecondaryText}"
                     HighlightBrush="{DynamicResource Brush_Accent}"/>
                 <dc:ProgressRing Width="52" Height="52" HorizontalAlignment="Center" VerticalAlignment="Center"

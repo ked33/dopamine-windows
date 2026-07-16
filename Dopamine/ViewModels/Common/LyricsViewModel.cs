@@ -27,6 +27,8 @@ namespace Dopamine.ViewModels.Common
         private bool centerLyrics;
         private bool isEditing;
         private string karaokeLyrics;
+        private string karaokeTranslationLyrics;
+        private string fallbackTranslationLyrics;
         private IMetadataService metadataService;
         private IProviderService providerService;
         private ILyricsService lyricsService;
@@ -124,6 +126,18 @@ namespace Dopamine.ViewModels.Common
         }
 
         public string FallbackLyrics => this.Lyrics?.Text ?? string.Empty;
+
+        public string KaraokeTranslationLyrics
+        {
+            get { return this.karaokeTranslationLyrics; }
+            set { SetProperty<string>(ref this.karaokeTranslationLyrics, value); }
+        }
+
+        public string FallbackTranslationLyrics
+        {
+            get { return this.fallbackTranslationLyrics; }
+            set { SetProperty<string>(ref this.fallbackTranslationLyrics, value); }
+        }
 
         public ObservableCollection<LyricsLineViewModel> LyricsLines
         {

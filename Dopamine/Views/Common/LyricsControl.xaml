@@ -79,6 +79,8 @@
             IsHitTestVisible="False"
             KaraokeLyrics="{Binding KaraokeLyrics}"
             FallbackLyrics="{Binding FallbackLyrics}"
+            KaraokeTranslationLyrics="{Binding KaraokeTranslationLyrics}"
+            FallbackTranslationLyrics="{Binding FallbackTranslationLyrics}"
             LyricsFontSize="{Binding FontSize}"
             BaseBrush="{DynamicResource Brush_SecondaryText}"
             HighlightBrush="{DynamicResource Brush_Accent}"

@@ -438,6 +438,8 @@ namespace Dopamine.ViewModels.Common
                     this.LyricsViewModel = new LyricsViewModel(this.container, track);
                     this.LyricsViewModel.SetLyrics(lyrics);
                     this.LyricsViewModel.KaraokeLyrics = result.KaraokeLyric ?? string.Empty;
+                    this.LyricsViewModel.KaraokeTranslationLyrics = result.KaraokeTranslationLyric ?? string.Empty;
+                    this.LyricsViewModel.FallbackTranslationLyrics = result.TranslationLyric ?? string.Empty;
                 });
             }
             catch (OperationCanceledException)

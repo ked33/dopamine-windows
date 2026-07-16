@@ -31,6 +31,8 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         private bool currentSongIsLiked;
         private string karaokeLyrics;
         private string fallbackLyrics;
+        private string karaokeTranslationLyrics;
+        private string fallbackTranslationLyrics;
         private bool isLikeOperationRunning;
         private string actionErrorMessage;
 
@@ -160,6 +162,18 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
 
         public bool HasLyrics => !string.IsNullOrWhiteSpace(this.KaraokeLyrics) ||
             !string.IsNullOrWhiteSpace(this.FallbackLyrics);
+
+        public string KaraokeTranslationLyrics
+        {
+            get { return this.karaokeTranslationLyrics; }
+            private set { SetProperty<string>(ref this.karaokeTranslationLyrics, value); }
+        }
+
+        public string FallbackTranslationLyrics
+        {
+            get { return this.fallbackTranslationLyrics; }
+            private set { SetProperty<string>(ref this.fallbackTranslationLyrics, value); }
+        }
 
         public bool IsLyricsEmpty => !this.IsLyricsLoading && !this.HasLyrics;
 
@@ -467,6 +481,8 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.lyricsSongId = songId;
             this.KaraokeLyrics = string.Empty;
             this.FallbackLyrics = string.Empty;
+            this.KaraokeTranslationLyrics = string.Empty;
+            this.FallbackTranslationLyrics = string.Empty;
             this.IsLyricsLoading = true;
             RaisePropertyChanged(nameof(this.IsLyricsEmpty));
 
@@ -483,6 +499,8 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
                     {
                         this.KaraokeLyrics = result.KaraokeLyric ?? string.Empty;
                         this.FallbackLyrics = result.Lyric ?? string.Empty;
+                        this.KaraokeTranslationLyrics = result.KaraokeTranslationLyric ?? string.Empty;
+                        this.FallbackTranslationLyrics = result.TranslationLyric ?? string.Empty;
                     }
                     else if (result.Error?.Code != NeteaseErrorCode.Cancelled)
                     {
@@ -525,6 +543,8 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.lyricsSongId = null;
             this.KaraokeLyrics = string.Empty;
             this.FallbackLyrics = string.Empty;
+            this.KaraokeTranslationLyrics = string.Empty;
+            this.FallbackTranslationLyrics = string.Empty;
             RaisePropertyChanged(nameof(this.IsLyricsEmpty));
         }
 
