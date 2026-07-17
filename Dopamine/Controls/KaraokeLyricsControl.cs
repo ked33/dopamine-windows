@@ -185,10 +185,32 @@ namespace Dopamine.Controls
         {
             List<LyricLine> parsed = ParseYrc(karaokeLyrics);
             if (parsed.Count == 0) parsed = ParseLrc(fallbackLyrics);
+            parsed = CollapseInlineBilingualLines(parsed);
             List<LyricLine> translations = ParseYrc(karaokeTranslationLyrics);
             if (translations.Count == 0) translations = ParseLrc(fallbackTranslationLyrics);
             AttachTranslations(parsed, translations);
             return parsed;
+        }
+
+        private static List<LyricLine> CollapseInlineBilingualLines(IReadOnlyList<LyricLine> source)
+        {
+            var result = new List<LyricLine>();
+
+            for (int index = 0; index < source.Count; index++)
+            {
+                LyricLine line = source[index];
+
+                if (index + 1 < source.Count &&
+                    Math.Abs(source[index + 1].StartMilliseconds - line.StartMilliseconds) <= 100)
+                {
+                    line.SetTranslation(source[index + 1]);
+                    index++;
+                }
+
+                result.Add(line);
+            }
+
+            return result;
         }
 
         private static void AttachTranslations(IReadOnlyList<LyricLine> lyrics, IReadOnlyList<LyricLine> translations)
@@ -196,6 +218,11 @@ namespace Dopamine.Controls
             int translationIndex = 0;
             foreach (LyricLine line in lyrics)
             {
+                if (!string.IsNullOrWhiteSpace(line.TranslationText))
+                {
+                    continue;
+                }
+
                 while (translationIndex + 1 < translations.Count &&
                     Math.Abs(translations[translationIndex + 1].StartMilliseconds - line.StartMilliseconds) <=
                     Math.Abs(translations[translationIndex].StartMilliseconds - line.StartMilliseconds))
@@ -425,6 +452,7 @@ namespace Dopamine.Controls
             {
                 this.TranslationText = translation.Text;
                 this.TranslationWords = translation.Words;
+                this.DurationMilliseconds = Math.Max(this.DurationMilliseconds, translation.DurationMilliseconds);
             }
 
             public FormattedText GetText(KaraokeLyricsControl owner, bool translation, bool isActive, bool isHighlight)
