@@ -16,6 +16,7 @@ using Prism.Mvvm;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -53,6 +54,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         private bool selectedSongIsLiked;
         private bool isLikeOperationRunning;
         private bool isDislikeOperationRunning;
+        private string refreshTimeText;
 
         public DelegateCommand LoadedCommand { get; private set; }
 
@@ -147,6 +149,12 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
                 : "Language_Netease_Like");
 
         public int Count => this.ItemsCvs == null ? 0 : this.ItemsCvs.View.Cast<TrackViewModel>().Count();
+
+        public string RefreshTimeText
+        {
+            get { return this.refreshTimeText; }
+            private set { SetProperty<string>(ref this.refreshTimeText, value); }
+        }
 
         public bool IsInitialLoading
         {
@@ -408,6 +416,9 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
                 this.Items = mapped;
                 this.RebuildCollectionView();
                 this.RefreshPlayingState();
+                this.RefreshTimeText = FormatRefreshTime(
+                    NeteaseDailyRecommendationSchedule.GetRecommendationDate(
+                        DateTimeOffset.UtcNow).AddHours(6));
             }
             catch (OperationCanceledException)
             {
@@ -855,6 +866,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
                 {
                     this.CancelLoading();
                     this.Items = new ObservableCollection<TrackViewModel>();
+                    this.RefreshTimeText = string.Empty;
                     this.RebuildCollectionView();
                 }
                 else if (this.isLoaded)
@@ -922,6 +934,13 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         {
             return !string.IsNullOrWhiteSpace(value) &&
                 value.IndexOf(searchText, StringComparison.CurrentCultureIgnoreCase) >= 0;
+        }
+
+        private static string FormatRefreshTime(DateTime refreshTime)
+        {
+            return refreshTime.ToString(
+                "yyyy年M月d日 dddd H:mm",
+                CultureInfo.GetCultureInfo("zh-CN"));
         }
     }
 }

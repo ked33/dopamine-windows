@@ -53,11 +53,14 @@
     </i:Interaction.Triggers>
 
     <DockPanel Margin="10,20,10,26">
-        <DockPanel DockPanel.Dock="Top" Margin="10,0,10,20">
-            <TextBlock Text="{Binding Count}" FontSize="13" Foreground="{DynamicResource Brush_Accent}" DockPanel.Dock="Left"/>
+        <DockPanel DockPanel.Dock="Top" Margin="10,0,10,20" LastChildFill="False">
+            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="{Binding Count}" FontSize="13" Foreground="{DynamicResource Brush_Accent}"/>
+                <TextBlock Text="{DynamicResource Language_Netease_Daily_Recommendations_Count}" FontSize="13" Margin="10,0,0,0" Foreground="{DynamicResource Brush_PrimaryText}"/>
+                <TextBlock Text="{Binding RefreshTimeText}" FontSize="13" Margin="16,0,0,0" Foreground="{DynamicResource Brush_SecondaryText}"/>
+            </StackPanel>
             <Button DockPanel.Dock="Right" Margin="10,0,0,0" Style="{StaticResource RegularButtonAccent}" Content="{DynamicResource Language_Netease_Play_All}" Command="{Binding PlayAllCommand}"/>
             <Button DockPanel.Dock="Right" Style="{StaticResource RegularButton}" Content="{DynamicResource Language_Refresh}" Command="{Binding RefreshCommand}" ToolTip="{DynamicResource Language_Netease_Daily_Recommendations_Refresh_Tooltip}"/>
-            <TextBlock Text="{DynamicResource Language_Netease_Daily_Recommendations_Count}" FontSize="13" Margin="10,0,0,0" Foreground="{DynamicResource Brush_PrimaryText}"/>
         </DockPanel>
 
         <Grid>
