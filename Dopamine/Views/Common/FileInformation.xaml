@@ -6,6 +6,8 @@
              xmlns:prismMvvm="clr-namespace:Prism.Mvvm;assembly=Prism.Wpf"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300"
+             Loaded="UserControl_Loaded"
+             Unloaded="UserControl_Unloaded"
              prismMvvm:ViewModelLocator.AutoWireViewModel="False">
 
     <UserControl.Resources>
@@ -57,31 +59,31 @@
         <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Album}"/>
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding SongAlbum}"/>
         <!-- Year -->
-        <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Year}"/>
-        <TextBlock Grid.Row="4" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding SongYear}"/>
+        <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Year}" Visibility="{Binding IsLocalFile, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+        <TextBlock Grid.Row="4" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding SongYear}" Visibility="{Binding IsLocalFile, Converter={StaticResource BooleanToCollapsedConverter}}"/>
         <!-- Genres -->
-        <TextBlock Grid.Row="5" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Genres}"/>
-        <TextBlock Grid.Row="5" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding SongGenres}"/>
+        <TextBlock Grid.Row="5" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Genres}" Visibility="{Binding IsLocalFile, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+        <TextBlock Grid.Row="5" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding SongGenres}" Visibility="{Binding IsLocalFile, Converter={StaticResource BooleanToCollapsedConverter}}"/>
         <!-- Track number -->
-        <TextBlock Grid.Row="6" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Track_Number}"/>
-        <TextBlock Grid.Row="6" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding SongTrackNumber}"/>
+        <TextBlock Grid.Row="6" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Track_Number}" Visibility="{Binding IsLocalFile, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+        <TextBlock Grid.Row="6" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding SongTrackNumber}" Visibility="{Binding IsLocalFile, Converter={StaticResource BooleanToCollapsedConverter}}"/>
         <!-- FILE -->
-        <Label Grid.Row="7" Margin="0,20,0,5" Style="{StaticResource TitleLabel}" Grid.ColumnSpan="2" Content="{DynamicResource Language_File}" />
+        <Label Grid.Row="7" Margin="0,20,0,5" Style="{StaticResource TitleLabel}" Grid.ColumnSpan="2" Content="{DynamicResource Language_File}" Visibility="{Binding IsLocalFile, Converter={StaticResource BooleanToCollapsedConverter}}" />
         <!-- Name -->
-        <TextBlock Grid.Row="8" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Name}"/>
-        <TextBlock Grid.Row="8" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding FileName}"/>
+        <TextBlock Grid.Row="8" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Name}" Visibility="{Binding IsLocalFile, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+        <TextBlock Grid.Row="8" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding FileName}" Visibility="{Binding IsLocalFile, Converter={StaticResource BooleanToCollapsedConverter}}"/>
         <!-- Folder -->
-        <TextBlock Grid.Row="9" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Folder}"/>
-        <TextBlock Grid.Row="9" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding FileFolder}"/>
+        <TextBlock Grid.Row="9" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Folder}" Visibility="{Binding IsLocalFile, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+        <TextBlock Grid.Row="9" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding FileFolder}" Visibility="{Binding IsLocalFile, Converter={StaticResource BooleanToCollapsedConverter}}"/>
         <!-- Path -->
-        <TextBlock Grid.Row="10" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Path}"/>
-        <TextBlock Grid.Row="10" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding FilePath}"/>
+        <TextBlock Grid.Row="10" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Path}" Visibility="{Binding IsLocalFile, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+        <TextBlock Grid.Row="10" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding FilePath}" Visibility="{Binding IsLocalFile, Converter={StaticResource BooleanToCollapsedConverter}}"/>
         <!-- Size -->
-        <TextBlock Grid.Row="11" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Size}"/>
-        <TextBlock Grid.Row="11" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding FileSize}"/>
+        <TextBlock Grid.Row="11" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Size}" Visibility="{Binding IsLocalFile, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+        <TextBlock Grid.Row="11" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding FileSize}" Visibility="{Binding IsLocalFile, Converter={StaticResource BooleanToCollapsedConverter}}"/>
         <!-- Last modified -->
-        <TextBlock Grid.Row="12" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Last_Modified}"/>
-        <TextBlock Grid.Row="12" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding FileLastModified}"/>
+        <TextBlock Grid.Row="12" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Last_Modified}" Visibility="{Binding IsLocalFile, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+        <TextBlock Grid.Row="12" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding FileLastModified}" Visibility="{Binding IsLocalFile, Converter={StaticResource BooleanToCollapsedConverter}}"/>
         <!-- AUDIO -->
         <Label Grid.Row="13" Margin="0,20,0,5" Style="{StaticResource TitleLabel}" Grid.ColumnSpan="2" Content="{DynamicResource Language_Audio}" />
         <!-- Duration -->
@@ -91,18 +93,17 @@
         <TextBlock Grid.Row="15" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Type}"/>
         <TextBlock Grid.Row="15" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding AudioType}"/>
         <!-- Sample rate -->
-        <TextBlock Grid.Row="16" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Sample_Rate}"/>
-        <TextBlock Grid.Row="16" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding AudioSampleRate}"/>
+        <TextBlock Grid.Row="16" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Sample_Rate}" Visibility="{Binding IsLocalFile, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+        <TextBlock Grid.Row="16" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding AudioSampleRate}" Visibility="{Binding IsLocalFile, Converter={StaticResource BooleanToCollapsedConverter}}"/>
         <!-- Bitrate -->
         <TextBlock Grid.Row="17" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Bitrate}"/>
         <TextBlock Grid.Row="17" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding AudioBitrate}"/>
+        <!-- Online audio size -->
+        <TextBlock Grid.Row="18" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Size}" Visibility="{Binding IsOnline, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+        <TextBlock Grid.Row="18" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding AudioSize}" Visibility="{Binding IsOnline, Converter={StaticResource BooleanToCollapsedConverter}}"/>
         <!-- ONLINE SOURCE -->
-        <Label Grid.Row="18" Margin="0,20,0,5" Style="{StaticResource TitleLabel}" Grid.ColumnSpan="2" Content="{DynamicResource Language_Online_Source}" Visibility="{Binding IsOnline, Converter={StaticResource BooleanToCollapsedConverter}}" />
-        <TextBlock Grid.Row="19" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Source}" Visibility="{Binding IsOnline, Converter={StaticResource BooleanToCollapsedConverter}}"/>
-        <TextBlock Grid.Row="19" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding OnlineSource}" Visibility="{Binding IsOnline, Converter={StaticResource BooleanToCollapsedConverter}}"/>
-        <TextBlock Grid.Row="20" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Song_ID}" Visibility="{Binding IsOnline, Converter={StaticResource BooleanToCollapsedConverter}}"/>
-        <TextBlock Grid.Row="20" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding OnlineId}" Visibility="{Binding IsOnline, Converter={StaticResource BooleanToCollapsedConverter}}"/>
-        <TextBlock Grid.Row="21" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Artwork_URL}" Visibility="{Binding IsOnline, Converter={StaticResource BooleanToCollapsedConverter}}"/>
-        <TextBlock Grid.Row="21" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding OnlineArtworkUrl}" Visibility="{Binding IsOnline, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+        <Label Grid.Row="19" Margin="0,20,0,5" Style="{StaticResource TitleLabel}" Grid.ColumnSpan="2" Content="{DynamicResource Language_Online_Source}" Visibility="{Binding IsOnline, Converter={StaticResource BooleanToCollapsedConverter}}" />
+        <TextBlock Grid.Row="20" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Source}" Visibility="{Binding IsOnline, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+        <TextBlock Grid.Row="20" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding OnlineSource}" Visibility="{Binding IsOnline, Converter={StaticResource BooleanToCollapsedConverter}}"/>
     </Grid>
 </UserControl>

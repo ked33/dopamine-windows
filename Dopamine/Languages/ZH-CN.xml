@@ -480,8 +480,7 @@
   <Text Key="Netease_Music">网易云音乐</Text>
   <Text Key="Online_Source">在线来源</Text>
   <Text Key="Source">来源</Text>
-  <Text Key="Song_ID">歌曲 ID</Text>
-  <Text Key="Artwork_URL">封面地址</Text>
+  <Text Key="Netease_Loading_Audio_Information">正在获取音频信息…</Text>
   <Text Key="Netease_Online_Description">登录后可在“音乐库 → 每日推荐”播放当前账号的每日推荐歌曲。</Text>
   <Text Key="Netease_Qr_Login">二维码登录</Text>
   <Text Key="Netease_Cookie_Login">Cookie 登录</Text>
