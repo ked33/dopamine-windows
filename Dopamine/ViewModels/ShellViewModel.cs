@@ -1,6 +1,7 @@
 ﻿using Dopamine.Services.Dialog;
 using Dopamine.Services.File;
 using Dopamine.Services.JumpList;
+using Dopamine.Services.Notification;
 using Dopamine.Services.Playback;
 using Dopamine.Services.Taskbar;
 using Dopamine.Services.Update;
@@ -22,15 +23,19 @@ namespace Dopamine.ViewModels
 
         public ITaskbarService TaskbarService { get; }
 
+        public IToastService ToastService { get; }
+
         public DelegateCommand PlayPreviousCommand { get; set; }
         public DelegateCommand PlayNextCommand { get; set; }
         public DelegateCommand PlayOrPauseCommand { get; set; }
         public DelegateCommand LoadedCommand { get; set; }
 
         public ShellViewModel(IPlaybackService playbackService, ITaskbarService taskbarService, IDialogService dialogService,
-            IJumpListService jumpListService, IFileService fileService, IUpdateService updateService)
+            IJumpListService jumpListService, IFileService fileService, IUpdateService updateService,
+            IToastService toastService)
         {
             this.TaskbarService = taskbarService;
+            this.ToastService = toastService;
 
             dialogService.DialogVisibleChanged += isDialogVisible => { this.IsOverlayVisible = isDialogVisible; };
 

@@ -264,6 +264,7 @@
     <Compile Include="Initializer.cs" />
     <Compile Include="Services\Notification\LegacyNotificationService.cs" />
     <Compile Include="Services\Notification\NotificationService.cs" />
+    <Compile Include="Services\Notification\ToastService.cs" />
     <Compile Include="Services\Notification\NotificationWindow.xaml.cs">
       <DependentUpon>NotificationWindow.xaml</DependentUpon>
     </Compile>
@@ -361,6 +362,7 @@
     <Compile Include="ViewModels\PlaybackControlsViewModel.cs" />
     <Compile Include="ViewModels\PlaybackInfoViewModel.cs" />
     <Compile Include="ViewModels\ShellViewModel.cs" />
+    <Compile Include="Services\Online\OnlineTrackDownloadCoordinator.cs" />
     <Compile Include="ViewModels\SimilarArtistViewModel.cs" />
     <Compile Include="ViewModels\VerticalVolumeControlsViewModel.cs" />
     <Compile Include="ViewModels\VolumeControlsViewModel.cs" />

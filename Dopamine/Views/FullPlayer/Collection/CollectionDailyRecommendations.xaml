@@ -24,6 +24,8 @@
                       Command="{Binding Source={StaticResource DailyRecommendationsViewModelProxy}, Path=Data.AddToNowPlayingCommand}"/>
             <MenuItem Header="{DynamicResource Language_Song_Information}"
                       Command="{Binding Source={StaticResource DailyRecommendationsViewModelProxy}, Path=Data.ShowTrackInformationCommand}"/>
+            <MenuItem Header="{DynamicResource Language_Download}"
+                      Command="{Binding Source={StaticResource DailyRecommendationsViewModelProxy}, Path=Data.DownloadCommand}"/>
             <Separator/>
             <MenuItem Header="{Binding Source={StaticResource DailyRecommendationsViewModelProxy}, Path=Data.LikeMenuHeader}"
                       Command="{Binding Source={StaticResource DailyRecommendationsViewModelProxy}, Path=Data.ToggleLikeCommand}"/>

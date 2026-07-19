@@ -152,6 +152,7 @@
     <Compile Include="NeteaseDailyRecommendationScheduleTests.cs" />
     <Compile Include="NeteaseRecommendationStoreTests.cs" />
     <Compile Include="NeteaseDependencySmokeTests.cs" />
+    <Compile Include="NeteaseDownloadTests.cs" />
     <Compile Include="NeteaseLoginContextTests.cs" />
     <Compile Include="NeteaseInteractionContractTests.cs" />
     <Compile Include="NeteaseMusicInteractionTests.cs" />

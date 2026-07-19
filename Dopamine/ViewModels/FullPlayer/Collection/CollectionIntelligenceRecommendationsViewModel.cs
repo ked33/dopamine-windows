@@ -4,6 +4,7 @@ using Dopamine.Core.Logging;
 using Dopamine.Core.Utils;
 using Dopamine.Services.Dialog;
 using Dopamine.Services.Entities;
+using Dopamine.Services.Online;
 using Dopamine.Services.Online.Netease;
 using Dopamine.Services.Playback;
 using Dopamine.Services.Provider;
@@ -36,6 +37,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         private readonly ISearchService searchService;
         private readonly IProviderService providerService;
         private readonly IDialogService dialogService;
+        private readonly OnlineTrackDownloadCoordinator downloadCoordinator;
 
         private ObservableCollection<TrackViewModel> items = new ObservableCollection<TrackViewModel>();
         private CollectionViewSource itemsCvs;
@@ -68,6 +70,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.searchService = searchService;
             this.dialogService = dialogService;
             this.providerService = container.Resolve<IProviderService>();
+            this.downloadCoordinator = container.Resolve<OnlineTrackDownloadCoordinator>();
 
             this.LoadedCommand = new DelegateCommand(this.Loaded);
             this.UnloadedCommand = new DelegateCommand(this.Unloaded);
@@ -99,6 +102,9 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.ShowTrackInformationCommand = new DelegateCommand(
                 () => this.ShowTrackInformation(),
                 () => this.SelectedItem != null);
+            this.DownloadCommand = new DelegateCommand(
+                () => this.DownloadSelectedAsync(),
+                () => this.downloadCoordinator.CanDownload(this.SelectedItem));
 
             this.playbackService.PlaybackSuccess += (_, __) => this.Dispatch(this.RefreshPlayingState);
             this.playbackService.PlaybackStopped += (_, __) => this.Dispatch(this.RefreshPlayingState);
@@ -130,6 +136,8 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         public DelegateCommand DislikeCommand { get; private set; }
 
         public DelegateCommand ShowTrackInformationCommand { get; private set; }
+
+        public DelegateCommand DownloadCommand { get; private set; }
 
         public ObservableCollection<SearchProvider> ContextMenuSearchProviders
         {
@@ -333,6 +341,8 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             }
 
             this.isLoaded = true;
+            this.downloadCoordinator.DownloadStateChanged -= this.DownloadCoordinator_DownloadStateChanged;
+            this.downloadCoordinator.DownloadStateChanged += this.DownloadCoordinator_DownloadStateChanged;
             this.sessionService.SessionChanged += this.SessionService_SessionChanged;
             this.searchService.DoSearch += this.SearchService_DoSearch;
             this.RefreshPlayingState();
@@ -349,6 +359,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.isLoaded = false;
             this.sessionService.SessionChanged -= this.SessionService_SessionChanged;
             this.searchService.DoSearch -= this.SearchService_DoSearch;
+            this.downloadCoordinator.DownloadStateChanged -= this.DownloadCoordinator_DownloadStateChanged;
             this.CancelRequest();
             this.CancelLikeStatusLookup();
         }
@@ -489,6 +500,22 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             }
         }
 
+        private async void DownloadSelectedAsync()
+        {
+            TrackViewModel target = this.SelectedItem;
+            if (this.downloadCoordinator.CanDownload(target))
+            {
+                await this.downloadCoordinator.DownloadAsync(target);
+            }
+        }
+
+        private void DownloadCoordinator_DownloadStateChanged(
+            object sender,
+            NeteaseDownloadStateChangedEventArgs e)
+        {
+            this.Dispatch(this.RaiseSelectionCommandStates);
+        }
+
         private bool CanModifyCurrentOnlineQueue()
         {
             return this.SelectedItem != null && this.playbackService.HasQueue &&
@@ -504,6 +531,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.ToggleLikeCommand?.RaiseCanExecuteChanged();
             this.DislikeCommand?.RaiseCanExecuteChanged();
             this.ShowTrackInformationCommand?.RaiseCanExecuteChanged();
+            this.DownloadCommand?.RaiseCanExecuteChanged();
         }
 
         private bool CanToggleLike()

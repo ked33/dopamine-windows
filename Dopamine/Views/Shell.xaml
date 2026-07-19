@@ -129,6 +129,23 @@
                 <pc:TransitioningContentControl Panel.ZIndex="0" x:Name="PlayerTypeRegion" FadeIn="True" FadeInTimeout="0.5" 
                                             prism:RegionManager.RegionName="{x:Static cp:RegionNames.PlayerTypeRegion}"/>
             </Border>
+            <Border Panel.ZIndex="20"
+                    Margin="24"
+                    Padding="16,10"
+                    MaxWidth="640"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Bottom"
+                    IsHitTestVisible="False"
+                    CornerRadius="4"
+                    Background="{DynamicResource Brush_WindowHeaderBackground}"
+                    BorderBrush="{DynamicResource Brush_Accent}"
+                    BorderThickness="1"
+                    Visibility="{Binding ToastService.IsVisible, Converter={StaticResource BooleanToCollapsedConverter}}">
+                <TextBlock Text="{Binding ToastService.Message}"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           Foreground="{DynamicResource Brush_PrimaryText}"/>
+            </Border>
         </Grid>
     </Border>
 </dc:Windows10BorderlessWindow>

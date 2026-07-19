@@ -236,6 +236,17 @@
       <Value>False</Value>
     </Setting>
   </Namespace>
+  <Namespace Name="Online">
+    <Setting Name="NeteaseAudioQuality">
+      <Value>2</Value>
+    </Setting>
+    <Setting Name="DownloadDirectory">
+      <Value></Value>
+    </Setting>
+    <Setting Name="DownloadSourcePriority">
+      <Value>0</Value>
+    </Setting>
+  </Namespace>
   <Namespace Name="Netease">
     <Setting Name="EnableUnblockNeteaseMusic">
       <Value>False</Value>

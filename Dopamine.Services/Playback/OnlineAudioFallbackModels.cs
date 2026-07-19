@@ -10,6 +10,8 @@ namespace Dopamine.Services.Playback
         public NeteaseError OfficialFailure { get; set; }
 
         public bool ForceRefresh { get; set; }
+
+        public bool AllowWithoutOfficialFailure { get; set; }
     }
 
     public sealed class OnlineAudioFallbackResult

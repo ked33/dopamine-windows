@@ -30,6 +30,7 @@ using Dopamine.Services.Lifetime;
 using Dopamine.Services.Lyrics;
 using Dopamine.Services.Metadata;
 using Dopamine.Services.Notification;
+using Dopamine.Services.Online;
 using Dopamine.Services.Online.Netease;
 using Dopamine.Services.Playback;
 using Dopamine.Services.Playlist;
@@ -308,9 +309,13 @@ namespace Dopamine
                 containerRegistry.RegisterSingleton<INeteasePersonalFmService, NeteasePersonalFmService>();
                 containerRegistry.RegisterSingleton<IUnblockSidecarService, UnblockSidecarService>();
                 containerRegistry.RegisterSingleton<IOnlineAudioFallbackProvider, UnblockNeteaseMusicFallbackProvider>();
+                containerRegistry.RegisterSingleton<NeteaseAudioSourceResolver>();
                 containerRegistry.RegisterSingleton<NeteaseTemporaryAudioCache>();
+                containerRegistry.RegisterSingleton<INeteaseDownloadService, NeteaseDownloadService>();
                 containerRegistry.RegisterSingleton<NeteasePlaybackSourceResolver>();
                 containerRegistry.RegisterSingleton<IPlaybackSourceResolver, PlaybackSourceResolver>();
+                containerRegistry.RegisterSingleton<IToastService, ToastService>();
+                containerRegistry.RegisterSingleton<OnlineTrackDownloadCoordinator>();
 
                 INotificationService notificationService;
 

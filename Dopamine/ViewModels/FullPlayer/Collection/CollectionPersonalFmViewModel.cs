@@ -2,11 +2,18 @@
 using Dopamine.Core.Base;
 using Dopamine.Core.Logging;
 using Dopamine.Core.Utils;
+using Dopamine.Services.Dialog;
+using Dopamine.Services.Entities;
+using Dopamine.Services.Online;
 using Dopamine.Services.Online.Netease;
 using Dopamine.Services.Playback;
+using Dopamine.ViewModels.Common;
+using Dopamine.Views.Common;
 using Prism.Commands;
+using Prism.Ioc;
 using Prism.Mvvm;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Windows;
@@ -19,6 +26,9 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         private readonly INeteaseSessionService sessionService;
         private readonly INeteaseMusicService musicService;
         private readonly IPlaybackService playbackService;
+        private readonly IContainerProvider container;
+        private readonly IDialogService dialogService;
+        private readonly OnlineTrackDownloadCoordinator downloadCoordinator;
         private bool isLoaded;
         private bool currentTrackRefreshPending;
         private CancellationTokenSource operationCancellationTokenSource;
@@ -40,12 +50,18 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             INeteasePersonalFmService personalFmService,
             INeteaseSessionService sessionService,
             INeteaseMusicService musicService,
-            IPlaybackService playbackService)
+            IPlaybackService playbackService,
+            IContainerProvider container,
+            IDialogService dialogService,
+            OnlineTrackDownloadCoordinator downloadCoordinator)
         {
             this.personalFmService = personalFmService;
             this.sessionService = sessionService;
             this.musicService = musicService;
             this.playbackService = playbackService;
+            this.container = container;
+            this.dialogService = dialogService;
+            this.downloadCoordinator = downloadCoordinator;
 
             this.LoadedCommand = new DelegateCommand(this.Loaded);
             this.UnloadedCommand = new DelegateCommand(this.Unloaded);
@@ -61,6 +77,13 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.ToggleLikeCommand = new DelegateCommand(
                 () => this.ToggleLikeAsync(),
                 () => this.CanToggleLike());
+            this.ShowTrackInformationCommand = new DelegateCommand(
+                this.ShowTrackInformation,
+                () => this.IsActive && !this.IsBusy && this.personalFmService.CurrentTrack != null);
+            this.DownloadCommand = new DelegateCommand(
+                () => this.DownloadCurrentAsync(),
+                () => this.IsActive && !this.IsBusy &&
+                    this.downloadCoordinator.CanDownload(this.personalFmService.CurrentTrack));
         }
 
         public DelegateCommand LoadedCommand { get; private set; }
@@ -74,6 +97,10 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         public DelegateCommand DislikeCommand { get; private set; }
 
         public DelegateCommand ToggleLikeCommand { get; private set; }
+
+        public DelegateCommand ShowTrackInformationCommand { get; private set; }
+
+        public DelegateCommand DownloadCommand { get; private set; }
 
         public bool IsLoggedIn => this.sessionService.State == NeteaseSessionState.SignedIn;
 
@@ -197,6 +224,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.sessionService.SessionChanged += this.SessionService_SessionChanged;
             this.playbackService.PlayingTrackChanged += this.PlaybackService_PlayingTrackChanged;
             this.playbackService.PlaybackSuccess += this.PlaybackService_PlaybackSuccess;
+            this.downloadCoordinator.DownloadStateChanged += this.DownloadCoordinator_DownloadStateChanged;
             this.RefreshCurrentTrackData();
         }
 
@@ -212,6 +240,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.sessionService.SessionChanged -= this.SessionService_SessionChanged;
             this.playbackService.PlayingTrackChanged -= this.PlaybackService_PlayingTrackChanged;
             this.playbackService.PlaybackSuccess -= this.PlaybackService_PlaybackSuccess;
+            this.downloadCoordinator.DownloadStateChanged -= this.DownloadCoordinator_DownloadStateChanged;
             this.currentTrackRefreshPending = false;
             this.CancelOperation();
             this.CancelLikeStatusLookup();
@@ -449,6 +478,51 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             }
         }
 
+        private void ShowTrackInformation()
+        {
+            TrackViewModel target = this.personalFmService.CurrentTrack;
+            if (target == null || target.IsLocalFile)
+            {
+                return;
+            }
+
+            FileInformation view = this.container.Resolve<FileInformation>();
+            view.DataContext = new FileInformationViewModel(
+                target,
+                this.musicService,
+                this.container.Resolve<IEnumerable<IOnlineAudioFallbackProvider>>());
+            this.dialogService.ShowCustomDialog(
+                0xe8d6,
+                16,
+                ResourceUtils.GetString("Language_Information"),
+                view,
+                400,
+                700,
+                true,
+                true,
+                true,
+                false,
+                ResourceUtils.GetString("Language_Ok"),
+                string.Empty,
+                null);
+        }
+
+        private async void DownloadCurrentAsync()
+        {
+            TrackViewModel target = this.personalFmService.CurrentTrack;
+            if (this.downloadCoordinator.CanDownload(target))
+            {
+                await this.downloadCoordinator.DownloadAsync(target);
+            }
+        }
+
+        private void DownloadCoordinator_DownloadStateChanged(
+            object sender,
+            NeteaseDownloadStateChangedEventArgs e)
+        {
+            this.Dispatch(this.RefreshState);
+        }
+
         private void CancelLikeStatusLookup()
         {
             CancellationTokenSource source = Interlocked.Exchange(
@@ -566,6 +640,8 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.SkipCommand.RaiseCanExecuteChanged();
             this.DislikeCommand.RaiseCanExecuteChanged();
             this.ToggleLikeCommand.RaiseCanExecuteChanged();
+            this.ShowTrackInformationCommand.RaiseCanExecuteChanged();
+            this.DownloadCommand.RaiseCanExecuteChanged();
         }
 
         private void Dispatch(Action action)

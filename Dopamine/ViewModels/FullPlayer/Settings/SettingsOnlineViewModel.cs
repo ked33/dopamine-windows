@@ -19,6 +19,7 @@ using Prism.Mvvm;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
@@ -26,6 +27,7 @@ using System.Security;
 using System.Windows;
 using System.Windows.Media;
 using Prism.Ioc;
+using WPFFolderBrowser;
 
 namespace Dopamine.ViewModels.FullPlayer.Settings
 {
@@ -71,6 +73,9 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
         private bool isUnblockRestarting;
         private string unblockStatusText;
         private bool isUnblockStateSubscribed;
+        private string downloadDirectory;
+        private ObservableCollection<string> downloadSourcePriorityOptions = new ObservableCollection<string>();
+        private int selectedDownloadSourcePriority;
 
         public DelegateCommand AddCommand { get; set; }
         public DelegateCommand EditCommand { get; set; }
@@ -81,8 +86,47 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
         public DelegateCommand RefreshNeteaseQrCommand { get; set; }
         public DelegateCommand NeteaseLogoutCommand { get; set; }
         public DelegateCommand RestartUnblockSidecarCommand { get; set; }
+        public DelegateCommand BrowseDownloadDirectoryCommand { get; set; }
+        public DelegateCommand OpenDownloadDirectoryCommand { get; set; }
 
         public ObservableCollection<string> NeteaseAudioQualityOptions => this.neteaseAudioQualityOptions;
+
+        public string DownloadDirectory
+        {
+            get { return this.downloadDirectory; }
+            set
+            {
+                string normalized = (value ?? string.Empty).Trim();
+                if (SetProperty<string>(ref this.downloadDirectory, normalized))
+                {
+                    NeteaseDownloadSettings.DownloadDirectory = normalized;
+                    RaisePropertyChanged(nameof(this.HasDownloadDirectory));
+                    this.OpenDownloadDirectoryCommand?.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
+        public bool HasDownloadDirectory => !string.IsNullOrWhiteSpace(this.DownloadDirectory);
+
+        public ObservableCollection<string> DownloadSourcePriorityOptions =>
+            this.downloadSourcePriorityOptions;
+
+        public int SelectedDownloadSourcePriority
+        {
+            get { return this.selectedDownloadSourcePriority; }
+            set
+            {
+                if ((value < 0 || value > 1) ||
+                    !SetProperty<int>(ref this.selectedDownloadSourcePriority, value))
+                {
+                    return;
+                }
+
+                NeteaseDownloadSettings.SourcePriority = value == 1
+                    ? OnlineAudioSourcePriority.UnblockFirst
+                    : OnlineAudioSourcePriority.OfficialFirst;
+            }
+        }
 
         public int SelectedNeteaseAudioQuality
         {
@@ -421,7 +465,11 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             this.checkBoxUnblockBodian = UnblockNeteaseMusicSettings.Sources.Contains("bodian");
             this.checkBoxUnblockKuwo = UnblockNeteaseMusicSettings.Sources.Contains("kuwo");
             this.selectedUnblockAudioQuality = UnblockNeteaseMusicSettings.EnableFlac ? 1 : 0;
+            this.downloadDirectory = NeteaseDownloadSettings.DownloadDirectory;
+            this.selectedDownloadSourcePriority = NeteaseDownloadSettings.SourcePriority ==
+                OnlineAudioSourcePriority.UnblockFirst ? 1 : 0;
             this.RefreshAudioQualityOptions();
+            this.RefreshDownloadSourcePriorityOptions();
 
             this.RefreshNeteaseQrCommand = new DelegateCommand(
                 () => this.BeginNeteaseQrLoginAsync(),
@@ -432,6 +480,10 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             this.RestartUnblockSidecarCommand = new DelegateCommand(
                 () => this.RestartUnblockSidecarAsync(),
                 () => this.CheckBoxEnableUnblockNeteaseMusic && !this.IsUnblockRestarting);
+            this.BrowseDownloadDirectoryCommand = new DelegateCommand(this.BrowseDownloadDirectory);
+            this.OpenDownloadDirectoryCommand = new DelegateCommand(
+                this.OpenDownloadDirectory,
+                () => this.HasDownloadDirectory && Directory.Exists(this.DownloadDirectory));
 
             this.neteaseSessionService.SessionChanged += (_, __) => this.DispatchNeteaseStateUpdate();
             this.i18nService.LanguageChanged += (_, __) =>
@@ -439,6 +491,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                 this.DispatchNeteaseStateUpdate();
                 this.DispatchUnblockStatusUpdate();
                 this.DispatchAudioQualityOptionsUpdate();
+                this.DispatchDownloadSourcePriorityOptionsUpdate();
             };
             this.UpdateNeteaseState();
             this.UpdateUnblockStatus();
@@ -735,6 +788,75 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             this.UnblockAudioQualityOptions.Clear();
             this.UnblockAudioQualityOptions.Add(ResourceUtils.GetString("Language_Netease_Unblock_Prefer_320K"));
             this.UnblockAudioQualityOptions.Add(ResourceUtils.GetString("Language_Netease_Unblock_Prefer_Flac"));
+        }
+
+        private void DispatchDownloadSourcePriorityOptionsUpdate()
+        {
+            if (Application.Current == null || Application.Current.Dispatcher.CheckAccess())
+            {
+                this.RefreshDownloadSourcePriorityOptions();
+                return;
+            }
+
+            Application.Current.Dispatcher.Invoke(new Action(this.RefreshDownloadSourcePriorityOptions));
+        }
+
+        private void RefreshDownloadSourcePriorityOptions()
+        {
+            this.DownloadSourcePriorityOptions.Clear();
+            this.DownloadSourcePriorityOptions.Add(
+                ResourceUtils.GetString("Language_Netease_Download_Official_First"));
+            this.DownloadSourcePriorityOptions.Add(
+                ResourceUtils.GetString("Language_Netease_Download_Unblock_First"));
+        }
+
+        private void BrowseDownloadDirectory()
+        {
+            try
+            {
+                var dialog = new WPFFolderBrowserDialog
+                {
+                    Title = ResourceUtils.GetString("Language_Netease_Download_Directory")
+                };
+                if (Directory.Exists(this.DownloadDirectory))
+                {
+                    dialog.InitialDirectory = this.DownloadDirectory;
+                }
+
+                Window owner = Application.Current?.MainWindow;
+                bool? result = owner == null
+                    ? dialog.ShowDialog()
+                    : dialog.ShowDialog(owner);
+                if (result == true && !string.IsNullOrWhiteSpace(dialog.FileName))
+                {
+                    this.DownloadDirectory = Path.GetFullPath(dialog.FileName);
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warning(
+                    "Could not choose the Netease download directory. ErrorType={0}",
+                    ex.GetType().Name);
+            }
+        }
+
+        private void OpenDownloadDirectory()
+        {
+            if (!this.HasDownloadDirectory || !Directory.Exists(this.DownloadDirectory))
+            {
+                return;
+            }
+
+            try
+            {
+                Actions.TryOpenPath(this.DownloadDirectory);
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warning(
+                    "Could not open the Netease download directory. ErrorType={0}",
+                    ex.GetType().Name);
+            }
         }
 
         private void UpdateNeteaseState()

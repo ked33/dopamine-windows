@@ -69,6 +69,48 @@
                           SelectedIndex="{Binding SelectedNeteaseAudioQuality, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                 <TextBlock Margin="0,8,0,0" Text="{DynamicResource Language_Netease_Audio_Quality_Description}" Foreground="{DynamicResource Brush_SecondaryText}" TextWrapping="Wrap"/>
             </StackPanel>
+            <Label Margin="0,20,0,0" Style="{StaticResource TitleLabel}" Content="{DynamicResource Language_Netease_Download_Title}" />
+            <StackPanel MaxWidth="620" HorizontalAlignment="Left">
+                <TextBlock Text="{DynamicResource Language_Netease_Download_Directory}" Foreground="{DynamicResource Brush_PrimaryText}"/>
+                <Grid Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Style="{StaticResource MetroTextBox}"
+                             IsReadOnly="True"
+                             Text="{Binding DownloadDirectory, Mode=OneWay}"
+                             MinWidth="360"/>
+                    <Button Grid.Column="1"
+                            Margin="10,0,0,0"
+                            Style="{StaticResource RegularButton}"
+                            Content="{DynamicResource Language_Netease_Download_Choose_Directory}"
+                            Command="{Binding BrowseDownloadDirectoryCommand}"/>
+                    <Button Grid.Column="2"
+                            Margin="10,0,0,0"
+                            Style="{StaticResource RegularButton}"
+                            Content="{DynamicResource Language_Netease_Download_Open_Directory}"
+                            Command="{Binding OpenDownloadDirectoryCommand}"/>
+                </Grid>
+                <TextBlock Margin="0,8,0,0"
+                           Text="{DynamicResource Language_Netease_Download_Directory_Description}"
+                           Foreground="{DynamicResource Brush_SecondaryText}"
+                           TextWrapping="Wrap"/>
+                <TextBlock Margin="0,14,0,0"
+                           Text="{DynamicResource Language_Netease_Download_Source_Priority}"
+                           Foreground="{DynamicResource Brush_PrimaryText}"/>
+                <ComboBox Margin="0,8,0,0"
+                          Width="260"
+                          HorizontalAlignment="Left"
+                          Style="{StaticResource MetroComboBox}"
+                          ItemsSource="{Binding DownloadSourcePriorityOptions}"
+                          SelectedIndex="{Binding SelectedDownloadSourcePriority, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Margin="0,8,0,0"
+                           Text="{DynamicResource Language_Netease_Download_Source_Priority_Description}"
+                           Foreground="{DynamicResource Brush_SecondaryText}"
+                           TextWrapping="Wrap"/>
+            </StackPanel>
             <Label Margin="0,20,0,0" Style="{StaticResource TitleLabel}" Content="UnblockNeteaseMusic" />
             <TextBlock Margin="0,5,0,0" MaxWidth="620" HorizontalAlignment="Left" Text="{DynamicResource Language_Netease_Unblock_Description}" Foreground="{DynamicResource Brush_PrimaryText}" TextWrapping="Wrap"/>
             <TextBlock Margin="0,8,0,0" MaxWidth="620" HorizontalAlignment="Left" Text="{DynamicResource Language_Netease_Unblock_Risk_Notice}" Foreground="{DynamicResource Brush_SecondaryText}" TextWrapping="Wrap"/>

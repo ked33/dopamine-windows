@@ -65,9 +65,11 @@
 
         <StackPanel Grid.Row="2" Margin="0,14,0,0" HorizontalAlignment="Center" Visibility="{Binding IsActiveVisible, Converter={StaticResource BooleanToCollapsedConverter}}">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Margin="0,0,10,0" Style="{StaticResource RegularButton}" Content="{DynamicResource Language_Song_Information}" Command="{Binding ShowTrackInformationCommand}"/>
                 <Button Margin="0,0,10,0" Style="{StaticResource RegularButton}" Content="{DynamicResource Language_Netease_Personal_Fm_Dislike}" Command="{Binding DislikeCommand}"/>
                 <Button Margin="0,0,10,0" Style="{StaticResource RegularButtonAccent}" Content="{DynamicResource Language_Netease_Personal_Fm_Skip}" Command="{Binding SkipCommand}"/>
-                <Button Style="{StaticResource RegularButton}" Content="{Binding LikeButtonText}" Command="{Binding ToggleLikeCommand}"/>
+                <Button Margin="0,0,10,0" Style="{StaticResource RegularButton}" Content="{Binding LikeButtonText}" Command="{Binding ToggleLikeCommand}"/>
+                <Button Style="{StaticResource RegularButton}" Content="{DynamicResource Language_Download}" Command="{Binding DownloadCommand}"/>
             </StackPanel>
             <TextBlock Margin="0,10,0,0" Text="{Binding ErrorMessage}" Foreground="{DynamicResource Brush_PrimaryText}" TextAlignment="Center" TextWrapping="Wrap" Visibility="{Binding HasError, Converter={StaticResource BooleanToCollapsedConverter}}"/>
         </StackPanel>

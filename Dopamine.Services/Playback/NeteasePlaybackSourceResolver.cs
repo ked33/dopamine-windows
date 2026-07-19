@@ -1,9 +1,6 @@
 ﻿using Dopamine.Core.Audio;
-using Dopamine.Core.Logging;
 using Dopamine.Services.Entities;
 using Dopamine.Services.Online.Netease;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,20 +8,15 @@ namespace Dopamine.Services.Playback
 {
     public sealed class NeteasePlaybackSourceResolver
     {
-        private readonly INeteaseMusicService musicService;
+        private readonly NeteaseAudioSourceResolver audioSourceResolver;
         private readonly NeteaseTemporaryAudioCache temporaryAudioCache;
-        private readonly IList<IOnlineAudioFallbackProvider> fallbackProviders;
 
         public NeteasePlaybackSourceResolver(
-            INeteaseMusicService musicService,
-            NeteaseTemporaryAudioCache temporaryAudioCache,
-            IEnumerable<IOnlineAudioFallbackProvider> fallbackProviders)
+            NeteaseAudioSourceResolver audioSourceResolver,
+            NeteaseTemporaryAudioCache temporaryAudioCache)
         {
-            this.musicService = musicService;
+            this.audioSourceResolver = audioSourceResolver;
             this.temporaryAudioCache = temporaryAudioCache;
-            this.fallbackProviders = (fallbackProviders ?? Enumerable.Empty<IOnlineAudioFallbackProvider>())
-                .OrderBy(x => x.Order)
-                .ToList();
         }
 
         public async Task<PlaybackSourceResolution> ResolveAsync(
@@ -37,104 +29,28 @@ namespace Dopamine.Services.Playback
                 return Failure(PlaybackFailureReason.ApiChanged, "Language_Netease_Service_Unavailable");
             }
 
-            if (request != null && request.ForceRefresh)
+            bool forceRefresh = request != null && request.ForceRefresh;
+            if (forceRefresh)
             {
                 this.temporaryAudioCache.Invalidate(track.SourceInfo.RemoteId);
             }
 
-            NeteaseAudioResolution official = await this.musicService.ResolveOfficialAudioAsync(
-                track.SourceInfo.RemoteId,
-                request != null && request.ForceRefresh,
+            NeteaseAudioSourceResolution source = await this.audioSourceResolver.ResolveAsync(
+                track,
+                OnlineAudioSourcePriority.OfficialFirst,
+                forceRefresh,
                 cancellationToken);
-
-            if (!official.IsSuccess)
+            if (source == null || !source.IsSuccess)
             {
-                if (official.Error != null)
-                {
-                    foreach (IOnlineAudioFallbackProvider provider in this.fallbackProviders)
-                    {
-                        if (!provider.CanHandle(official.Error))
-                        {
-                            continue;
-                        }
-
-                        OnlineAudioFallbackResult fallback;
-                        try
-                        {
-                            fallback = await provider.TryResolveAsync(
-                                new OnlineAudioFallbackRequest
-                                {
-                                    Track = track,
-                                    OfficialFailure = official.Error,
-                                    ForceRefresh = request != null && request.ForceRefresh
-                                },
-                                cancellationToken);
-                        }
-                        catch (System.OperationCanceledException)
-                        {
-                            return Failure(PlaybackFailureReason.Cancelled, "Language_Netease_Cancelled");
-                        }
-                        catch (System.Exception ex)
-                        {
-                            AppLog.Warning(
-                                "Online audio fallback failed. Provider={0}, ErrorType={1}",
-                                provider.Id,
-                                ex.GetType().Name);
-                            continue;
-                        }
-
-                        if (fallback != null && fallback.IsSuccess)
-                        {
-                            string cacheKey = string.Format(
-                                "fallback-{0}-{1}-{2}",
-                                fallback.ProviderId ?? provider.Id,
-                                string.IsNullOrWhiteSpace(fallback.CacheVariant) ? "default" : fallback.CacheVariant,
-                                official.SongId ?? track.SourceInfo.RemoteId);
-                            NeteaseResult<string> fallbackCached = await this.temporaryAudioCache.GetOrDownloadAsync(
-                                cacheKey,
-                                fallback.Url,
-                                fallback.MediaType,
-                                request?.BufferingProgress,
-                                cancellationToken);
-
-                            if (fallbackCached.IsSuccess)
-                            {
-                                return new PlaybackSourceResolution
-                                {
-                                    IsSuccess = true,
-                                    AudioSource = AudioSource.FromLocalFile(fallbackCached.Value)
-                                };
-                            }
-
-                            if (fallbackCached.Error?.Code == NeteaseErrorCode.Cancelled)
-                            {
-                                return Failure(MapFailureReason(fallbackCached.Error), fallbackCached.Error.MessageKey);
-                            }
-                        }
-
-                        if (cancellationToken.IsCancellationRequested)
-                        {
-                            return Failure(PlaybackFailureReason.Cancelled, "Language_Netease_Cancelled");
-                        }
-                    }
-                }
-
-                return Failure(MapFailureReason(official.Error), official.Error?.MessageKey);
+                return Failure(MapFailureReason(source?.Error), source?.Error?.MessageKey);
             }
 
-            // Direct CSCore HTTPS playback has not passed the required runtime probe on this machine.
-            // Use the documented temporary-file compatibility path until that probe is completed.
-            string officialCacheKey = string.Format(
-                "official-{0}-{1}",
-                string.IsNullOrWhiteSpace(official.QualityLevel) ? "default" : official.QualityLevel,
-                official.SongId);
             NeteaseResult<string> cached = await this.temporaryAudioCache.GetOrDownloadAsync(
-                officialCacheKey,
-                official.Url,
-                official.Type,
+                source.CacheKey,
+                source.Url,
+                source.MediaType,
                 request?.BufferingProgress,
                 cancellationToken);
-
             if (!cached.IsSuccess)
             {
                 return Failure(MapFailureReason(cached.Error), cached.Error?.MessageKey);

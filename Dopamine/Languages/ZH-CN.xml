@@ -568,4 +568,24 @@
   <Text Key="Netease_Unblock_Status_Ready">状态：已就绪（UnblockNeteaseMusic {0}）</Text>
   <Text Key="Netease_Unblock_Status_Unavailable">状态：不可用；不影响官方音源播放</Text>
   <Text Key="Netease_Unblock_Status_Incompatible">状态：辅助进程协议不兼容，请重新安装或更新 Portable 包</Text>
+  <Text Key="Netease_Download_Title">歌曲下载</Text>
+  <Text Key="Netease_Download_Directory">下载目录</Text>
+  <Text Key="Netease_Download_Choose_Directory">选择……</Text>
+  <Text Key="Netease_Download_Open_Directory">打开</Text>
+  <Text Key="Netease_Download_Directory_Description">下载前必须先选择目录。文件名格式为“歌手 - 歌曲名”，同名文件不会被覆盖。</Text>
+  <Text Key="Netease_Download_Source_Priority">下载音源优先级</Text>
+  <Text Key="Netease_Download_Source_Priority_Description">此设置仅影响下载。只有启用且可用时才会使用 UnblockNeteaseMusic。</Text>
+  <Text Key="Netease_Download_Official_First">官方网易云优先</Text>
+  <Text Key="Netease_Download_Unblock_First">UnblockNeteaseMusic 优先</Text>
+  <Text Key="Netease_Download_Directory_Required">请先在“设置 - 在线”中配置下载目录。</Text>
+  <Text Key="Netease_Download_Directory_Not_Writable">配置的下载目录不可用或无法写入。</Text>
+  <Text Key="Netease_Download_Source_Unavailable">该歌曲没有可用的下载音源。</Text>
+  <Text Key="Netease_Download_Unsupported_Format">返回的音频格式无法保存。</Text>
+  <Text Key="Netease_Download_Failed">无法下载该歌曲。</Text>
+  <Text Key="Netease_Download_Toast_Success">{song} ✅ 下载成功</Text>
+  <Text Key="Netease_Download_Toast_Already_Exists">{song} ✅ 文件已存在</Text>
+  <Text Key="Netease_Download_Toast_Partial_Success">{song} ⚠ 下载完成，但标签或封面写入失败</Text>
+  <Text Key="Netease_Download_Toast_Directory_Required">{song} ❎ 请先在“设置 - 在线”中配置下载目录</Text>
+  <Text Key="Netease_Download_Toast_Cancelled">{song} ❎ 下载已取消</Text>
+  <Text Key="Netease_Download_Toast_Failed">{song} ❎ 下载失败</Text>
 </Language>

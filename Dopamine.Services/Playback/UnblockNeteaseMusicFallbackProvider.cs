@@ -45,7 +45,7 @@ namespace Dopamine.Services.Playback
             CancellationToken cancellationToken)
         {
             if (!UnblockNeteaseMusicSettings.IsEnabled || request?.Track?.SourceInfo == null ||
-                !this.CanHandle(request.OfficialFailure))
+                (!request.AllowWithoutOfficialFailure && !this.CanHandle(request.OfficialFailure)))
             {
                 return OnlineAudioFallbackResult.Failure("not_applicable");
             }

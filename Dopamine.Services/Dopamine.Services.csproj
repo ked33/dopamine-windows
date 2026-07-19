@@ -234,6 +234,7 @@
     <Compile Include="Metadata\MetadataService.cs" />
     <Compile Include="Metadata\RatingChangedEventArgs.cs" />
     <Compile Include="Notification\INotificationService.cs" />
+    <Compile Include="Notification\IToastService.cs" />
     <Compile Include="Playback\DequeueResult.cs" />
     <Compile Include="Playback\EnqueueResult.cs" />
     <Compile Include="Playback\IPlaybackService.cs" />
@@ -241,6 +242,8 @@
     <Compile Include="Playback\IUnblockSidecarService.cs" />
     <Compile Include="Playback\IPlaybackSourceResolver.cs" />
     <Compile Include="Playback\NeteasePlaybackSourceResolver.cs" />
+    <Compile Include="Playback\NeteaseAudioSourceResolution.cs" />
+    <Compile Include="Playback\NeteaseAudioSourceResolver.cs" />
     <Compile Include="Playback\NeteaseTemporaryAudioCache.cs" />
     <Compile Include="Playback\OnlineAudioFallbackModels.cs" />
     <Compile Include="Playback\PlaybackSourceResolution.cs" />
@@ -269,6 +272,10 @@
     <Compile Include="Online\Netease\INeteaseSessionStore.cs" />
     <Compile Include="Online\Netease\NeteaseApiClient.cs" />
     <Compile Include="Online\Netease\NeteaseAudioQualitySettings.cs" />
+    <Compile Include="Online\Netease\INeteaseDownloadService.cs" />
+    <Compile Include="Online\Netease\NeteaseDownloadModels.cs" />
+    <Compile Include="Online\Netease\NeteaseDownloadService.cs" />
+    <Compile Include="Online\Netease\NeteaseDownloadSettings.cs" />
     <Compile Include="Online\Netease\NeteaseCookieHeaderParser.cs" />
     <Compile Include="Online\Netease\DpapiNeteaseRecommendationStore.cs" />
     <Compile Include="Online\Netease\NeteaseDailyRecommendationSchedule.cs" />

@@ -141,10 +141,32 @@ namespace Dopamine.Services.Playback
 
                     if (System.IO.File.Exists(finalPath))
                     {
+                        var concurrent = new FileInfo(finalPath);
+                        if (concurrent.Length > 0)
+                        {
+                            concurrent.LastAccessTimeUtc = DateTime.UtcNow;
+                            progress?.Report(1.0);
+                            return NeteaseResult<string>.Success(finalPath);
+                        }
+
                         TryDelete(finalPath);
                     }
 
-                    System.IO.File.Move(partialPath, finalPath);
+                    try
+                    {
+                        System.IO.File.Move(partialPath, finalPath);
+                    }
+                    catch (IOException)
+                    {
+                        if (System.IO.File.Exists(finalPath) && new FileInfo(finalPath).Length > 0)
+                        {
+                            progress?.Report(1.0);
+                            return NeteaseResult<string>.Success(finalPath);
+                        }
+
+                        throw;
+                    }
+
                     progress?.Report(1.0);
                     this.TryCleanup();
                     return NeteaseResult<string>.Success(finalPath);
@@ -164,6 +186,63 @@ namespace Dopamine.Services.Playback
             {
                 AppLog.Warning("Could not prepare a temporary Netease audio file. ErrorType={0}", ex.GetType().Name);
                 return Failure();
+            }
+        }
+
+        public async Task<NeteaseResult<byte[]>> DownloadBytesAsync(
+            string url,
+            long maximumBytes,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (maximumBytes <= 0)
+                {
+                    return ByteDownloadFailure();
+                }
+
+                using (HttpResponseMessage response = await this.GetValidatedResponseAsync(url, cancellationToken))
+                {
+                    if (response.Content.Headers.ContentLength.HasValue &&
+                        response.Content.Headers.ContentLength.Value > maximumBytes)
+                    {
+                        return ByteDownloadFailure();
+                    }
+
+                    using (Stream source = await response.Content.ReadAsStreamAsync())
+                    using (var destination = new MemoryStream())
+                    {
+                        var buffer = new byte[81920];
+                        long totalBytes = 0;
+                        int bytesRead;
+
+                        while ((bytesRead = await source.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
+                        {
+                            totalBytes += bytesRead;
+                            if (totalBytes > maximumBytes)
+                            {
+                                return ByteDownloadFailure();
+                            }
+
+                            await destination.WriteAsync(buffer, 0, bytesRead, cancellationToken);
+                        }
+
+                        return destination.Length == 0
+                            ? ByteDownloadFailure()
+                            : NeteaseResult<byte[]>.Success(destination.ToArray());
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                return NeteaseResult<byte[]>.Failure(new NeteaseError(
+                    NeteaseErrorCode.Cancelled,
+                    "Language_Netease_Cancelled"));
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warning("Could not download Netease artwork. ErrorType={0}", ex.GetType().Name);
+                return ByteDownloadFailure();
             }
         }
 
@@ -382,13 +461,62 @@ namespace Dopamine.Services.Playback
             }
         }
 
-        private static string NormalizeExtension(string mediaType, string url)
+        public static string NormalizeExtension(string mediaType, string url)
         {
-            string extension = string.IsNullOrWhiteSpace(mediaType)
-                ? string.Empty
-                : "." + mediaType.Trim().TrimStart('.').ToLowerInvariant();
+            string normalizedMediaType = (mediaType ?? string.Empty)
+                .Split(';')[0]
+                .Trim()
+                .TrimStart('.')
+                .ToLowerInvariant();
+            string extension;
 
-            if (string.IsNullOrWhiteSpace(extension) || extension.Length > 8)
+            switch (normalizedMediaType)
+            {
+                case "audio/mpeg":
+                case "audio/mp3":
+                case "mpeg":
+                case "mp3":
+                    extension = ".mp3";
+                    break;
+                case "audio/flac":
+                case "audio/x-flac":
+                case "flac":
+                    extension = ".flac";
+                    break;
+                case "audio/mp4":
+                case "audio/m4a":
+                case "audio/x-m4a":
+                case "mp4":
+                case "m4a":
+                    extension = ".m4a";
+                    break;
+                case "audio/aac":
+                case "aac":
+                    extension = ".aac";
+                    break;
+                case "audio/wav":
+                case "audio/x-wav":
+                case "wav":
+                    extension = ".wav";
+                    break;
+                case "audio/ogg":
+                case "ogg":
+                    extension = ".ogg";
+                    break;
+                case "audio/opus":
+                case "opus":
+                    extension = ".opus";
+                    break;
+                case "audio/x-ms-wma":
+                case "wma":
+                    extension = ".wma";
+                    break;
+                default:
+                    extension = string.Empty;
+                    break;
+            }
+
+            if (string.IsNullOrWhiteSpace(extension))
             {
                 Uri uri;
                 extension = Uri.TryCreate(url, UriKind.Absolute, out uri)
@@ -422,6 +550,13 @@ namespace Dopamine.Services.Playback
         private static NeteaseResult<string> Failure()
         {
             return NeteaseResult<string>.Failure(new NeteaseError(
+                NeteaseErrorCode.TemporaryDownloadFailed,
+                "Language_Netease_Temporary_Download_Failed"));
+        }
+
+        private static NeteaseResult<byte[]> ByteDownloadFailure()
+        {
+            return NeteaseResult<byte[]>.Failure(new NeteaseError(
                 NeteaseErrorCode.TemporaryDownloadFailed,
                 "Language_Netease_Temporary_Download_Failed"));
         }
