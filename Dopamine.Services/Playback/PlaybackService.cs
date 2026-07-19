@@ -1775,7 +1775,10 @@ namespace Dopamine.Services.Playback
         {
             this.isPlayingPreviousTrack = true;
 
-            if (this.GetCurrentTime.Seconds > 3)
+            bool shouldRestartCurrentTrack = this.queueContext != PlaybackQueueContext.NeteasePersonalFm &&
+                this.GetCurrentTime.TotalSeconds > 3;
+
+            if (shouldRestartCurrentTrack)
             {
                 // If we're more than 3 seconds into the Track, try to
                 // jump to the beginning of the current Track.
