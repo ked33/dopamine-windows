@@ -133,6 +133,13 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
 
         public bool IsPlaylistSelected => this.selectedPlaylist != null;
 
+        // Each playlist remembers its own shuffle preference. Tracks in the right pane belong
+        // to the playlist selected in the left pane.
+        protected override PlaybackQueueContext QueueSourceContext
+            => this.selectedPlaylist != null ? PlaybackQueueContext.Playlist : PlaybackQueueContext.Default;
+
+        protected override string QueueSourceContextId => PlaylistShuffleMemory.CreateContextId(this.selectedPlaylist);
+
         public long PlaylistsCount => this.playlists == null ? 0 : this.playlists.Count;
 
         public ObservableCollection<PlaylistViewModel> Playlists
@@ -174,8 +181,12 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
 
         private async Task ShuffleSelectedPlaylistAsync()
         {
-            IList<TrackViewModel> tracks = await this.playlistService.GetTracksAsync(this.SelectedPlaylist);
-            await this.playbackService.EnqueueAsync(tracks, true, false);
+            PlaylistViewModel playlist = this.SelectedPlaylist;
+            IList<TrackViewModel> tracks = await this.playlistService.GetTracksAsync(playlist);
+
+            // Explicitly shuffling a playlist also stores shuffle = true in that playlist's memory.
+            await this.playbackService.EnqueueAsync(tracks, true, false,
+                PlaybackQueueContext.Playlist, PlaylistShuffleMemory.CreateContextId(playlist));
         }
 
         private async Task AddPlaylistToNowPlayingAsync()

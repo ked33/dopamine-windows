@@ -105,7 +105,7 @@ namespace Dopamine.ViewModels
 
             // Initial Loop and Shuffle state
             this.loopMode = (LoopMode)SettingsClient.Get<int>("Playback", "LoopMode");
-            this.shuffle = SettingsClient.Get<bool>("Playback", "Shuffle");
+            this.shuffle = this.playbackService.Shuffle;
 
             // Initial status of the Play/Pause button
             if (this.playbackService.IsPlaying)
@@ -163,14 +163,15 @@ namespace Dopamine.ViewModels
 
         public void GetPlayBackServiceShuffle()
         {
-            // Important: set Shuffle directly, not the Shuffle Property, 
+            // Important: set Shuffle directly, not the Shuffle Property,
             // because there is no Shuffle Property Setter!
             this.shuffle = this.playbackService.Shuffle;
 
             RaisePropertyChanged(nameof(this.Shuffle));
 
-            // Save the Shuffle status in the Settings
-            SettingsClient.Set<bool>("Playback", "Shuffle", this.shuffle);
+            // Persisting the shuffle state is handled by PlaybackService, which remembers
+            // it per queue context (Songs, Folders, each playlist, ...). Writing the global
+            // "Playback|Shuffle" setting here would overwrite that memory.
         }
     }
 }

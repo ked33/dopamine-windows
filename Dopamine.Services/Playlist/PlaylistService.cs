@@ -76,6 +76,8 @@ namespace Dopamine.Services.Playlist
         public event EventHandler PlaylistFolderChanged = delegate { };
         public event TracksAddedHandler TracksAdded = delegate { };
         public event TracksDeletedHandler TracksDeleted = delegate { };
+        public event PlaylistRenamedHandler PlaylistRenamed = delegate { };
+        public event PlaylistDeletedHandler PlaylistDeleted = delegate { };
 
         private string SanitizePlaylistFilename(string playlistName)
         {
@@ -728,6 +730,11 @@ namespace Dopamine.Services.Playlist
 
             this.watcher.Suspend(); // Stop watching the playlist folder
 
+            // Capture the old name before editing: updating a smart playlist deletes the old file.
+            string oldPlaylistName = editablePlaylistViewModel.Type.Equals(PlaylistType.Smart)
+                ? this.GetSmartPlaylistName(editablePlaylistViewModel.Path)
+                : System.IO.Path.GetFileNameWithoutExtension(editablePlaylistViewModel.Path);
+
             EditPlaylistResult result = EditPlaylistResult.Error;
 
             if (editablePlaylistViewModel.Type.Equals(PlaylistType.Static))
@@ -743,6 +750,17 @@ namespace Dopamine.Services.Playlist
 
             if (result == EditPlaylistResult.Success)
             {
+                // The static playlist name on disk is the sanitized file name.
+                string newPlaylistName = editablePlaylistViewModel.Type.Equals(PlaylistType.Static)
+                    ? this.SanitizePlaylistFilename(editablePlaylistViewModel.PlaylistName)
+                    : editablePlaylistViewModel.PlaylistName;
+
+                if (!string.IsNullOrEmpty(oldPlaylistName) &&
+                    !oldPlaylistName.Equals(newPlaylistName, StringComparison.OrdinalIgnoreCase))
+                {
+                    this.PlaylistRenamed(editablePlaylistViewModel.Type, oldPlaylistName, newPlaylistName);
+                }
+
                 this.PlaylistFolderChanged(this, new EventArgs());
             }
 
@@ -785,6 +803,7 @@ namespace Dopamine.Services.Playlist
 
             if (result == DeletePlaylistsResult.Success)
             {
+                this.PlaylistDeleted(playlist);
                 this.PlaylistFolderChanged(this, new EventArgs());
             }
 

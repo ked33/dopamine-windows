@@ -8,6 +8,7 @@ using System.Windows.Controls;
 using Digimezzo.Foundation.WPF.Controls;
 using System.Windows.Media;
 using Dopamine.Services.Entities;
+using Dopamine.Services.Playback;
 using Dopamine.Core.Prism;
 using Prism.Commands;
 
@@ -25,6 +26,12 @@ namespace Dopamine.Views.FullPlayer.Collection
 
             // PubSub Events
             this.eventAggregator.GetEvent<ScrollToPlayingTrack>().Subscribe(async (_) => await this.ScrollToPlayingTrackAsync(this.ListBoxTracks));
+        }
+
+        protected override PlaybackQueueContext GetQueueSourceContext()
+        {
+            // The Folders page shares a single shuffle memory (not one per subfolder).
+            return PlaybackQueueContext.Folders;
         }
 
         private async void ListBoxTracks_KeyUp(object sender, KeyEventArgs e)

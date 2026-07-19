@@ -14,6 +14,8 @@ namespace Dopamine.Services.Playlist
         event TracksAddedHandler TracksAdded;
         event TracksDeletedHandler TracksDeleted;
         event EventHandler PlaylistFolderChanged;
+        event PlaylistRenamedHandler PlaylistRenamed;
+        event PlaylistDeletedHandler PlaylistDeleted;
 
         Task<CreateNewPlaylistResult> CreateNewPlaylistAsync(EditablePlaylistViewModel editablePlaylist);
 

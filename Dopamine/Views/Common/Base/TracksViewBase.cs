@@ -4,6 +4,7 @@ using Dopamine.Core.Logging;
 using Digimezzo.Foundation.WPF.Controls;
 using Dopamine.Core.Base;
 using Dopamine.Services.Entities;
+using Dopamine.Services.Playback;
 using Dopamine.Services.Utils;
 using System;
 using System.Collections.Generic;
@@ -18,6 +19,20 @@ namespace Dopamine.Views.Common.Base
 {
     public abstract class TracksViewBase : CommonViewBase
     {
+        /// <summary>
+        /// The queue context that tracks enqueued from this view belong to. Views which have
+        /// their own shuffle memory (Songs, Folders, each playlist) override this so the
+        /// playback service can apply and persist the shuffle preference of that source.
+        /// </summary>
+        protected virtual PlaybackQueueContext GetQueueSourceContext()
+        {
+            return PlaybackQueueContext.Default;
+        }
+
+        protected virtual string GetQueueSourceContextId()
+        {
+            return null;
+        }
         protected override async Task KeyUpHandlerAsync(object sender, KeyEventArgs e)
         {
             ListBox lb = (ListBox)sender;
@@ -79,7 +94,11 @@ namespace Dopamine.Views.Common.Base
                 // The user wants to enqueue tracks for the selected item
                 if (lb.SelectedItem.GetType().Name == typeof(TrackViewModel).Name)
                 {
-                    await this.playbackService.EnqueueAsync(lb.Items.OfType<TrackViewModel>().ToList(), (TrackViewModel)lb.SelectedItem);
+                    await this.playbackService.EnqueueAsync(
+                        lb.Items.OfType<TrackViewModel>().ToList(),
+                        (TrackViewModel)lb.SelectedItem,
+                        this.GetQueueSourceContext(),
+                        this.GetQueueSourceContextId());
                 }
                 else if (lb.SelectedItem.GetType().Name == typeof(ArtistViewModel).Name)
                 {

@@ -15,6 +15,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Dopamine.Services.Entities;
+using Dopamine.Services.Playback;
 using Dopamine.Services.Utils;
 using System.Reflection;
 using System.ComponentModel;
@@ -60,7 +61,7 @@ namespace Dopamine.Views.FullPlayer.Collection
                 if (dataGridCell == null) return;
 
                 DataGrid dg = (DataGrid)sender;
-                await this.playbackService.EnqueueAsync(dg.Items.OfType<TrackViewModel>().ToList(), (TrackViewModel)dg.SelectedItem);
+                await this.playbackService.EnqueueAsync(dg.Items.OfType<TrackViewModel>().ToList(), (TrackViewModel)dg.SelectedItem, PlaybackQueueContext.Songs, null);
             }
         }
 
@@ -69,7 +70,7 @@ namespace Dopamine.Views.FullPlayer.Collection
             try
             {
                 var dg = VisualTreeUtils.FindAncestor<DataGrid>((DataGridRow)sender);
-                await this.playbackService.EnqueueAsync(dg.Items.OfType<TrackViewModel>().ToList(), (TrackViewModel)dg.SelectedItem);
+                await this.playbackService.EnqueueAsync(dg.Items.OfType<TrackViewModel>().ToList(), (TrackViewModel)dg.SelectedItem, PlaybackQueueContext.Songs, null);
             }
             catch (Exception ex)
             {

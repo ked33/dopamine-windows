@@ -23,6 +23,10 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         private IFileService fileService;
         private IPlaybackService playbackService;
         private IEventAggregator eventAggregator;
+
+        // The Folders page shares a single shuffle memory (not one per subfolder).
+        protected override PlaybackQueueContext QueueSourceContext => PlaybackQueueContext.Folders;
+
         private double leftPaneWidthPercent;
         private ObservableCollection<FolderViewModel> folders;
         private ObservableCollection<SubfolderViewModel> subfolders;

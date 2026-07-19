@@ -85,6 +85,8 @@ namespace Dopamine.Services.Playback
 
         Task<bool> PlaySelectedAsync(IList<TrackViewModel> tracks);
 
+        Task<bool> PlaySelectedAsync(IList<TrackViewModel> tracks, PlaybackQueueContext queueContext, string queueContextId);
+
         Task<bool> PlayTransientQueueAsync(
             IList<TrackViewModel> tracks,
             TrackViewModel startTrack,
@@ -92,11 +94,17 @@ namespace Dopamine.Services.Playback
 
         Task EnqueueAsync(IList<TrackViewModel> tracks, TrackViewModel track);
 
+        Task EnqueueAsync(IList<TrackViewModel> tracks, TrackViewModel track, PlaybackQueueContext queueContext, string queueContextId);
+
         Task EnqueueAsync(IList<TrackViewModel> tracks);
 
         Task EnqueueAsync(bool shuffle, bool unshuffle);
 
+        Task EnqueueAsync(bool shuffle, bool unshuffle, PlaybackQueueContext queueContext);
+
         Task EnqueueAsync(IList<TrackViewModel> tracks, bool shuffle, bool unshuffle);
+
+        Task EnqueueAsync(IList<TrackViewModel> tracks, bool shuffle, bool unshuffle, PlaybackQueueContext queueContext, string queueContextId);
 
         Task EnqueueArtistsAsync(IList<string> artists, bool shuffle, bool unshuffle);
 

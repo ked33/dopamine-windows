@@ -2,6 +2,7 @@
 using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Data;
 using Dopamine.Services.Dialog;
+using Dopamine.Services.Playback;
 using Dopamine.ViewModels.Common.Base;
 using Dopamine.Views.FullPlayer.Collection;
 using Prism.Commands;
@@ -16,6 +17,10 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         private IContainerProvider container;
         private IDialogService dialogService;
         private IEventAggregator eventAggregator;
+
+        // The Songs page has its own shuffle memory, independent of other sources.
+        protected override PlaybackQueueContext QueueSourceContext => PlaybackQueueContext.Songs;
+
         private bool ratingVisible;
         private bool loveVisible;
         private bool lyricsVisible;

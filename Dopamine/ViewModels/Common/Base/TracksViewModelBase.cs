@@ -373,7 +373,7 @@ namespace Dopamine.ViewModels.Common.Base
 
         protected async Task PlaySelectedAsync()
         {
-            var result = await this.playbackService.PlaySelectedAsync(this.selectedTracks);
+            var result = await this.playbackService.PlaySelectedAsync(this.selectedTracks, this.QueueSourceContext, this.QueueSourceContextId);
 
             if (!result)
             {

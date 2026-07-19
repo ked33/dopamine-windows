@@ -4,6 +4,7 @@ using Digimezzo.Foundation.Core.Logging;
 using Dopamine.Core.Logging;
 using Dopamine.Core.Prism;
 using Dopamine.Services.Entities;
+using Dopamine.Services.Playback;
 using Dopamine.Services.Playlist;
 using Dopamine.Views.Common.Base;
 using Prism.Commands;
@@ -35,6 +36,19 @@ namespace Dopamine.Views.FullPlayer.Collection
 
             // PubSub Events
             this.eventAggregator.GetEvent<ScrollToPlayingTrack>().Subscribe(async (_) => await this.ScrollToPlayingTrackAsync(this.ListBoxTracks));
+        }
+
+        protected override PlaybackQueueContext GetQueueSourceContext()
+        {
+            // Tracks shown in the right pane belong to the playlist selected in the left pane.
+            return this.ListBoxPlaylists.SelectedItem is PlaylistViewModel
+                ? PlaybackQueueContext.Playlist
+                : PlaybackQueueContext.Default;
+        }
+
+        protected override string GetQueueSourceContextId()
+        {
+            return PlaylistShuffleMemory.CreateContextId(this.ListBoxPlaylists.SelectedItem as PlaylistViewModel);
         }
 
         private async void ListBoxPlaylists_MouseDoubleClick(object sender, MouseButtonEventArgs e)

@@ -94,6 +94,7 @@ namespace Dopamine.Services.Playback
         private bool isLoadingTrack;
         private QueuePersistenceMode queuePersistenceMode = QueuePersistenceMode.Durable;
         private PlaybackQueueContext queueContext = PlaybackQueueContext.Default;
+        private string queueContextId;
         private IPlaybackSourceResolver playbackSourceResolver;
         private CancellationTokenSource playbackSourceCancellationTokenSource;
         private long playbackSourceGeneration;
@@ -236,6 +237,18 @@ namespace Dopamine.Services.Playback
             {
                 SettingDefaults.SetSafe<bool>("Netease", "IntelligenceRecommendationsShuffle", this.shuffle);
             }
+            else if (this.queueContext == PlaybackQueueContext.Songs)
+            {
+                SettingDefaults.SetSafe<bool>("Playback", "SongsShuffle", this.shuffle);
+            }
+            else if (this.queueContext == PlaybackQueueContext.Folders)
+            {
+                SettingDefaults.SetSafe<bool>("Playback", "FoldersShuffle", this.shuffle);
+            }
+            else if (this.queueContext == PlaybackQueueContext.Playlist && !string.IsNullOrEmpty(this.queueContextId))
+            {
+                PlaylistShuffleMemory.Set(this.queueContextId, this.shuffle);
+            }
             else
             {
                 this.durableShuffle = this.shuffle;
@@ -351,6 +364,8 @@ namespace Dopamine.Services.Playback
             this.fileService.ImportingTracks += (_, __) => this.canGetSavedQueuedTracks = false;
             this.fileService.TracksImported += (tracks, track) => this.EnqueueFromFilesAsync(tracks, track);
             this.i18nService.LanguageChanged += (_, __) => this.UpdateQueueLanguageAsync();
+            this.playlistService.PlaylistRenamed += this.OnPlaylistRenamed;
+            this.playlistService.PlaylistDeleted += this.OnPlaylistDeleted;
 
             // Set up timers
             this.progressTimer.Interval = TimeSpan.FromSeconds(this.progressTimeoutSeconds).TotalMilliseconds;
@@ -861,12 +876,17 @@ namespace Dopamine.Services.Playback
 
         public async Task EnqueueAsync(IList<TrackViewModel> tracks, bool shuffle, bool unshuffle)
         {
+            await this.EnqueueAsync(tracks, shuffle, unshuffle, PlaybackQueueContext.Default, null);
+        }
+
+        public async Task EnqueueAsync(IList<TrackViewModel> tracks, bool shuffle, bool unshuffle, PlaybackQueueContext queueContext, string queueContextId)
+        {
             if (tracks == null)
             {
                 return;
             }
 
-            this.EnterDurableQueueMode();
+            this.EnterDurableQueueMode(queueContext, queueContextId);
 
             // Shuffle
             if (shuffle)
@@ -880,7 +900,7 @@ namespace Dopamine.Services.Playback
                 await this.EnqueueAsync(tracks, false);
             }
 
-            // Use the current shuffle mode
+            // Use the shuffle mode remembered for this queue context
             if (!shuffle && !unshuffle)
             {
                 await this.EnqueueAsync(tracks, this.shuffle);
@@ -892,12 +912,17 @@ namespace Dopamine.Services.Playback
 
         private async Task EnqueueTrackEntitiesAsync(IList<Track> tracks, bool shuffle, bool unshuffle)
         {
+            await this.EnqueueTrackEntitiesAsync(tracks, shuffle, unshuffle, PlaybackQueueContext.Default, null);
+        }
+
+        private async Task EnqueueTrackEntitiesAsync(IList<Track> tracks, bool shuffle, bool unshuffle, PlaybackQueueContext queueContext, string queueContextId)
+        {
             if (tracks == null)
             {
                 return;
             }
 
-            this.EnterDurableQueueMode();
+            this.EnterDurableQueueMode(queueContext, queueContextId);
 
             // Shuffle
             if (shuffle)
@@ -911,7 +936,7 @@ namespace Dopamine.Services.Playback
                 await this.EnqueueTrackEntitiesAsync(tracks, false);
             }
 
-            // Use the current shuffle mode
+            // Use the shuffle mode remembered for this queue context
             if (!shuffle && !unshuffle)
             {
                 await this.EnqueueTrackEntitiesAsync(tracks, this.shuffle);
@@ -923,9 +948,14 @@ namespace Dopamine.Services.Playback
 
         public async Task EnqueueAsync(bool shuffle, bool unshuffle)
         {
+            await this.EnqueueAsync(shuffle, unshuffle, PlaybackQueueContext.Default);
+        }
+
+        public async Task EnqueueAsync(bool shuffle, bool unshuffle, PlaybackQueueContext queueContext)
+        {
             IList<Track> tracks = await this.trackRepository.GetTracksAsync();
             List<Track> orderedTracks = await EntityUtils.OrderTrackEntitiesAsync(tracks, TrackOrder.ByAlbum);
-            await this.EnqueueTrackEntitiesAsync(orderedTracks, shuffle, unshuffle);
+            await this.EnqueueTrackEntitiesAsync(orderedTracks, shuffle, unshuffle, queueContext, null);
         }
 
         public async Task EnqueueAsync(IList<TrackViewModel> tracks)
@@ -935,12 +965,17 @@ namespace Dopamine.Services.Playback
 
         public async Task EnqueueAsync(IList<TrackViewModel> tracks, TrackViewModel track)
         {
+            await this.EnqueueAsync(tracks, track, PlaybackQueueContext.Default, null);
+        }
+
+        public async Task EnqueueAsync(IList<TrackViewModel> tracks, TrackViewModel track, PlaybackQueueContext queueContext, string queueContextId)
+        {
             if (tracks == null || track == null)
             {
                 return;
             }
 
-            this.EnterDurableQueueMode();
+            this.EnterDurableQueueMode(queueContext, queueContextId);
 
             await this.EnqueueAsync(tracks, this.shuffle);
             await this.PlaySelectedAsync(track);
@@ -989,13 +1024,17 @@ namespace Dopamine.Services.Playback
                 return;
             }
 
-            IList<TrackViewModel> tracks = await this.playlistService.GetTracksAsync(playlistViewModels.First());
-            await this.EnqueueAsync(tracks, shuffle, unshuffle);
+            PlaylistViewModel playlist = playlistViewModels.First();
+            IList<TrackViewModel> tracks = await this.playlistService.GetTracksAsync(playlist);
+            await this.EnqueueAsync(tracks, shuffle, unshuffle, PlaybackQueueContext.Playlist, PlaylistShuffleMemory.CreateContextId(playlist));
         }
 
         public async Task PlaySelectedAsync(TrackViewModel track)
         {
-            if (track != null && track.IsLocalFile)
+            // Only reset the context when switching from a transient (online) queue back to
+            // the durable queue. Playing another track inside the current durable queue must
+            // not touch the queue context, or per-source shuffle memory would be lost.
+            if (track != null && track.IsLocalFile && this.queuePersistenceMode == QueuePersistenceMode.Transient)
             {
                 this.EnterDurableQueueMode();
             }
@@ -1005,7 +1044,12 @@ namespace Dopamine.Services.Playback
 
         public async Task<bool> PlaySelectedAsync(IList<TrackViewModel> tracks)
         {
-            this.EnterDurableQueueMode();
+            return await this.PlaySelectedAsync(tracks, PlaybackQueueContext.Default, null);
+        }
+
+        public async Task<bool> PlaySelectedAsync(IList<TrackViewModel> tracks, PlaybackQueueContext queueContext, string queueContextId)
+        {
+            this.EnterDurableQueueMode(queueContext, queueContextId);
             var result = await this.queueManager.ClearQueueAsync();
             if (result)
             {
@@ -2038,7 +2082,7 @@ namespace Dopamine.Services.Playback
 
         private async Task EnqueueAlwaysAsync(IList<TrackViewModel> tracks, IList<long> shuffleOrderIDs)
         {
-            this.EnterDurableQueueMode();
+            this.RestoreQueueContextFromSettings();
 
             if (await this.queueManager.ClearQueueAsync())
             {
@@ -2051,12 +2095,10 @@ namespace Dopamine.Services.Playback
 
         private async Task EnqueueAsync(IList<TrackViewModel> tracks, bool shuffle)
         {
-            this.EnterDurableQueueMode();
-
             if (await this.queueManager.ClearQueueAsync())
             {
                 await this.queueManager.EnqueueAsync(tracks, shuffle);
-                this.durableShuffle = shuffle;
+                this.PersistContextShuffleMemory(shuffle);
 
                 if (shuffle != this.shuffle)
                 {
@@ -2071,12 +2113,10 @@ namespace Dopamine.Services.Playback
 
         private async Task EnqueueTrackEntitiesAsync(IList<Track> tracks, bool shuffle)
         {
-            this.EnterDurableQueueMode();
-
             if (await this.queueManager.ClearQueueAsync())
             {
                 await this.queueManager.EnqueueAsync(tracks, shuffle, (track) => this.container.ResolveTrackViewModel(track));
-                this.durableShuffle = shuffle;
+                this.PersistContextShuffleMemory(shuffle);
 
                 if (shuffle != this.shuffle)
                 {
@@ -2110,8 +2150,14 @@ namespace Dopamine.Services.Playback
 
         private void EnterDurableQueueMode()
         {
+            this.EnterDurableQueueMode(PlaybackQueueContext.Default, null);
+        }
+
+        private void EnterDurableQueueMode(PlaybackQueueContext context, string contextId)
+        {
             this.queuePersistenceMode = QueuePersistenceMode.Durable;
-            this.SetQueueContext(PlaybackQueueContext.Default);
+            this.SetQueueContext(context, contextId);
+            this.PersistCurrentQueueContext();
         }
 
         private bool CanAddTracksToCurrentQueue(IList<TrackViewModel> tracks)
@@ -2126,10 +2172,11 @@ namespace Dopamine.Services.Playback
                 : tracks.All(x => x.IsLocalFile);
         }
 
-        private void SetQueueContext(PlaybackQueueContext context)
+        private void SetQueueContext(PlaybackQueueContext context, string contextId = null)
         {
             this.queueContext = context;
-            bool contextShuffle = this.GetQueueContextShuffle(context);
+            this.queueContextId = context == PlaybackQueueContext.Playlist ? contextId : null;
+            bool contextShuffle = this.GetQueueContextShuffle(this.queueContext, this.queueContextId);
 
             if (this.shuffle != contextShuffle)
             {
@@ -2138,7 +2185,7 @@ namespace Dopamine.Services.Playback
             }
         }
 
-        private bool GetQueueContextShuffle(PlaybackQueueContext context)
+        private bool GetQueueContextShuffle(PlaybackQueueContext context, string contextId)
         {
             switch (context)
             {
@@ -2148,9 +2195,102 @@ namespace Dopamine.Services.Playback
                     return SettingDefaults.GetOrAdd<bool>("Netease", "IntelligenceRecommendationsShuffle", false);
                 case PlaybackQueueContext.NeteasePersonalFm:
                     return false;
+                case PlaybackQueueContext.Songs:
+                    return SettingDefaults.GetOrAdd<bool>("Playback", "SongsShuffle", false);
+                case PlaybackQueueContext.Folders:
+                    return SettingDefaults.GetOrAdd<bool>("Playback", "FoldersShuffle", false);
+                case PlaybackQueueContext.Playlist:
+                    return string.IsNullOrEmpty(contextId) ? this.durableShuffle : PlaylistShuffleMemory.Get(contextId);
                 default:
                     return this.durableShuffle;
             }
+        }
+
+        private void PersistCurrentQueueContext()
+        {
+            SettingDefaults.SetSafe<int>("Playback", "QueueContext", (int)this.queueContext);
+            SettingDefaults.SetSafe<string>("Playback", "QueueContextId", this.queueContextId ?? string.Empty);
+        }
+
+        private void PersistContextShuffleMemory(bool shuffle)
+        {
+            switch (this.queueContext)
+            {
+                case PlaybackQueueContext.NeteaseDailyRecommendations:
+                    SettingDefaults.SetSafe<bool>("Netease", "DailyRecommendationsShuffle", shuffle);
+                    break;
+                case PlaybackQueueContext.NeteaseIntelligenceRecommendations:
+                    SettingDefaults.SetSafe<bool>("Netease", "IntelligenceRecommendationsShuffle", shuffle);
+                    break;
+                case PlaybackQueueContext.NeteasePersonalFm:
+                    // Shuffle is forced off for the personal FM: nothing to persist.
+                    break;
+                case PlaybackQueueContext.Songs:
+                    SettingDefaults.SetSafe<bool>("Playback", "SongsShuffle", shuffle);
+                    break;
+                case PlaybackQueueContext.Folders:
+                    SettingDefaults.SetSafe<bool>("Playback", "FoldersShuffle", shuffle);
+                    break;
+                case PlaybackQueueContext.Playlist:
+                    if (!string.IsNullOrEmpty(this.queueContextId))
+                    {
+                        PlaylistShuffleMemory.Set(this.queueContextId, shuffle);
+                        break;
+                    }
+
+                    goto default;
+                default:
+                    this.durableShuffle = shuffle;
+                    SettingsClient.Set<bool>("Playback", "Shuffle", shuffle);
+                    break;
+            }
+        }
+
+        private void RestoreQueueContextFromSettings()
+        {
+            this.queuePersistenceMode = QueuePersistenceMode.Durable;
+
+            int savedContext = SettingDefaults.GetOrAdd<int>("Playback", "QueueContext", (int)PlaybackQueueContext.Default);
+            string savedContextId = SettingDefaults.GetOrAdd<string>("Playback", "QueueContextId", string.Empty);
+
+            // Only the durable local contexts can be restored. Transient (online) contexts are
+            // never persisted, and any unexpected value falls back to the default context.
+            PlaybackQueueContext context = PlaybackQueueContext.Default;
+            string contextId = null;
+
+            if (savedContext == (int)PlaybackQueueContext.Songs || savedContext == (int)PlaybackQueueContext.Folders)
+            {
+                context = (PlaybackQueueContext)savedContext;
+            }
+            else if (savedContext == (int)PlaybackQueueContext.Playlist && !string.IsNullOrEmpty(savedContextId))
+            {
+                context = PlaybackQueueContext.Playlist;
+                contextId = savedContextId;
+            }
+
+            this.SetQueueContext(context, contextId);
+        }
+
+        private void OnPlaylistRenamed(PlaylistType playlistType, string oldPlaylistName, string newPlaylistName)
+        {
+            string oldContextId = PlaylistShuffleMemory.CreateContextId(playlistType, oldPlaylistName);
+            string newContextId = PlaylistShuffleMemory.CreateContextId(playlistType, newPlaylistName);
+
+            PlaylistShuffleMemory.Rename(oldContextId, newContextId);
+
+            if (this.queueContext == PlaybackQueueContext.Playlist &&
+                string.Equals(this.queueContextId, oldContextId, StringComparison.OrdinalIgnoreCase))
+            {
+                this.queueContextId = newContextId;
+                this.PersistCurrentQueueContext();
+            }
+        }
+
+        private void OnPlaylistDeleted(PlaylistViewModel playlist)
+        {
+            // Only the stored memory is cleaned up. The current queue context is left untouched,
+            // so an ongoing playback of the deleted playlist keeps its shuffle state.
+            PlaylistShuffleMemory.Remove(PlaylistShuffleMemory.CreateContextId(playlist));
         }
 
         private void SetBufferingProgress(bool show, double progressValue)
@@ -2194,7 +2334,7 @@ namespace Dopamine.Services.Playback
             this.Volume = SettingsClient.Get<float>("Playback", "Volume");
             this.mute = SettingsClient.Get<bool>("Playback", "Mute");
             this.durableShuffle = SettingsClient.Get<bool>("Playback", "Shuffle");
-            this.shuffle = this.GetQueueContextShuffle(this.queueContext);
+            this.shuffle = this.GetQueueContextShuffle(this.queueContext, this.queueContextId);
             this.EventMode = false;
             //this.EventMode = SettingsClient.Get<bool>("Playback", "WasapiEventMode");
             //this.ExclusiveMode = false;

@@ -2,7 +2,7 @@
 <Settings>
   <Namespace Name="Configuration">
     <Setting Name="Version">
-      <Value>123</Value>
+      <Value>124</Value>
     </Setting>
     <Setting Name="IsPortable">
       <Value>False</Value>
@@ -234,6 +234,21 @@
     </Setting>
     <Setting Name="EnablePlaybackFade">
       <Value>False</Value>
+    </Setting>
+    <Setting Name="SongsShuffle">
+      <Value>False</Value>
+    </Setting>
+    <Setting Name="FoldersShuffle">
+      <Value>False</Value>
+    </Setting>
+    <Setting Name="PlaylistShuffleMap">
+      <Value></Value>
+    </Setting>
+    <Setting Name="QueueContext">
+      <Value>0</Value>
+    </Setting>
+    <Setting Name="QueueContextId">
+      <Value></Value>
     </Setting>
   </Namespace>
   <Namespace Name="Online">

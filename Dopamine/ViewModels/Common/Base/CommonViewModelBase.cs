@@ -99,6 +99,15 @@ namespace Dopamine.ViewModels.Common.Base
             }
         }
 
+        /// <summary>
+        /// The queue context that playback started from this view model belongs to. Pages with
+        /// their own shuffle memory (Songs, Folders, each playlist) override this so the
+        /// playback service can apply and persist the shuffle preference of that source.
+        /// </summary>
+        protected virtual PlaybackQueueContext QueueSourceContext => PlaybackQueueContext.Default;
+
+        protected virtual string QueueSourceContextId => null;
+
         public CommonViewModelBase(IContainerProvider container) : base(container)
         {
             // Dependency injection
@@ -121,7 +130,7 @@ namespace Dopamine.ViewModels.Common.Base
             this.EditTracksCommand = new DelegateCommand(() => this.EditSelectedTracks(), () => !this.IsIndexing);
             this.LoadedCommand = new DelegateCommand(async () => await this.LoadedCommandAsync());
             this.UnloadedCommand = new DelegateCommand(async () => await this.UnloadedCommandAsync());
-            this.ShuffleAllCommand = new DelegateCommand(() => this.playbackService.EnqueueAsync(true, false));
+            this.ShuffleAllCommand = new DelegateCommand(() => this.playbackService.EnqueueAsync(true, false, this.QueueSourceContext));
 
             // Events
             this.playbackService.PlaybackFailed += (_, __) => this.ShowPlayingTrackAsync();
