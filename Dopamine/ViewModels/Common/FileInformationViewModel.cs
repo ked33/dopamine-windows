@@ -4,6 +4,7 @@ using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Utils;
 using Dopamine.Data.Metadata;
 using Dopamine.Services.Metadata;
+using Dopamine.Services.Entities;
 using Prism.Mvvm;
 using System;
 using System.Globalization;
@@ -35,6 +36,36 @@ namespace Dopamine.ViewModels.Common
         private string audioType;
         private string audioSampleRate;
         private string audioBitrate;
+
+        // Online source
+        private bool isOnline;
+        private string onlineSource;
+        private string onlineId;
+        private string onlineArtworkUrl;
+
+        public bool IsOnline
+        {
+            get { return this.isOnline; }
+            private set { SetProperty<bool>(ref this.isOnline, value); }
+        }
+
+        public string OnlineSource
+        {
+            get { return this.onlineSource; }
+            private set { SetProperty<string>(ref this.onlineSource, value); }
+        }
+
+        public string OnlineId
+        {
+            get { return this.onlineId; }
+            private set { SetProperty<string>(ref this.onlineId, value); }
+        }
+
+        public string OnlineArtworkUrl
+        {
+            get { return this.onlineArtworkUrl; }
+            private set { SetProperty<string>(ref this.onlineArtworkUrl, value); }
+        }
 
         public string SongTitle
         {
@@ -133,6 +164,25 @@ namespace Dopamine.ViewModels.Common
 
             this.GetFileMetadata(path);
             this.GetFileInformation(path);
+        }
+
+        public FileInformationViewModel(TrackViewModel track)
+        {
+            if (track == null || track.SourceInfo == null || track.IsLocalFile)
+            {
+                return;
+            }
+
+            this.IsOnline = true;
+            this.SongTitle = track.TrackTitle;
+            this.SongArtists = track.ArtistName;
+            this.SongAlbum = track.AlbumTitle;
+            this.AudioDuration = track.Track.Duration.HasValue
+                ? FormatUtils.FormatTime(TimeSpan.FromMilliseconds(track.Track.Duration.Value))
+                : string.Empty;
+            this.OnlineSource = ResourceUtils.GetString("Language_Netease_Music");
+            this.OnlineId = track.SourceInfo.RemoteId;
+            this.OnlineArtworkUrl = track.SourceInfo.ArtworkUrl;
         }
     
         private void GetFileMetadata(string path)

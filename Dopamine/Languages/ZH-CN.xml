@@ -11,6 +11,7 @@
   <Text Key="Collection">音乐库</Text>
   <Text Key="Settings">设置</Text>
   <Text Key="Information">相关信息</Text>
+  <Text Key="Song_Information">歌曲信息</Text>
   <Text Key="Manage">管理</Text>
   <Text Key="Artists">艺术家</Text>
   <Text Key="Albums">专辑</Text>
@@ -477,6 +478,10 @@
   <Text Key="Confirm_Clear_Blacklist">你确定你要清空黑名单吗？</Text>
   <Text Key="Error_Clearing_Blacklist">黑名单不能被清空。请查阅日志文件以了解更多信息。</Text>
   <Text Key="Netease_Music">网易云音乐</Text>
+  <Text Key="Online_Source">在线来源</Text>
+  <Text Key="Source">来源</Text>
+  <Text Key="Song_ID">歌曲 ID</Text>
+  <Text Key="Artwork_URL">封面地址</Text>
   <Text Key="Netease_Online_Description">登录后可在“音乐库 → 每日推荐”播放当前账号的每日推荐歌曲。</Text>
   <Text Key="Netease_Qr_Login">二维码登录</Text>
   <Text Key="Netease_Cookie_Login">Cookie 登录</Text>

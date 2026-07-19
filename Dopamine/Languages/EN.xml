@@ -11,6 +11,7 @@
   <Text Key="Collection">Collection</Text>
   <Text Key="Settings">Settings</Text>
   <Text Key="Information">Information</Text>
+  <Text Key="Song_Information">Song information</Text>
   <Text Key="Manage">Manage</Text>
   <Text Key="Artists">Artists</Text>
   <Text Key="Albums">Albums</Text>
@@ -477,6 +478,10 @@
   <Text Key="Confirm_Clear_Blacklist">Are you sure you want to clear the blacklist?</Text>
   <Text Key="Error_Clearing_Blacklist">The blacklist could not be cleared. Please consult the log file for more information.</Text>
   <Text Key="Netease_Music">Netease Cloud Music</Text>
+  <Text Key="Online_Source">Online source</Text>
+  <Text Key="Source">Source</Text>
+  <Text Key="Song_ID">Song ID</Text>
+  <Text Key="Artwork_URL">Artwork URL</Text>
   <Text Key="Netease_Online_Description">Sign in to play your account's daily recommendations from Collection → Daily recommendations.</Text>
   <Text Key="Netease_Qr_Login">QR code login</Text>
   <Text Key="Netease_Cookie_Login">Cookie login</Text>

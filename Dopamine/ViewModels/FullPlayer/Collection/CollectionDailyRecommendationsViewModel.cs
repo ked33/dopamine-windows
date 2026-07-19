@@ -10,6 +10,8 @@ using Dopamine.Services.Online.Netease;
 using Dopamine.Services.Playback;
 using Dopamine.Services.Provider;
 using Dopamine.Services.Search;
+using Dopamine.ViewModels.Common;
+using Dopamine.Views.Common;
 using Prism.Commands;
 using Prism.Ioc;
 using Prism.Mvvm;
@@ -75,6 +77,8 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         public DelegateCommand ToggleLikeCommand { get; private set; }
 
         public DelegateCommand DislikeCommand { get; private set; }
+
+        public DelegateCommand ShowTrackInformationCommand { get; private set; }
 
         public ObservableCollection<SearchProvider> ContextMenuSearchProviders
         {
@@ -245,6 +249,9 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.DislikeCommand = new DelegateCommand(
                 () => this.DislikeSelectedAsync(),
                 () => this.CanDislikeSelected());
+            this.ShowTrackInformationCommand = new DelegateCommand(
+                () => this.ShowTrackInformation(),
+                () => this.SelectedItem != null);
 
             this.searchService.DoSearch += (_) => this.DispatchFilterRefresh();
             this.sessionService.SessionChanged += (_, __) => this.DispatchSessionChanged();
@@ -520,6 +527,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.SearchOnlineCommand?.RaiseCanExecuteChanged();
             this.ToggleLikeCommand?.RaiseCanExecuteChanged();
             this.DislikeCommand?.RaiseCanExecuteChanged();
+            this.ShowTrackInformationCommand?.RaiseCanExecuteChanged();
         }
 
         private bool CanToggleLike()
@@ -742,6 +750,33 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             RaisePropertyChanged(nameof(this.Count));
             this.RefreshPlayingState();
             this.RaiseStateProperties();
+        }
+
+        private void ShowTrackInformation()
+        {
+            TrackViewModel target = this.SelectedItem;
+
+            if (target == null || target.IsLocalFile)
+            {
+                return;
+            }
+
+            FileInformation view = this.container.Resolve<FileInformation>();
+            view.DataContext = new FileInformationViewModel(target);
+            this.dialogService.ShowCustomDialog(
+                0xe8d6,
+                16,
+                ResourceUtils.GetString("Language_Information"),
+                view,
+                400,
+                700,
+                true,
+                true,
+                true,
+                false,
+                ResourceUtils.GetString("Language_Ok"),
+                string.Empty,
+                null);
         }
 
         private void CancelLikeStatusLookup()

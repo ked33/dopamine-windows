@@ -40,6 +40,10 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <!-- SONG -->
         <Label Grid.Row="0" Margin="0,0,0,5" Style="{StaticResource TitleLabel}" Grid.ColumnSpan="2" Content="{DynamicResource Language_Song}" />
@@ -92,5 +96,13 @@
         <!-- Bitrate -->
         <TextBlock Grid.Row="17" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Bitrate}"/>
         <TextBlock Grid.Row="17" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding AudioBitrate}"/>
+        <!-- ONLINE SOURCE -->
+        <Label Grid.Row="18" Margin="0,20,0,5" Style="{StaticResource TitleLabel}" Grid.ColumnSpan="2" Content="{DynamicResource Language_Online_Source}" Visibility="{Binding IsOnline, Converter={StaticResource BooleanToCollapsedConverter}}" />
+        <TextBlock Grid.Row="19" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Source}" Visibility="{Binding IsOnline, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+        <TextBlock Grid.Row="19" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding OnlineSource}" Visibility="{Binding IsOnline, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+        <TextBlock Grid.Row="20" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Song_ID}" Visibility="{Binding IsOnline, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+        <TextBlock Grid.Row="20" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding OnlineId}" Visibility="{Binding IsOnline, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+        <TextBlock Grid.Row="21" Grid.Column="0" Margin="0,5,10,0" Foreground="{DynamicResource Brush_SecondaryText}" Text="{DynamicResource Language_Artwork_URL}" Visibility="{Binding IsOnline, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+        <TextBlock Grid.Row="21" Grid.Column="1" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Brush_PrimaryText}" Text="{Binding OnlineArtworkUrl}" Visibility="{Binding IsOnline, Converter={StaticResource BooleanToCollapsedConverter}}"/>
     </Grid>
 </UserControl>
