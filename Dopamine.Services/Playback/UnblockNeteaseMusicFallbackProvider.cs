@@ -1,4 +1,4 @@
-﻿using Digimezzo.Foundation.Core.Utils;
+﻿using Dopamine.Data;
 using Dopamine.Services.Entities;
 using Dopamine.Services.Online.Netease;
 using System.Collections.Generic;

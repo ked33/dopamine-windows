@@ -148,7 +148,7 @@ namespace Dopamine.Services.Playback
 
                 this.StopProcess();
                 string executable = GetExecutablePath();
-                if (string.IsNullOrWhiteSpace(executable) || !File.Exists(executable))
+                if (string.IsNullOrWhiteSpace(executable) || !System.IO.File.Exists(executable))
                 {
                     this.SetState(UnblockSidecarState.Unavailable);
                     return false;

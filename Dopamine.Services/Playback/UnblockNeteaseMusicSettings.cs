@@ -36,7 +36,12 @@ namespace Dopamine.Services.Playback
                     .Where(x => AllowedSources.Contains(x))
                     .Distinct()
                     .ToList();
-                return sources.Count > 0 ? sources : AllowedSources;
+                if (sources.Count > 0)
+                {
+                    return sources;
+                }
+
+                return AllowedSources;
             }
             set
             {
