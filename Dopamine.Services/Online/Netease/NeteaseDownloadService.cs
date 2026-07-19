@@ -204,7 +204,7 @@ namespace Dopamine.Services.Online.Netease
                 }
 
                 string finalPath = Path.Combine(downloadDirectory, fileNameBase + extension);
-                if (File.Exists(finalPath))
+                if (System.IO.File.Exists(finalPath))
                 {
                     return AlreadyExists(displayName, finalPath);
                 }
@@ -250,18 +250,18 @@ namespace Dopamine.Services.Online.Netease
                 }
 
                 cancellationToken.ThrowIfCancellationRequested();
-                if (File.Exists(finalPath))
+                if (System.IO.File.Exists(finalPath))
                 {
                     return AlreadyExists(displayName, finalPath);
                 }
 
                 try
                 {
-                    File.Move(partialPath, finalPath);
+                    System.IO.File.Move(partialPath, finalPath);
                 }
                 catch (IOException)
                 {
-                    if (File.Exists(finalPath))
+                    if (System.IO.File.Exists(finalPath))
                     {
                         return AlreadyExists(displayName, finalPath);
                     }
@@ -414,7 +414,7 @@ namespace Dopamine.Services.Online.Netease
             foreach (string extension in SupportedExtensions)
             {
                 string path = Path.Combine(directory, fileNameBase + extension);
-                if (File.Exists(path))
+                if (System.IO.File.Exists(path))
                 {
                     return path;
                 }
@@ -513,9 +513,9 @@ namespace Dopamine.Services.Online.Netease
         {
             try
             {
-                if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+                if (!string.IsNullOrWhiteSpace(path) && System.IO.File.Exists(path))
                 {
-                    File.Delete(path);
+                    System.IO.File.Delete(path);
                 }
             }
             catch
