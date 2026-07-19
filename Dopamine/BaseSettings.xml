@@ -2,7 +2,7 @@
 <Settings>
   <Namespace Name="Configuration">
     <Setting Name="Version">
-      <Value>121</Value>
+      <Value>122</Value>
     </Setting>
     <Setting Name="IsPortable">
       <Value>False</Value>
