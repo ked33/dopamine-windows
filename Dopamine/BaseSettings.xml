@@ -2,7 +2,7 @@
 <Settings>
   <Namespace Name="Configuration">
     <Setting Name="Version">
-      <Value>122</Value>
+      <Value>123</Value>
     </Setting>
     <Setting Name="IsPortable">
       <Value>False</Value>
@@ -245,6 +245,12 @@
     </Setting>
     <Setting Name="DownloadSourcePriority">
       <Value>0</Value>
+    </Setting>
+    <Setting Name="GdSearchSource">
+      <Value>netease</Value>
+    </Setting>
+    <Setting Name="GdDownloadQuality">
+      <Value>999</Value>
     </Setting>
   </Namespace>
   <Namespace Name="Netease">

@@ -31,6 +31,7 @@ using Dopamine.Services.Lyrics;
 using Dopamine.Services.Metadata;
 using Dopamine.Services.Notification;
 using Dopamine.Services.Online;
+using Dopamine.Services.Online.GdMusic;
 using Dopamine.Services.Online.Netease;
 using Dopamine.Services.Playback;
 using Dopamine.Services.Playlist;
@@ -313,9 +314,13 @@ namespace Dopamine
                 containerRegistry.RegisterSingleton<NeteaseTemporaryAudioCache>();
                 containerRegistry.RegisterSingleton<INeteaseDownloadService, NeteaseDownloadService>();
                 containerRegistry.RegisterSingleton<NeteasePlaybackSourceResolver>();
+                containerRegistry.RegisterSingleton<IGdMusicApiClient, GdMusicApiClient>();
+                containerRegistry.RegisterSingleton<GdMusicDownloadService>();
+                containerRegistry.RegisterSingleton<GdMusicPlaybackSourceResolver>();
                 containerRegistry.RegisterSingleton<IPlaybackSourceResolver, PlaybackSourceResolver>();
                 containerRegistry.RegisterSingleton<IToastService, ToastService>();
                 containerRegistry.RegisterSingleton<OnlineTrackDownloadCoordinator>();
+                containerRegistry.RegisterSingleton<GdMusicDownloadCoordinator>();
 
                 INotificationService notificationService;
 

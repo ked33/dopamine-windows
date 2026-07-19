@@ -10,6 +10,8 @@
 
         public string ArtworkUrl { get; set; }
 
+        public string PictureId { get; set; }
+
         public TrackSourceInfo DeepCopy()
         {
             return new TrackSourceInfo
@@ -17,7 +19,8 @@
                 Kind = this.Kind,
                 ProviderId = this.ProviderId,
                 RemoteId = this.RemoteId,
-                ArtworkUrl = this.ArtworkUrl
+                ArtworkUrl = this.ArtworkUrl,
+                PictureId = this.PictureId
             };
         }
 

@@ -242,6 +242,7 @@
     <Compile Include="Playback\IUnblockSidecarService.cs" />
     <Compile Include="Playback\IPlaybackSourceResolver.cs" />
     <Compile Include="Playback\NeteasePlaybackSourceResolver.cs" />
+    <Compile Include="Playback\GdMusicPlaybackSourceResolver.cs" />
     <Compile Include="Playback\NeteaseAudioSourceResolution.cs" />
     <Compile Include="Playback\NeteaseAudioSourceResolver.cs" />
     <Compile Include="Playback\NeteaseTemporaryAudioCache.cs" />
@@ -264,6 +265,12 @@
     <Compile Include="Playback\UnblockSidecarService.cs" />
     <Compile Include="Playback\UpdateQueueMetadataResult.cs" />
     <Compile Include="Online\Netease\DpapiNeteaseSessionStore.cs" />
+    <Compile Include="Online\GdMusic\GdMusicApiClient.cs" />
+    <Compile Include="Online\GdMusic\GdMusicDownloadService.cs" />
+    <Compile Include="Online\GdMusic\GdMusicModels.cs" />
+    <Compile Include="Online\GdMusic\GdMusicSettings.cs" />
+    <Compile Include="Online\GdMusic\GdMusicTrackFactory.cs" />
+    <Compile Include="Online\GdMusic\IGdMusicApiClient.cs" />
     <Compile Include="Online\Netease\INeteaseApiClient.cs" />
     <Compile Include="Online\Netease\INeteaseMusicService.cs" />
     <Compile Include="Online\Netease\INeteasePersonalFmService.cs" />

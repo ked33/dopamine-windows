@@ -20,7 +20,7 @@ namespace Dopamine.Services.Online.Netease
         private const int MaximumLegacyPathLength = 259;
         private const int MaximumSupportedExtensionLength = 5;
         private const int TemporaryFileNameLength = 43;
-        private static readonly string[] SupportedExtensions =
+        internal static readonly string[] SupportedExtensions =
         {
             ".mp3", ".flac", ".m4a", ".aac", ".wav", ".ogg", ".opus", ".wma"
         };
@@ -401,7 +401,7 @@ namespace Dopamine.Services.Online.Netease
                 .ToArray());
         }
 
-        private static string GetDisplayName(TrackViewModel track)
+        internal static string GetDisplayName(TrackViewModel track)
         {
             string songId = track?.SourceInfo?.RemoteId ?? "netease";
             string artist = string.IsNullOrWhiteSpace(track?.ArtistName) ? songId : track.ArtistName;
@@ -409,7 +409,7 @@ namespace Dopamine.Services.Online.Netease
             return artist + " - " + title;
         }
 
-        private static string FindExistingPath(string directory, string fileNameBase)
+        internal static string FindExistingPath(string directory, string fileNameBase)
         {
             foreach (string extension in SupportedExtensions)
             {
@@ -423,7 +423,7 @@ namespace Dopamine.Services.Online.Netease
             return null;
         }
 
-        private static async Task CopyFileAsync(
+        internal static async Task CopyFileAsync(
             string sourcePath,
             string destinationPath,
             CancellationToken cancellationToken)
@@ -448,7 +448,7 @@ namespace Dopamine.Services.Online.Netease
             }
         }
 
-        private static void WriteMetadata(string path, TrackViewModel track, byte[] artwork)
+        internal static void WriteMetadata(string path, TrackViewModel track, byte[] artwork)
         {
             var metadata = new FileMetadata(path);
 
@@ -509,7 +509,7 @@ namespace Dopamine.Services.Online.Netease
             };
         }
 
-        private static void TryDelete(string path)
+        internal static void TryDelete(string path)
         {
             try
             {

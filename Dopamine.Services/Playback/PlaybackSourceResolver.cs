@@ -8,10 +8,14 @@ namespace Dopamine.Services.Playback
     public sealed class PlaybackSourceResolver : IPlaybackSourceResolver
     {
         private readonly NeteasePlaybackSourceResolver neteaseResolver;
+        private readonly GdMusicPlaybackSourceResolver gdMusicResolver;
 
-        public PlaybackSourceResolver(NeteasePlaybackSourceResolver neteaseResolver)
+        public PlaybackSourceResolver(
+            NeteasePlaybackSourceResolver neteaseResolver,
+            GdMusicPlaybackSourceResolver gdMusicResolver)
         {
             this.neteaseResolver = neteaseResolver;
+            this.gdMusicResolver = gdMusicResolver;
         }
 
         public Task<PlaybackSourceResolution> ResolveAsync(
@@ -43,6 +47,11 @@ namespace Dopamine.Services.Playback
             if (track.SourceInfo != null && track.SourceInfo.Kind == TrackSourceKind.Netease)
             {
                 return this.neteaseResolver.ResolveAsync(track, request, cancellationToken);
+            }
+
+            if (track.SourceInfo != null && track.SourceInfo.Kind == TrackSourceKind.ExternalOnline)
+            {
+                return this.gdMusicResolver.ResolveAsync(track, request, cancellationToken);
             }
 
             return Task.FromResult(Failure(PlaybackFailureReason.ApiChanged, "Language_Netease_Service_Unavailable"));

@@ -588,4 +588,24 @@
   <Text Key="Netease_Download_Toast_Directory_Required">{song} ❎ 请先在“设置 - 在线”中配置下载目录</Text>
   <Text Key="Netease_Download_Toast_Cancelled">{song} ❎ 下载已取消</Text>
   <Text Key="Netease_Download_Toast_Failed">{song} ❎ 下载失败</Text>
+  <Text Key="GdMusic_Search_Tab">在线搜索</Text>
+  <Text Key="GdMusic_Search_Button">搜索</Text>
+  <Text Key="GdMusic_Search_Prompt">输入关键词搜索在线歌曲</Text>
+  <Text Key="GdMusic_Result_Count">首歌曲</Text>
+  <Text Key="GdMusic_No_Results">没有找到相关歌曲</Text>
+  <Text Key="GdMusic_Load_More">加载更多</Text>
+  <Text Key="GdMusic_Search_Failed">在线搜索服务暂时不可用</Text>
+  <Text Key="GdMusic_Rate_Limited">请求过于频繁，请稍后再试（5 分钟内最多 50 次）</Text>
+  <Text Key="GdMusic_Settings_Title">在线搜索</Text>
+  <Text Key="GdMusic_Settings_Description">配置“网易云推荐”页面中“在线搜索”选项卡使用的聚合搜索服务。</Text>
+  <Text Key="GdMusic_Attribution">数据来源：GD音乐台(music.gdstudio.xyz)，仅供学习交流使用</Text>
+  <Text Key="GdMusic_Search_Source">搜索音乐源</Text>
+  <Text Key="GdMusic_Search_Source_Description">稳定音乐源：netease、joox、bilibili，其他音乐源可能暂不可用。netease 源的歌曲通过网易云账号播放，其他音乐源通过在线搜索服务播放。</Text>
+  <Text Key="GdMusic_Download_Quality">下载与播放音质</Text>
+  <Text Key="GdMusic_Download_Quality_Description">在线搜索下载时请求的音质，歌曲没有所选音质时会自动降级。非网易云音乐源的在线播放也使用此音质。</Text>
+  <Text Key="GdMusic_Quality_128">128 kbps</Text>
+  <Text Key="GdMusic_Quality_192">192 kbps</Text>
+  <Text Key="GdMusic_Quality_320">320 kbps</Text>
+  <Text Key="GdMusic_Quality_740">740（16bit 无损）</Text>
+  <Text Key="GdMusic_Quality_999">999（Hi-Res 无损）</Text>
 </Language>

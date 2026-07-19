@@ -18,6 +18,9 @@
             <dc:PivotItem Header="{DynamicResource Language_Netease_Personal_Fm}" Style="{StaticResource MenuPivotItem}">
                 <views:CollectionPersonalFm/>
             </dc:PivotItem>
+            <dc:PivotItem Header="{DynamicResource Language_GdMusic_Search_Tab}" Style="{StaticResource MenuPivotItem}">
+                <views:CollectionOnlineSearch/>
+            </dc:PivotItem>
         </dc:Pivot>
     </Grid>
 </UserControl>

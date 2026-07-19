@@ -331,6 +331,7 @@
     <Compile Include="ViewModels\FullPlayer\Collection\CollectionDailyRecommendationsViewModel.cs" />
     <Compile Include="ViewModels\FullPlayer\Collection\CollectionIntelligenceRecommendationsViewModel.cs" />
     <Compile Include="ViewModels\FullPlayer\Collection\CollectionNeteaseRecommendationsViewModel.cs" />
+    <Compile Include="ViewModels\FullPlayer\Collection\CollectionOnlineSearchViewModel.cs" />
     <Compile Include="ViewModels\FullPlayer\Collection\CollectionPersonalFmViewModel.cs" />
     <Compile Include="ViewModels\FullPlayer\Collection\CollectionViewModel.cs" />
     <Compile Include="ViewModels\FullPlayer\Collection\CollectionUtils.cs" />
@@ -363,6 +364,7 @@
     <Compile Include="ViewModels\PlaybackInfoViewModel.cs" />
     <Compile Include="ViewModels\ShellViewModel.cs" />
     <Compile Include="Services\Online\OnlineTrackDownloadCoordinator.cs" />
+    <Compile Include="Services\Online\GdMusicDownloadCoordinator.cs" />
     <Compile Include="ViewModels\SimilarArtistViewModel.cs" />
     <Compile Include="ViewModels\VerticalVolumeControlsViewModel.cs" />
     <Compile Include="ViewModels\VolumeControlsViewModel.cs" />
@@ -531,6 +533,9 @@
     </Compile>
     <Compile Include="Views\FullPlayer\Collection\CollectionNeteaseRecommendations.xaml.cs">
       <DependentUpon>CollectionNeteaseRecommendations.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\FullPlayer\Collection\CollectionOnlineSearch.xaml.cs">
+      <DependentUpon>CollectionOnlineSearch.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\FullPlayer\Collection\CollectionPersonalFm.xaml.cs">
       <DependentUpon>CollectionPersonalFm.xaml</DependentUpon>
@@ -1430,6 +1435,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\FullPlayer\Collection\CollectionNeteaseRecommendations.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\FullPlayer\Collection\CollectionOnlineSearch.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

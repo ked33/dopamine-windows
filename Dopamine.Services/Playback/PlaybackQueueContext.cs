@@ -5,6 +5,7 @@
         Default = 0,
         NeteaseDailyRecommendations = 1,
         NeteaseIntelligenceRecommendations = 2,
-        NeteasePersonalFm = 3
+        NeteasePersonalFm = 3,
+        OnlineSearch = 4
     }
 }

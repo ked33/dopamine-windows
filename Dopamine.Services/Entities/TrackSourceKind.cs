@@ -3,6 +3,7 @@
     public enum TrackSourceKind
     {
         LocalFile = 0,
-        Netease = 1
+        Netease = 1,
+        ExternalOnline = 2
     }
 }

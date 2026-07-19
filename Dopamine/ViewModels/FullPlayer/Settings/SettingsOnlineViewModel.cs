@@ -9,6 +9,7 @@ using Dopamine.Services.Dialog;
 using Dopamine.Services.Provider;
 using Dopamine.Services.Scrobbling;
 using Dopamine.Services.I18n;
+using Dopamine.Services.Online.GdMusic;
 using Dopamine.Services.Online.Netease;
 using Dopamine.Services.Playback;
 using Dopamine.Utils;
@@ -76,6 +77,10 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
         private string downloadDirectory;
         private ObservableCollection<string> downloadSourcePriorityOptions = new ObservableCollection<string>();
         private int selectedDownloadSourcePriority;
+        private ObservableCollection<string> gdSearchSourceOptions = new ObservableCollection<string>();
+        private int selectedGdSearchSource;
+        private ObservableCollection<string> gdDownloadQualityOptions = new ObservableCollection<string>();
+        private int selectedGdDownloadQuality;
 
         public DelegateCommand AddCommand { get; set; }
         public DelegateCommand EditCommand { get; set; }
@@ -125,6 +130,40 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                 NeteaseDownloadSettings.SourcePriority = value == 1
                     ? OnlineAudioSourcePriority.UnblockFirst
                     : OnlineAudioSourcePriority.OfficialFirst;
+            }
+        }
+
+        public ObservableCollection<string> GdSearchSourceOptions => this.gdSearchSourceOptions;
+
+        public int SelectedGdSearchSource
+        {
+            get { return this.selectedGdSearchSource; }
+            set
+            {
+                if (value < 0 || value >= GdMusicSettings.SupportedSearchSources.Count ||
+                    !SetProperty<int>(ref this.selectedGdSearchSource, value))
+                {
+                    return;
+                }
+
+                GdMusicSettings.SearchSource = GdMusicSettings.SupportedSearchSources[value];
+            }
+        }
+
+        public ObservableCollection<string> GdDownloadQualityOptions => this.gdDownloadQualityOptions;
+
+        public int SelectedGdDownloadQuality
+        {
+            get { return this.selectedGdDownloadQuality; }
+            set
+            {
+                if (value < 0 || value >= GdMusicSettings.SupportedDownloadQualities.Count ||
+                    !SetProperty<int>(ref this.selectedGdDownloadQuality, value))
+                {
+                    return;
+                }
+
+                GdMusicSettings.DownloadQuality = GdMusicSettings.SupportedDownloadQualities[value];
             }
         }
 
@@ -468,8 +507,12 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             this.downloadDirectory = NeteaseDownloadSettings.DownloadDirectory;
             this.selectedDownloadSourcePriority = NeteaseDownloadSettings.SourcePriority ==
                 OnlineAudioSourcePriority.UnblockFirst ? 1 : 0;
+            this.selectedGdSearchSource = GetGdSearchSourceIndex(GdMusicSettings.SearchSource);
+            this.selectedGdDownloadQuality = GetGdDownloadQualityIndex(GdMusicSettings.DownloadQuality);
             this.RefreshAudioQualityOptions();
             this.RefreshDownloadSourcePriorityOptions();
+            this.RefreshGdSearchSourceOptions();
+            this.RefreshGdDownloadQualityOptions();
 
             this.RefreshNeteaseQrCommand = new DelegateCommand(
                 () => this.BeginNeteaseQrLoginAsync(),
@@ -492,6 +535,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                 this.DispatchUnblockStatusUpdate();
                 this.DispatchAudioQualityOptionsUpdate();
                 this.DispatchDownloadSourcePriorityOptionsUpdate();
+                this.DispatchGdDownloadQualityOptionsUpdate();
             };
             this.UpdateNeteaseState();
             this.UpdateUnblockStatus();
@@ -808,6 +852,62 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                 ResourceUtils.GetString("Language_Netease_Download_Official_First"));
             this.DownloadSourcePriorityOptions.Add(
                 ResourceUtils.GetString("Language_Netease_Download_Unblock_First"));
+        }
+
+        private static int GetGdSearchSourceIndex(string source)
+        {
+            for (int i = 0; i < GdMusicSettings.SupportedSearchSources.Count; i++)
+            {
+                if (string.Equals(GdMusicSettings.SupportedSearchSources[i], source, StringComparison.Ordinal))
+                {
+                    return i;
+                }
+            }
+
+            return 0;
+        }
+
+        private static int GetGdDownloadQualityIndex(int quality)
+        {
+            for (int i = 0; i < GdMusicSettings.SupportedDownloadQualities.Count; i++)
+            {
+                if (GdMusicSettings.SupportedDownloadQualities[i] == quality)
+                {
+                    return i;
+                }
+            }
+
+            return GdMusicSettings.SupportedDownloadQualities.Count - 1;
+        }
+
+        private void RefreshGdSearchSourceOptions()
+        {
+            this.GdSearchSourceOptions.Clear();
+            foreach (string source in GdMusicSettings.SupportedSearchSources)
+            {
+                this.GdSearchSourceOptions.Add(source);
+            }
+        }
+
+        private void DispatchGdDownloadQualityOptionsUpdate()
+        {
+            if (Application.Current == null || Application.Current.Dispatcher.CheckAccess())
+            {
+                this.RefreshGdDownloadQualityOptions();
+                return;
+            }
+
+            Application.Current.Dispatcher.Invoke(new Action(this.RefreshGdDownloadQualityOptions));
+        }
+
+        private void RefreshGdDownloadQualityOptions()
+        {
+            this.GdDownloadQualityOptions.Clear();
+            this.GdDownloadQualityOptions.Add(ResourceUtils.GetString("Language_GdMusic_Quality_128"));
+            this.GdDownloadQualityOptions.Add(ResourceUtils.GetString("Language_GdMusic_Quality_192"));
+            this.GdDownloadQualityOptions.Add(ResourceUtils.GetString("Language_GdMusic_Quality_320"));
+            this.GdDownloadQualityOptions.Add(ResourceUtils.GetString("Language_GdMusic_Quality_740"));
+            this.GdDownloadQualityOptions.Add(ResourceUtils.GetString("Language_GdMusic_Quality_999"));
         }
 
         private void BrowseDownloadDirectory()

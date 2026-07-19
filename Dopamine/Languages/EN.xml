@@ -588,4 +588,24 @@
   <Text Key="Netease_Download_Toast_Directory_Required">{song} ❎ Configure the download directory in Settings - Online first</Text>
   <Text Key="Netease_Download_Toast_Cancelled">{song} ❎ Download cancelled</Text>
   <Text Key="Netease_Download_Toast_Failed">{song} ❎ Download failed</Text>
+  <Text Key="GdMusic_Search_Tab">Online search</Text>
+  <Text Key="GdMusic_Search_Button">Search</Text>
+  <Text Key="GdMusic_Search_Prompt">Enter a keyword to search for online songs</Text>
+  <Text Key="GdMusic_Result_Count">songs</Text>
+  <Text Key="GdMusic_No_Results">No songs were found</Text>
+  <Text Key="GdMusic_Load_More">Load more</Text>
+  <Text Key="GdMusic_Search_Failed">The online search service is temporarily unavailable</Text>
+  <Text Key="GdMusic_Rate_Limited">Too many requests. Please try again later (at most 50 requests per 5 minutes)</Text>
+  <Text Key="GdMusic_Settings_Title">Online search</Text>
+  <Text Key="GdMusic_Settings_Description">Configure the aggregated search service used by the online search tab of the Netease recommendations page.</Text>
+  <Text Key="GdMusic_Attribution">Data source: GD Music Station (music.gdstudio.xyz), for study purposes only</Text>
+  <Text Key="GdMusic_Search_Source">Search music source</Text>
+  <Text Key="GdMusic_Search_Source_Description">Stable sources: netease, joox and bilibili. Other sources may be unavailable. Netease results play through your Netease account, other sources play through the online search service.</Text>
+  <Text Key="GdMusic_Download_Quality">Download and playback quality</Text>
+  <Text Key="GdMusic_Download_Quality_Description">The requested quality for online search downloads. It falls back automatically when a song does not offer the selected quality. Online playback of non-Netease sources also uses this quality.</Text>
+  <Text Key="GdMusic_Quality_128">128 kbps</Text>
+  <Text Key="GdMusic_Quality_192">192 kbps</Text>
+  <Text Key="GdMusic_Quality_320">320 kbps</Text>
+  <Text Key="GdMusic_Quality_740">740 (16-bit lossless)</Text>
+  <Text Key="GdMusic_Quality_999">999 (Hi-Res lossless)</Text>
 </Language>
