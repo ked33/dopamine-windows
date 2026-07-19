@@ -55,6 +55,8 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         private int searchGeneration;
         private CancellationTokenSource searchCancellationTokenSource;
         private ObservableCollection<SearchProvider> contextMenuSearchProviders;
+        private ObservableCollection<string> searchSourceOptions = new ObservableCollection<string>();
+        private int selectedSearchSource;
 
         public DelegateCommand LoadedCommand { get; private set; }
 
@@ -127,6 +129,13 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             this.playbackService.QueueChanged += (_, __) => this.Dispatch(this.RaiseSelectionCommandStates);
             this.providerService.SearchProvidersChanged += (_, __) => this.GetSearchProvidersAsync();
 
+            foreach (string source in GdMusicSettings.SupportedSearchSources)
+            {
+                this.searchSourceOptions.Add(source);
+            }
+
+            this.selectedSearchSource = GetSearchSourceIndex(GdMusicSettings.SearchSource);
+
             this.RebuildCollectionView();
             this.GetSearchProvidersAsync();
         }
@@ -172,6 +181,29 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         {
             get { return this.searchText; }
             set { SetProperty<string>(ref this.searchText, value); }
+        }
+
+        public ObservableCollection<string> SearchSourceOptions => this.searchSourceOptions;
+
+        public int SelectedSearchSource
+        {
+            get { return this.selectedSearchSource; }
+            set
+            {
+                if (value < 0 || value >= GdMusicSettings.SupportedSearchSources.Count ||
+                    !SetProperty<int>(ref this.selectedSearchSource, value))
+                {
+                    return;
+                }
+
+                GdMusicSettings.SearchSource = GdMusicSettings.SupportedSearchSources[value];
+
+                if (!string.IsNullOrWhiteSpace(this.SearchText))
+                {
+                    this.CancelSearch();
+                    this.SearchAsync(false);
+                }
+            }
         }
 
         public bool IsSearching
@@ -590,6 +622,19 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
         {
             return !string.IsNullOrWhiteSpace(value) &&
                 value.IndexOf(filterText, StringComparison.CurrentCultureIgnoreCase) >= 0;
+        }
+
+        private static int GetSearchSourceIndex(string source)
+        {
+            for (int i = 0; i < GdMusicSettings.SupportedSearchSources.Count; i++)
+            {
+                if (string.Equals(GdMusicSettings.SupportedSearchSources[i], source, StringComparison.Ordinal))
+                {
+                    return i;
+                }
+            }
+
+            return 0;
         }
     }
 }

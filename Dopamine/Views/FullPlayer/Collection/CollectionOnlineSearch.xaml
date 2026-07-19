@@ -52,6 +52,13 @@
 
     <DockPanel Margin="10,20,10,26">
         <DockPanel DockPanel.Dock="Top" Margin="10,0,10,20">
+            <ComboBox DockPanel.Dock="Left"
+                      Width="110"
+                      Margin="0,0,10,0"
+                      VerticalAlignment="Center"
+                      Style="{StaticResource MetroComboBox}"
+                      ItemsSource="{Binding SearchSourceOptions}"
+                      SelectedIndex="{Binding SelectedSearchSource, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
             <Button DockPanel.Dock="Right"
                     Margin="10,0,0,0"
                     Style="{StaticResource RegularButtonAccent}"

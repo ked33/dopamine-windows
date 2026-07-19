@@ -32,7 +32,8 @@
         Songs = 3,
         Playlists = 4,
         Folders = 5,
-        DailyRecommendations = 6
+        DailyRecommendations = 6,
+        OnlineSearch = 7
     }
 
     public enum SettingsPage

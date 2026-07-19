@@ -399,6 +399,7 @@ namespace Dopamine
                 containerRegistry.Register<object, CollectionTracks>(typeof(CollectionTracks).FullName);
                 containerRegistry.Register<object, CollectionDailyRecommendations>(typeof(CollectionDailyRecommendations).FullName);
                 containerRegistry.Register<object, CollectionNeteaseRecommendations>(typeof(CollectionNeteaseRecommendations).FullName);
+                containerRegistry.Register<object, CollectionOnlineSearch>(typeof(CollectionOnlineSearch).FullName);
 
                 // Settings
                 containerRegistry.Register<object, SettingsMenu>(typeof(SettingsMenu).FullName);

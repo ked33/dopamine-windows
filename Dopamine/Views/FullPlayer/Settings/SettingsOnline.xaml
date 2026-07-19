@@ -149,17 +149,6 @@
             <StackPanel MaxWidth="620" HorizontalAlignment="Left">
                 <TextBlock Margin="0,5,0,0" Text="{DynamicResource Language_GdMusic_Settings_Description}" Foreground="{DynamicResource Brush_PrimaryText}" TextWrapping="Wrap"/>
                 <TextBlock Margin="0,8,0,0" Text="{DynamicResource Language_GdMusic_Attribution}" Foreground="{DynamicResource Brush_SecondaryText}" TextWrapping="Wrap"/>
-                <TextBlock Margin="0,14,0,0" Text="{DynamicResource Language_GdMusic_Search_Source}" Foreground="{DynamicResource Brush_PrimaryText}"/>
-                <ComboBox Margin="0,8,0,0"
-                          Width="220"
-                          HorizontalAlignment="Left"
-                          Style="{StaticResource MetroComboBox}"
-                          ItemsSource="{Binding GdSearchSourceOptions}"
-                          SelectedIndex="{Binding SelectedGdSearchSource, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                <TextBlock Margin="0,8,0,0"
-                           Text="{DynamicResource Language_GdMusic_Search_Source_Description}"
-                           Foreground="{DynamicResource Brush_SecondaryText}"
-                           TextWrapping="Wrap"/>
                 <TextBlock Margin="0,14,0,0" Text="{DynamicResource Language_GdMusic_Download_Quality}" Foreground="{DynamicResource Brush_PrimaryText}"/>
                 <ComboBox Margin="0,8,0,0"
                           Width="220"
