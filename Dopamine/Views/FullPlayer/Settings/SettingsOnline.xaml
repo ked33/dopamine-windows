@@ -62,7 +62,38 @@
                     <Button Margin="0,12,0,0" HorizontalAlignment="Left" Style="{StaticResource RegularButton}" Content="{DynamicResource Language_Sign_Out}" Command="{Binding NeteaseLogoutCommand}"/>
                 </StackPanel>
             </Grid>
-            <Label Style="{StaticResource TitleLabel}" Content="{DynamicResource Language_Search_Online}" />
+            <Label Margin="0,20,0,0" Style="{StaticResource TitleLabel}" Content="UnblockNeteaseMusic" />
+            <TextBlock Margin="0,5,0,0" MaxWidth="620" HorizontalAlignment="Left" Text="{DynamicResource Language_Netease_Unblock_Description}" Foreground="{DynamicResource Brush_PrimaryText}" TextWrapping="Wrap"/>
+            <TextBlock Margin="0,8,0,0" MaxWidth="620" HorizontalAlignment="Left" Text="{DynamicResource Language_Netease_Unblock_Risk_Notice}" Foreground="{DynamicResource Brush_SecondaryText}" TextWrapping="Wrap"/>
+            <dc:Windows10ToggleSwitch Margin="0,12,0,0" HorizontalAlignment="Left" FontSize="12" OnLabel="{DynamicResource Language_Yes}" OffLabel="{DynamicResource Language_No}" Foreground="{DynamicResource Brush_PrimaryText}" Accent="{DynamicResource Brush_Accent}" IsChecked="{Binding CheckBoxEnableUnblockNeteaseMusic}"/>
+            <StackPanel Margin="0,12,0,0" IsEnabled="{Binding CheckBoxEnableUnblockNeteaseMusic}">
+                <TextBlock Text="{DynamicResource Language_Netease_Unblock_Sources}" Foreground="{DynamicResource Brush_PrimaryText}"/>
+                <UniformGrid Margin="0,8,0,0" Columns="3" Width="450" HorizontalAlignment="Left">
+                    <dc:Windows10ToggleSwitch HorizontalAlignment="Left" FontSize="12" OnLabel="Kugou" OffLabel="Kugou" Foreground="{DynamicResource Brush_PrimaryText}" Accent="{DynamicResource Brush_Accent}" IsChecked="{Binding CheckBoxUnblockKugou}"/>
+                    <dc:Windows10ToggleSwitch HorizontalAlignment="Left" FontSize="12" OnLabel="Bodian" OffLabel="Bodian" Foreground="{DynamicResource Brush_PrimaryText}" Accent="{DynamicResource Brush_Accent}" IsChecked="{Binding CheckBoxUnblockBodian}"/>
+                    <dc:Windows10ToggleSwitch HorizontalAlignment="Left" FontSize="12" OnLabel="Kuwo" OffLabel="Kuwo" Foreground="{DynamicResource Brush_PrimaryText}" Accent="{DynamicResource Brush_Accent}" IsChecked="{Binding CheckBoxUnblockKuwo}"/>
+                </UniformGrid>
+                <TextBlock Margin="0,12,0,0" Text="{DynamicResource Language_Netease_Unblock_Enable_Flac}" Foreground="{DynamicResource Brush_PrimaryText}" TextWrapping="Wrap"/>
+                <dc:Windows10ToggleSwitch Margin="0,8,0,0" HorizontalAlignment="Left" FontSize="12" OnLabel="{DynamicResource Language_Yes}" OffLabel="{DynamicResource Language_No}" Foreground="{DynamicResource Brush_PrimaryText}" Accent="{DynamicResource Brush_Accent}" IsChecked="{Binding CheckBoxUnblockEnableFlac}"/>
+                <Grid Margin="0,12,0,0" MaxWidth="620" HorizontalAlignment="Left">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource Brush_SecondaryText}" Text="{Binding UnblockStatusText}" TextWrapping="Wrap"/>
+                    <Button Grid.Column="1" Margin="15,0,0,0" Style="{StaticResource RegularButton}" Content="{DynamicResource Language_Netease_Unblock_Restart}" Command="{Binding RestartUnblockSidecarCommand}"/>
+                </Grid>
+                <StackPanel.Style>
+                    <Style>
+                        <Style.Triggers>
+                            <Trigger Property="StackPanel.IsEnabled" Value="False">
+                                <Setter Property="StackPanel.Opacity" Value="0.5" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+            </StackPanel>
+            <Label Margin="0,20,0,0" Style="{StaticResource TitleLabel}" Content="{DynamicResource Language_Search_Online}" />
             <TextBlock Margin="0,5,0,0" Text="{DynamicResource Language_Add_Remove_Online_Search_Providers}" Foreground="{DynamicResource Brush_PrimaryText}"/>
             <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                 <ListBox Style="{StaticResource MetroListBox}" Width="300" ItemsSource="{Binding SearchProviders}" SelectedItem="{Binding SelectedSearchProvider}"/>

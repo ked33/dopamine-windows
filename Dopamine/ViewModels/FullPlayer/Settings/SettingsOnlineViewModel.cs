@@ -10,6 +10,7 @@ using Dopamine.Services.Provider;
 using Dopamine.Services.Scrobbling;
 using Dopamine.Services.I18n;
 using Dopamine.Services.Online.Netease;
+using Dopamine.Services.Playback;
 using Dopamine.Utils;
 using Dopamine.Views.FullPlayer.Settings;
 using Prism.Commands;
@@ -58,6 +59,15 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
         private bool isNeteaseQrExpired;
         private bool isNeteasePageLoaded;
         private int selectedNeteaseLoginMethod;
+        private readonly IUnblockSidecarService unblockSidecarService;
+        private bool checkBoxEnableUnblockNeteaseMusic;
+        private bool checkBoxUnblockKugou;
+        private bool checkBoxUnblockBodian;
+        private bool checkBoxUnblockKuwo;
+        private bool checkBoxUnblockEnableFlac;
+        private bool isUnblockRestarting;
+        private string unblockStatusText;
+        private bool isUnblockStateSubscribed;
 
         public DelegateCommand AddCommand { get; set; }
         public DelegateCommand EditCommand { get; set; }
@@ -67,6 +77,83 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
         public DelegateCommand CreateLastFmAccountCommand { get; set; }
         public DelegateCommand RefreshNeteaseQrCommand { get; set; }
         public DelegateCommand NeteaseLogoutCommand { get; set; }
+        public DelegateCommand RestartUnblockSidecarCommand { get; set; }
+
+        public bool CheckBoxEnableUnblockNeteaseMusic
+        {
+            get { return this.checkBoxEnableUnblockNeteaseMusic; }
+            set
+            {
+                if (!SetProperty<bool>(ref this.checkBoxEnableUnblockNeteaseMusic, value))
+                {
+                    return;
+                }
+
+                UnblockNeteaseMusicSettings.IsEnabled = value;
+                this.RestartUnblockSidecarCommand?.RaiseCanExecuteChanged();
+                if (value)
+                {
+                    this.RestartUnblockSidecarAsync();
+                }
+                else
+                {
+                    this.unblockSidecarService.Stop();
+                    this.UpdateUnblockStatus();
+                }
+            }
+        }
+
+        public bool CheckBoxUnblockKugou
+        {
+            get { return this.checkBoxUnblockKugou; }
+            set { this.SetUnblockSource(ref this.checkBoxUnblockKugou, value, nameof(this.CheckBoxUnblockKugou)); }
+        }
+
+        public bool CheckBoxUnblockBodian
+        {
+            get { return this.checkBoxUnblockBodian; }
+            set { this.SetUnblockSource(ref this.checkBoxUnblockBodian, value, nameof(this.CheckBoxUnblockBodian)); }
+        }
+
+        public bool CheckBoxUnblockKuwo
+        {
+            get { return this.checkBoxUnblockKuwo; }
+            set { this.SetUnblockSource(ref this.checkBoxUnblockKuwo, value, nameof(this.CheckBoxUnblockKuwo)); }
+        }
+
+        public bool CheckBoxUnblockEnableFlac
+        {
+            get { return this.checkBoxUnblockEnableFlac; }
+            set
+            {
+                if (!SetProperty<bool>(ref this.checkBoxUnblockEnableFlac, value))
+                {
+                    return;
+                }
+
+                UnblockNeteaseMusicSettings.EnableFlac = value;
+                if (this.CheckBoxEnableUnblockNeteaseMusic)
+                {
+                    this.RestartUnblockSidecarAsync();
+                }
+            }
+        }
+
+        public bool IsUnblockRestarting
+        {
+            get { return this.isUnblockRestarting; }
+            set
+            {
+                SetProperty<bool>(ref this.isUnblockRestarting, value);
+                this.RestartUnblockSidecarCommand?.RaiseCanExecuteChanged();
+            }
+        }
+
+        public string UnblockStatusText
+        {
+            get { return this.unblockStatusText; }
+            set { SetProperty<string>(ref this.unblockStatusText, value); }
+        }
 
         public bool IsNeteaseSignedIn => this.neteaseSessionService.State == NeteaseSessionState.SignedIn;
 
@@ -284,7 +371,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
 
         public SettingsOnlineViewModel(IContainerProvider container, IProviderService providerService, IDialogService dialogService,
             IScrobblingService scrobblingService, IEventAggregator eventAggregator, INeteaseSessionService neteaseSessionService,
-            II18nService i18nService)
+            II18nService i18nService, IUnblockSidecarService unblockSidecarService)
         {
             AppLog.InfoAlways(
                 "Settings Online ViewModel construction started. HasContainer={0}, HasProviderService={1}, HasDialogService={2}, HasScrobblingService={3}, HasEventAggregator={4}, HasNeteaseSessionService={5}, HasI18nService={6}",
@@ -303,6 +390,12 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             this.eventAggregator = eventAggregator;
             this.neteaseSessionService = neteaseSessionService;
             this.i18nService = i18nService;
+            this.unblockSidecarService = unblockSidecarService;
+            this.checkBoxEnableUnblockNeteaseMusic = UnblockNeteaseMusicSettings.IsEnabled;
+            this.checkBoxUnblockKugou = UnblockNeteaseMusicSettings.Sources.Contains("kugou");
+            this.checkBoxUnblockBodian = UnblockNeteaseMusicSettings.Sources.Contains("bodian");
+            this.checkBoxUnblockKuwo = UnblockNeteaseMusicSettings.Sources.Contains("kuwo");
+            this.checkBoxUnblockEnableFlac = UnblockNeteaseMusicSettings.EnableFlac;
 
             this.RefreshNeteaseQrCommand = new DelegateCommand(
                 () => this.BeginNeteaseQrLoginAsync(),
@@ -310,10 +403,18 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             this.NeteaseLogoutCommand = new DelegateCommand(
                 () => this.LogoutNeteaseAsync(),
                 () => !this.IsNeteaseSigningIn);
+            this.RestartUnblockSidecarCommand = new DelegateCommand(
+                () => this.RestartUnblockSidecarAsync(),
+                () => this.CheckBoxEnableUnblockNeteaseMusic && !this.IsUnblockRestarting);
 
             this.neteaseSessionService.SessionChanged += (_, __) => this.DispatchNeteaseStateUpdate();
-            this.i18nService.LanguageChanged += (_, __) => this.DispatchNeteaseStateUpdate();
+            this.i18nService.LanguageChanged += (_, __) =>
+            {
+                this.DispatchNeteaseStateUpdate();
+                this.DispatchUnblockStatusUpdate();
+            };
             this.UpdateNeteaseState();
+            this.UpdateUnblockStatus();
 
             this.scrobblingService.SignInStateChanged += (_) =>
             {
@@ -362,7 +463,9 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                 this.SelectedNeteaseLoginMethod,
                 this.activeNeteaseQrSession != null);
             this.isNeteasePageLoaded = true;
+            this.SubscribeUnblockState();
             this.UpdateNeteaseState();
+            this.UpdateUnblockStatus();
 
             if (!this.IsNeteaseSignedIn && this.SelectedNeteaseLoginMethod == 0 && this.activeNeteaseQrSession == null)
             {
@@ -377,6 +480,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
         {
             AppLog.InfoAlways("Settings Online Netease unload started.");
             this.isNeteasePageLoaded = false;
+            this.UnsubscribeUnblockState();
             this.CancelNeteaseQrLogin();
             AppLog.InfoAlways("Settings Online Netease unload completed.");
         }
@@ -622,6 +726,130 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                     }
                     break;
             }
+        }
+
+        private void SetUnblockSource(ref bool field, bool value, string propertyName)
+        {
+            if (field == value)
+            {
+                return;
+            }
+
+            int enabledSourceCount = (this.checkBoxUnblockKugou ? 1 : 0) +
+                (this.checkBoxUnblockBodian ? 1 : 0) +
+                (this.checkBoxUnblockKuwo ? 1 : 0);
+            if (!value && enabledSourceCount <= 1)
+            {
+                RaisePropertyChanged(propertyName);
+                return;
+            }
+
+            SetProperty<bool>(ref field, value, propertyName);
+            var sources = new List<string>();
+            if (this.checkBoxUnblockKugou)
+            {
+                sources.Add("kugou");
+            }
+            if (this.checkBoxUnblockBodian)
+            {
+                sources.Add("bodian");
+            }
+            if (this.checkBoxUnblockKuwo)
+            {
+                sources.Add("kuwo");
+            }
+            UnblockNeteaseMusicSettings.Sources = sources;
+        }
+
+        private async void RestartUnblockSidecarAsync()
+        {
+            if (!this.CheckBoxEnableUnblockNeteaseMusic || this.IsUnblockRestarting)
+            {
+                return;
+            }
+
+            this.IsUnblockRestarting = true;
+            try
+            {
+                await this.unblockSidecarService.RestartAsync(CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warning("Could not restart the Unblock sidecar from Settings. ErrorType={0}", ex.GetType().Name);
+            }
+            finally
+            {
+                this.IsUnblockRestarting = false;
+                this.UpdateUnblockStatus();
+            }
+        }
+
+        private void SubscribeUnblockState()
+        {
+            if (this.isUnblockStateSubscribed)
+            {
+                return;
+            }
+
+            this.unblockSidecarService.StateChanged += this.UnblockSidecarService_StateChanged;
+            this.isUnblockStateSubscribed = true;
+        }
+
+        private void UnsubscribeUnblockState()
+        {
+            if (!this.isUnblockStateSubscribed)
+            {
+                return;
+            }
+
+            this.unblockSidecarService.StateChanged -= this.UnblockSidecarService_StateChanged;
+            this.isUnblockStateSubscribed = false;
+        }
+
+        private void UnblockSidecarService_StateChanged(object sender, EventArgs e)
+        {
+            this.DispatchUnblockStatusUpdate();
+        }
+
+        private void DispatchUnblockStatusUpdate()
+        {
+            if (Application.Current == null || Application.Current.Dispatcher.CheckAccess())
+            {
+                this.UpdateUnblockStatus();
+                return;
+            }
+
+            Application.Current.Dispatcher.BeginInvoke(new Action(this.UpdateUnblockStatus));
+        }
+
+        private void UpdateUnblockStatus()
+        {
+            string key;
+            switch (this.unblockSidecarService.State)
+            {
+                case UnblockSidecarState.Disabled:
+                    key = "Language_Netease_Unblock_Status_Disabled";
+                    break;
+                case UnblockSidecarState.Stopped:
+                    key = "Language_Netease_Unblock_Status_Stopped";
+                    break;
+                case UnblockSidecarState.Starting:
+                    key = "Language_Netease_Unblock_Status_Starting";
+                    break;
+                case UnblockSidecarState.Ready:
+                    this.UnblockStatusText = string.Format(
+                        ResourceUtils.GetString("Language_Netease_Unblock_Status_Ready"),
+                        this.unblockSidecarService.Version);
+                    return;
+                case UnblockSidecarState.Incompatible:
+                    key = "Language_Netease_Unblock_Status_Incompatible";
+                    break;
+                default:
+                    key = "Language_Netease_Unblock_Status_Unavailable";
+                    break;
+            }
+
+            this.UnblockStatusText = ResourceUtils.GetString(key);
         }
 
         private string GetNeteaseErrorText(NeteaseError error)

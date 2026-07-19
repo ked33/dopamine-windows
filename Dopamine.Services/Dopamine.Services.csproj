@@ -238,9 +238,11 @@
     <Compile Include="Playback\EnqueueResult.cs" />
     <Compile Include="Playback\IPlaybackService.cs" />
     <Compile Include="Playback\IOnlineAudioFallbackProvider.cs" />
+    <Compile Include="Playback\IUnblockSidecarService.cs" />
     <Compile Include="Playback\IPlaybackSourceResolver.cs" />
     <Compile Include="Playback\NeteasePlaybackSourceResolver.cs" />
     <Compile Include="Playback\NeteaseTemporaryAudioCache.cs" />
+    <Compile Include="Playback\OnlineAudioFallbackModels.cs" />
     <Compile Include="Playback\PlaybackSourceResolution.cs" />
     <Compile Include="Playback\PlaybackSourceResolver.cs" />
     <Compile Include="Playback\QueuePersistenceMode.cs" />
@@ -252,6 +254,11 @@
     <Compile Include="Playback\PlaybackSuccessEventArgs.cs" />
     <Compile Include="Playback\PlaybackVolumeChangedEventArgs.cs" />
     <Compile Include="Playback\QueueManager.cs" />
+    <Compile Include="Playback\UnblockNeteaseMusicFallbackProvider.cs" />
+    <Compile Include="Playback\UnblockNeteaseMusicSettings.cs" />
+    <Compile Include="Playback\UnblockProcessJob.cs" />
+    <Compile Include="Playback\UnblockSidecarModels.cs" />
+    <Compile Include="Playback\UnblockSidecarService.cs" />
     <Compile Include="Playback\UpdateQueueMetadataResult.cs" />
     <Compile Include="Online\Netease\DpapiNeteaseSessionStore.cs" />
     <Compile Include="Online\Netease\INeteaseApiClient.cs" />

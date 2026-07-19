@@ -1,0 +1,26 @@
+{
+  "name": "dopamine-unblock-sidecar",
+  "version": "1.0.0",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "main": "sidecar.js",
+  "bin": "sidecar.js",
+  "scripts": {
+    "build": "pkg sidecar.js --public --no-bytecode --public-packages \"*\" --target node18-win-x64 --output dist/win-x64/Dopamine.UnblockSidecar.exe && pkg sidecar.js --public --no-bytecode --public-packages \"*\" --target node18-win-arm64 --output dist/win-arm64/Dopamine.UnblockSidecar.exe"
+  },
+  "dependencies": {
+    "@unblockneteasemusic/server": "0.28.0"
+  },
+  "devDependencies": {
+    "pkg": "5.8.1"
+  },
+  "pkg": {
+    "scripts": [
+      "node_modules/@unblockneteasemusic/server/src/**/*.js"
+    ],
+    "assets": [
+      "node_modules/@unblockneteasemusic/server/package.json"
+    ],
+    "outputPath": "dist"
+  }
+}

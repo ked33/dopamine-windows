@@ -237,6 +237,15 @@
     </Setting>
   </Namespace>
   <Namespace Name="Netease">
+    <Setting Name="EnableUnblockNeteaseMusic">
+      <Value>False</Value>
+    </Setting>
+    <Setting Name="UnblockSources">
+      <Value>kugou;bodian;kuwo</Value>
+    </Setting>
+    <Setting Name="UnblockEnableFlac">
+      <Value>False</Value>
+    </Setting>
     <Setting Name="DailyRecommendationsShuffle">
       <Value>False</Value>
     </Setting>

@@ -5,7 +5,9 @@ using Dopamine.Services.Online.Netease;
 using System;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,9 +16,14 @@ namespace Dopamine.Services.Playback
     public sealed class NeteaseTemporaryAudioCache
     {
         private const long MaximumCacheBytes = 512L * 1024L * 1024L;
+        private const int MaximumRedirects = 5;
         private static readonly TimeSpan MaximumAge = TimeSpan.FromHours(24);
 
-        private readonly HttpClient httpClient = new HttpClient();
+        private readonly HttpClient httpClient = new HttpClient(new HttpClientHandler
+        {
+            AllowAutoRedirect = false,
+            UseCookies = false
+        });
         private readonly string cacheDirectory;
         private long sessionGeneration;
 
@@ -73,10 +80,7 @@ namespace Dopamine.Services.Playback
 
                 try
                 {
-                    using (HttpResponseMessage response = await this.httpClient.GetAsync(
-                        url,
-                        HttpCompletionOption.ResponseHeadersRead,
-                        cancellationToken))
+                    using (HttpResponseMessage response = await this.GetValidatedResponseAsync(url, cancellationToken))
                     {
                         response.EnsureSuccessStatusCode();
 
@@ -130,6 +134,11 @@ namespace Dopamine.Services.Playback
                         }
                     }
 
+                    if (!System.IO.File.Exists(partialPath) || new FileInfo(partialPath).Length == 0)
+                    {
+                        return Failure();
+                    }
+
                     if (System.IO.File.Exists(finalPath))
                     {
                         TryDelete(finalPath);
@@ -165,7 +174,19 @@ namespace Dopamine.Services.Playback
                 return;
             }
 
-            foreach (string path in Directory.GetFiles(this.cacheDirectory, SanitizeSongId(songId) + ".*"))
+            string sanitizedSongId = SanitizeSongId(songId);
+            if (string.IsNullOrEmpty(sanitizedSongId))
+            {
+                return;
+            }
+
+            foreach (string path in Directory.GetFiles(this.cacheDirectory)
+                .Where(path =>
+                {
+                    string cacheKey = Path.GetFileNameWithoutExtension(path);
+                    return cacheKey.Equals(sanitizedSongId, StringComparison.OrdinalIgnoreCase) ||
+                        cacheKey.EndsWith("-" + sanitizedSongId, StringComparison.OrdinalIgnoreCase);
+                }))
             {
                 TryDelete(path);
             }
@@ -195,6 +216,125 @@ namespace Dopamine.Services.Playback
         {
             string extension = NormalizeExtension(mediaType, url);
             return Path.Combine(this.cacheDirectory, SanitizeSongId(songId) + extension);
+        }
+
+        private async Task<HttpResponseMessage> GetValidatedResponseAsync(
+            string url,
+            CancellationToken cancellationToken)
+        {
+            Uri currentUri;
+            if (!Uri.TryCreate(url, UriKind.Absolute, out currentUri))
+            {
+                throw new HttpRequestException("Invalid audio URL.");
+            }
+
+            for (int redirectCount = 0; redirectCount <= MaximumRedirects; redirectCount++)
+            {
+                await ValidatePublicHttpUriAsync(currentUri, cancellationToken);
+                HttpResponseMessage response = await this.httpClient.GetAsync(
+                    currentUri,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    cancellationToken);
+
+                if (!IsRedirect(response.StatusCode))
+                {
+                    try
+                    {
+                        response.EnsureSuccessStatusCode();
+                        return response;
+                    }
+                    catch
+                    {
+                        response.Dispose();
+                        throw;
+                    }
+                }
+
+                Uri location = response.Headers.Location;
+                response.Dispose();
+                if (location == null || redirectCount == MaximumRedirects)
+                {
+                    throw new HttpRequestException("Invalid audio redirect.");
+                }
+
+                currentUri = location.IsAbsoluteUri ? location : new Uri(currentUri, location);
+            }
+
+            throw new HttpRequestException("Too many audio redirects.");
+        }
+
+        private static async Task ValidatePublicHttpUriAsync(Uri uri, CancellationToken cancellationToken)
+        {
+            if (uri == null ||
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) ||
+                !string.IsNullOrEmpty(uri.UserInfo) ||
+                string.IsNullOrWhiteSpace(uri.Host) ||
+                uri.IsLoopback)
+            {
+                throw new HttpRequestException("Unsafe audio URL.");
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            IPAddress literalAddress;
+            IPAddress[] addresses = IPAddress.TryParse(uri.Host, out literalAddress)
+                ? new[] { literalAddress }
+                : await Dns.GetHostAddressesAsync(uri.DnsSafeHost);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (addresses.Length == 0 || addresses.Any(address => !IsPublicAddress(address)))
+            {
+                throw new HttpRequestException("Audio URL resolved to a non-public address.");
+            }
+        }
+
+        private static bool IsRedirect(HttpStatusCode statusCode)
+        {
+            int code = (int)statusCode;
+            return code == 301 || code == 302 || code == 303 || code == 307 || code == 308;
+        }
+
+        private static bool IsPublicAddress(IPAddress address)
+        {
+            if (address == null || IPAddress.IsLoopback(address) || address.Equals(IPAddress.Any) ||
+                address.Equals(IPAddress.IPv6Any) || address.Equals(IPAddress.None) ||
+                address.Equals(IPAddress.IPv6None))
+            {
+                return false;
+            }
+
+            if (address.IsIPv4MappedToIPv6)
+            {
+                address = address.MapToIPv4();
+            }
+
+            byte[] bytes = address.GetAddressBytes();
+            if (address.AddressFamily == AddressFamily.InterNetwork)
+            {
+                return !(
+                    bytes[0] == 0 ||
+                    bytes[0] == 10 ||
+                    bytes[0] == 127 ||
+                    (bytes[0] == 100 && bytes[1] >= 64 && bytes[1] <= 127) ||
+                    (bytes[0] == 169 && bytes[1] == 254) ||
+                    (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31) ||
+                    (bytes[0] == 192 && bytes[1] == 0 && bytes[2] == 0) ||
+                    (bytes[0] == 192 && bytes[1] == 0 && bytes[2] == 2) ||
+                    (bytes[0] == 192 && bytes[1] == 168) ||
+                    (bytes[0] == 198 && bytes[1] == 51 && bytes[2] == 100) ||
+                    (bytes[0] == 198 && (bytes[1] == 18 || bytes[1] == 19)) ||
+                    (bytes[0] == 203 && bytes[1] == 0 && bytes[2] == 113) ||
+                    bytes[0] >= 224);
+            }
+
+            if (address.AddressFamily == AddressFamily.InterNetworkV6)
+            {
+                return !address.IsIPv6LinkLocal &&
+                    !address.IsIPv6Multicast &&
+                    !address.IsIPv6SiteLocal &&
+                    (bytes[0] & 0xfe) != 0xfc;
+            }
+
+            return false;
         }
 
         private void TryCleanup()
@@ -274,7 +414,9 @@ namespace Dopamine.Services.Playback
 
         private static string SanitizeSongId(string songId)
         {
-            return new string((songId ?? string.Empty).Where(char.IsLetterOrDigit).ToArray());
+            return new string((songId ?? string.Empty)
+                .Where(character => char.IsLetterOrDigit(character) || character == '-' || character == '_')
+                .ToArray());
         }
 
         private static NeteaseResult<string> Failure()

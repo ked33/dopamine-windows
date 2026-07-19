@@ -30,6 +30,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Setup Node.js for Unblock sidecar
+        uses: actions/setup-node@v6
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: tools/UnblockSidecar/package-lock.json
+
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v3
 
@@ -39,6 +46,12 @@ jobs:
       - name: Restore NuGet packages
         shell: pwsh
         run: nuget restore $env:SOLUTION_FILE -NonInteractive
+
+      - name: Build Unblock sidecar
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & (Join-Path $env:GITHUB_WORKSPACE 'tools\UnblockSidecar\build.ps1')
 
       - name: Install WinRT contract references
         shell: pwsh
@@ -206,6 +219,34 @@ jobs:
 
           if ($LASTEXITCODE -ne 0) {
             throw "Dopamine tests failed with exit code $LASTEXITCODE"
+          }
+
+      - name: Prepare Unblock sidecar for Portable packaging
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $sidecarRoot = Join-Path $env:GITHUB_WORKSPACE 'tools\UnblockSidecar\dist'
+          $outputRoot = Join-Path $env:GITHUB_WORKSPACE $env:OUTPUT_DIR
+          $destinationRoot = Join-Path $outputRoot 'UnblockNeteaseMusic'
+          $requiredFiles = @(
+            'win-x64\Dopamine.UnblockSidecar.exe',
+            'win-arm64\Dopamine.UnblockSidecar.exe',
+            'licenses\COPYING',
+            'licenses\COPYING.LESSER',
+            'licenses\package-lock.json',
+            'licenses\README.md'
+          )
+
+          foreach ($relativePath in $requiredFiles) {
+            $source = Join-Path $sidecarRoot $relativePath
+            if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
+              throw "Required Unblock sidecar file is missing: $source"
+            }
+
+            $destination = Join-Path $destinationRoot $relativePath
+            New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
+            Copy-Item -LiteralPath $source -Destination $destination -Force
           }
 
       - name: Stage Portable Files

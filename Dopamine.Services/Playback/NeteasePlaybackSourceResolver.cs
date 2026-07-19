@@ -1,4 +1,5 @@
 ﻿using Dopamine.Core.Audio;
+using Dopamine.Core.Logging;
 using Dopamine.Services.Entities;
 using Dopamine.Services.Online.Netease;
 using System.Collections.Generic;
@@ -48,8 +49,7 @@ namespace Dopamine.Services.Playback
 
             if (!official.IsSuccess)
             {
-                if (official.Error != null &&
-                    (official.Error.Code == NeteaseErrorCode.NoCopyright || official.Error.Code == NeteaseErrorCode.EmptyUrl))
+                if (official.Error != null)
                 {
                     foreach (IOnlineAudioFallbackProvider provider in this.fallbackProviders)
                     {
@@ -58,14 +58,63 @@ namespace Dopamine.Services.Playback
                             continue;
                         }
 
-                        PlaybackSourceResolution fallback = await provider.TryResolveAsync(
-                            track.SourceInfo,
-                            official.Error,
-                            cancellationToken);
+                        OnlineAudioFallbackResult fallback;
+                        try
+                        {
+                            fallback = await provider.TryResolveAsync(
+                                new OnlineAudioFallbackRequest
+                                {
+                                    Track = track,
+                                    OfficialFailure = official.Error,
+                                    ForceRefresh = request != null && request.ForceRefresh
+                                },
+                                cancellationToken);
+                        }
+                        catch (System.OperationCanceledException)
+                        {
+                            return Failure(PlaybackFailureReason.Cancelled, "Language_Netease_Cancelled");
+                        }
+                        catch (System.Exception ex)
+                        {
+                            AppLog.Warning(
+                                "Online audio fallback failed. Provider={0}, ErrorType={1}",
+                                provider.Id,
+                                ex.GetType().Name);
+                            continue;
+                        }
 
                         if (fallback != null && fallback.IsSuccess)
                         {
-                            return fallback;
+                            string cacheKey = string.Format(
+                                "fallback-{0}-{1}-{2}",
+                                fallback.ProviderId ?? provider.Id,
+                                string.IsNullOrWhiteSpace(fallback.CacheVariant) ? "default" : fallback.CacheVariant,
+                                official.SongId ?? track.SourceInfo.RemoteId);
+                            NeteaseResult<string> fallbackCached = await this.temporaryAudioCache.GetOrDownloadAsync(
+                                cacheKey,
+                                fallback.Url,
+                                fallback.MediaType,
+                                request?.BufferingProgress,
+                                cancellationToken);
+
+                            if (fallbackCached.IsSuccess)
+                            {
+                                return new PlaybackSourceResolution
+                                {
+                                    IsSuccess = true,
+                                    AudioSource = AudioSource.FromLocalFile(fallbackCached.Value)
+                                };
+                            }
+
+                            if (fallbackCached.Error?.Code == NeteaseErrorCode.Cancelled)
+                            {
+                                return Failure(MapFailureReason(fallbackCached.Error), fallbackCached.Error.MessageKey);
+                            }
+                        }
+
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            return Failure(PlaybackFailureReason.Cancelled, "Language_Netease_Cancelled");
                         }
                     }
                 }

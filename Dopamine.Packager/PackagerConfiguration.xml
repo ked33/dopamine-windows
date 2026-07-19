@@ -14,6 +14,7 @@
         <Directory>Equalizer</Directory>
         <Directory>Icons</Directory>
         <Directory>Languages</Directory>
+        <Directory>UnblockNeteaseMusic</Directory>
         <Directory>x64</Directory>
         <Directory>x86</Directory>
         <Directory>FFmpeg\bin\windows\x64</Directory>

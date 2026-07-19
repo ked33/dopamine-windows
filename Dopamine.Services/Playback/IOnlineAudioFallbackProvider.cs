@@ -1,5 +1,4 @@
-﻿using Dopamine.Services.Entities;
-using Dopamine.Services.Online.Netease;
+﻿using Dopamine.Services.Online.Netease;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,9 +12,8 @@ namespace Dopamine.Services.Playback
 
         bool CanHandle(NeteaseError officialFailure);
 
-        Task<PlaybackSourceResolution> TryResolveAsync(
-            TrackSourceInfo sourceInfo,
-            NeteaseError officialFailure,
+        Task<OnlineAudioFallbackResult> TryResolveAsync(
+            OnlineAudioFallbackRequest request,
             CancellationToken cancellationToken);
     }
 }

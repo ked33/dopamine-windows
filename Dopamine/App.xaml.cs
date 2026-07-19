@@ -102,6 +102,18 @@ namespace Dopamine
             {
                 if (Container != null)
                 {
+                    Container.Resolve<IUnblockSidecarService>().Dispose();
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warning("Could not stop the Unblock sidecar on exit. ErrorType={0}", ex.GetType().Name);
+            }
+
+            try
+            {
+                if (Container != null)
+                {
                     Container.Resolve<NeteaseTemporaryAudioCache>().Clear();
                 }
             }
@@ -294,6 +306,8 @@ namespace Dopamine
                 containerRegistry.RegisterSingleton<INeteaseSessionService, NeteaseSessionService>();
                 containerRegistry.RegisterSingleton<INeteaseMusicService, NeteaseMusicService>();
                 containerRegistry.RegisterSingleton<INeteasePersonalFmService, NeteasePersonalFmService>();
+                containerRegistry.RegisterSingleton<IUnblockSidecarService, UnblockSidecarService>();
+                containerRegistry.RegisterSingleton<IOnlineAudioFallbackProvider, UnblockNeteaseMusicFallbackProvider>();
                 containerRegistry.RegisterSingleton<NeteaseTemporaryAudioCache>();
                 containerRegistry.RegisterSingleton<NeteasePlaybackSourceResolver>();
                 containerRegistry.RegisterSingleton<IPlaybackSourceResolver, PlaybackSourceResolver>();

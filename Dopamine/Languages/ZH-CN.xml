@@ -545,4 +545,15 @@
   <Text Key="Netease_Not_Interested">不感兴趣</Text>
   <Text Key="Netease_Not_Interested_Confirmation">确定将“{song}”标记为不感兴趣吗？网易云将调整后续推荐，此操作暂不支持撤销。</Text>
   <Text Key="Netease_Recommendation_Cache_Save_Failed">网易云推荐已更新，但无法保存本地加密缓存；下次进入时将重新获取。</Text>
+  <Text Key="Netease_Unblock_Description">可选的后备播放功能，仅处理版权受限、空播放地址、需要会员权限和仅提供试听的结果。官方地址可播放时始终优先使用，且此功能默认关闭。</Text>
+  <Text Key="Netease_Unblock_Risk_Notice">使用时，本地辅助进程会把歌曲 ID、标题、歌手、专辑和时长发送给所选公开音源进行匹配，但不会接收网易云 Cookie。可用性及允许的使用方式取决于所在地区和音源服务条款。</Text>
+  <Text Key="Netease_Unblock_Sources">后备音源顺序（至少保留一个）</Text>
+  <Text Key="Netease_Unblock_Enable_Flac">音源支持时优先使用无损音频；这可能增加匹配时间、下载大小和失败概率。</Text>
+  <Text Key="Netease_Unblock_Restart">启动 / 重新启动辅助进程</Text>
+  <Text Key="Netease_Unblock_Status_Disabled">状态：已关闭</Text>
+  <Text Key="Netease_Unblock_Status_Stopped">状态：未运行；需要后备播放时会自动启动</Text>
+  <Text Key="Netease_Unblock_Status_Starting">状态：正在启动……</Text>
+  <Text Key="Netease_Unblock_Status_Ready">状态：已就绪（UnblockNeteaseMusic {0}）</Text>
+  <Text Key="Netease_Unblock_Status_Unavailable">状态：不可用；不影响官方音源播放</Text>
+  <Text Key="Netease_Unblock_Status_Incompatible">状态：辅助进程协议不兼容，请重新安装或更新 Portable 包</Text>
 </Language>

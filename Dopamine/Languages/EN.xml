@@ -545,4 +545,15 @@
   <Text Key="Netease_Not_Interested">Not interested</Text>
   <Text Key="Netease_Not_Interested_Confirmation">Mark “{song}” as not interested? Netease will adjust future recommendations and this action cannot currently be undone.</Text>
   <Text Key="Netease_Recommendation_Cache_Save_Failed">The recommendation was updated online, but the local encrypted cache could not be saved. It will be fetched again next time.</Text>
+  <Text Key="Netease_Unblock_Description">Optional fallback for copyright-restricted, empty URL, subscription-required, and trial-only playback results. Official playable URLs always take priority, and the helper remains disabled by default.</Text>
+  <Text Key="Netease_Unblock_Risk_Notice">When used, the local helper sends the song ID, title, artists, album, and duration to the selected public music providers. It never receives your Netease Cookie. Availability and permitted use depend on your region and the providers' terms.</Text>
+  <Text Key="Netease_Unblock_Sources">Fallback source order (keep at least one enabled)</Text>
+  <Text Key="Netease_Unblock_Enable_Flac">Prefer lossless audio when a provider offers it. This may increase lookup time, download size, and failure rate.</Text>
+  <Text Key="Netease_Unblock_Restart">Start / restart helper</Text>
+  <Text Key="Netease_Unblock_Status_Disabled">Status: disabled</Text>
+  <Text Key="Netease_Unblock_Status_Stopped">Status: stopped; it will start automatically when fallback is needed</Text>
+  <Text Key="Netease_Unblock_Status_Starting">Status: starting…</Text>
+  <Text Key="Netease_Unblock_Status_Ready">Status: ready (UnblockNeteaseMusic {0})</Text>
+  <Text Key="Netease_Unblock_Status_Unavailable">Status: unavailable; official playback is unaffected</Text>
+  <Text Key="Netease_Unblock_Status_Incompatible">Status: incompatible helper protocol; reinstall or update the Portable package</Text>
 </Language>
