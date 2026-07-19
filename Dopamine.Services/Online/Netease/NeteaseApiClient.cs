@@ -4,6 +4,7 @@ using HyPlayer.NeteaseApi;
 using HyPlayer.NeteaseApi.ApiContracts;
 using HyPlayer.NeteaseApi.ApiContracts.Playlist;
 using HyPlayer.NeteaseApi.ApiContracts.PersonalFM;
+using HyPlayer.NeteaseApi.ApiContracts.Recommend;
 using HyPlayer.NeteaseApi.ApiContracts.Song;
 using HyPlayer.NeteaseApi.ApiContracts.User;
 using HyPlayer.NeteaseApi.Bases;
@@ -656,6 +657,59 @@ namespace Dopamine.Services.Online.Netease
                     SongId = songId,
                     Error = this.MapError(method, ex, 0, cancellationToken)
                 };
+            }
+        }
+
+        public async Task<NeteaseResult<string>> SearchSongIdAsync(string keyword, CancellationToken cancellationToken)
+        {
+            const string method = "SearchApi";
+
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                return NeteaseResult<string>.Failure(new NeteaseError(
+                    NeteaseErrorCode.EmptyResponse,
+                    "Language_Netease_Service_Unavailable"));
+            }
+
+            try
+            {
+                var request = new SearchRequest
+                {
+                    Keyword = keyword,
+                    Type = HyPlayer.NeteaseApi.Models.NeteaseResourceType.Song,
+                    Limit = 1,
+                    Offset = 0
+                };
+                var result = await this.handler
+                    .RequestAsync<SearchSongResponse, SearchRequest, SearchResponse, ErrorResultBase, SearchActualRequest>(
+                        NeteaseApis.SearchApi, request, cancellationToken);
+
+                if (result.IsError)
+                {
+                    return NeteaseResult<string>.Failure(this.MapError(method, result.Error, 0, cancellationToken));
+                }
+
+                if (result.Value == null || result.Value.Code != 200)
+                {
+                    return NeteaseResult<string>.Failure(this.MapResponseError(method, result.Value?.Code ?? 0));
+                }
+
+                string songId = (result.Value.Result?.Items ?? Array.Empty<HyPlayer.NeteaseApi.Models.ResponseModels.EmittedSongDtoWithPrivilege>())
+                    .Select(song => song.Id)
+                    .FirstOrDefault(id => !string.IsNullOrWhiteSpace(id));
+
+                if (string.IsNullOrWhiteSpace(songId))
+                {
+                    return NeteaseResult<string>.Failure(new NeteaseError(
+                        NeteaseErrorCode.EmptyResponse,
+                        "Language_Netease_Service_Unavailable"));
+                }
+
+                return NeteaseResult<string>.Success(songId);
+            }
+            catch (Exception ex)
+            {
+                return NeteaseResult<string>.Failure(this.MapError(method, ex, 0, cancellationToken));
             }
         }
 

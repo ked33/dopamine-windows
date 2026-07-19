@@ -47,6 +47,8 @@ namespace Dopamine.Services.Online.Netease
 
         Task<NeteaseAudioResolution> GetSongUrlAsync(string songId, string level, CancellationToken cancellationToken);
 
+        Task<NeteaseResult<string>> SearchSongIdAsync(string keyword, CancellationToken cancellationToken);
+
         Task<NeteaseLyricResult> GetLyricsAsync(string songId, CancellationToken cancellationToken);
 
         void ReplaceCookies(IReadOnlyDictionary<string, string> cookies);

@@ -290,6 +290,7 @@
     <Compile Include="Online\Netease\NeteaseLoginContext.cs" />
     <Compile Include="Online\Netease\NeteaseModels.cs" />
     <Compile Include="Online\Netease\NeteaseMusicService.cs" />
+    <Compile Include="Online\Netease\NeteaseOnlineLyricsApi.cs" />
     <Compile Include="Online\Netease\NeteasePersonalFmService.cs" />
     <Compile Include="Online\Netease\NeteaseTrackFactory.cs" />
     <Compile Include="Online\Netease\NeteaseQrStatusMapper.cs" />

@@ -54,6 +54,7 @@ namespace Dopamine.ViewModels.Common
         private bool isNowPlayingLyricsPageActive;
         private LyricsFactory lyricsFactory;
         private INeteaseMusicService neteaseMusicService;
+        private INeteaseApiClient neteaseApiClient;
         private CancellationTokenSource lyricsCancellationTokenSource;
         private int lyricsGeneration;
 
@@ -91,6 +92,7 @@ namespace Dopamine.ViewModels.Common
             this.eventAggregator = container.Resolve<IEventAggregator>();
             this.i18NService = container.Resolve<II18nService>();
             this.neteaseMusicService = container.Resolve<INeteaseMusicService>();
+            this.neteaseApiClient = container.Resolve<INeteaseApiClient>();
 
             this.highlightTimer.Interval = this.highlightTimerIntervalMilliseconds;
             this.highlightTimer.Elapsed += HighlightTimer_Elapsed;
@@ -166,7 +168,8 @@ namespace Dopamine.ViewModels.Common
         private void I18NService_LanguageChanged(object sender, EventArgs e)
         {
             this.lyricsFactory = new LyricsFactory(SettingsClient.Get<int>("Lyrics", "TimeoutSeconds"),
-                SettingsClient.Get<string>("Lyrics", "Providers"), this.info);
+                SettingsClient.Get<string>("Lyrics", "Providers"), this.info,
+                new NeteaseOnlineLyricsApi(this.neteaseApiClient, this.info));
         }
 
         private void RefreshTimer_Elapsed(object sender, ElapsedEventArgs e)

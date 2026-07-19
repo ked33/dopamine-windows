@@ -360,6 +360,13 @@ namespace Dopamine.Tests
                 throw new NotImplementedException();
             }
 
+            public Task<NeteaseResult<string>> SearchSongIdAsync(
+                string keyword,
+                CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException();
+            }
+
             public Task<NeteaseLyricResult> GetLyricsAsync(
                 string songId,
                 CancellationToken cancellationToken)

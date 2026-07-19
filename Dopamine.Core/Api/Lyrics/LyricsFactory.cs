@@ -12,7 +12,7 @@ namespace Dopamine.Core.Api.Lyrics
         private readonly IList<ILyricsApi> lyricsApis;
         private readonly IList<ILyricsApi> lyricsApisPipe;
 
-        public LyricsFactory(int timeoutSeconds, string providers, ILocalizationInfo info)
+        public LyricsFactory(int timeoutSeconds, string providers, ILocalizationInfo info, ILyricsApi neteaseLyricsApi = null)
         {
             lyricsApis = new List<ILyricsApi>();
             lyricsApisPipe = new List<ILyricsApi>();
@@ -21,7 +21,7 @@ namespace Dopamine.Core.Api.Lyrics
             if (providers.ToLower().Contains("lololyrics")) lyricsApis.Add(new LololyricsApi(timeoutSeconds));
             if (providers.ToLower().Contains("metrolyrics")) lyricsApis.Add(new MetroLyricsApi(timeoutSeconds));
             if (providers.ToLower().Contains("xiamilyrics")) lyricsApis.Add(new XiamiLyricsApi(timeoutSeconds, info));
-            if (providers.ToLower().Contains("neteaselyrics")) lyricsApis.Add(new NeteaseLyricsApi(timeoutSeconds, info));
+            if (providers.ToLower().Contains("neteaselyrics") && neteaseLyricsApi != null) lyricsApis.Add(neteaseLyricsApi);
         }
 
         public async Task<Lyrics> GetLyricsAsync(string artist, string title)
