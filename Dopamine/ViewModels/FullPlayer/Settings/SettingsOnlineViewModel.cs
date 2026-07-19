@@ -59,12 +59,15 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
         private bool isNeteaseQrExpired;
         private bool isNeteasePageLoaded;
         private int selectedNeteaseLoginMethod;
+        private ObservableCollection<string> neteaseAudioQualityOptions = new ObservableCollection<string>();
+        private int selectedNeteaseAudioQuality;
         private readonly IUnblockSidecarService unblockSidecarService;
         private bool checkBoxEnableUnblockNeteaseMusic;
         private bool checkBoxUnblockKugou;
         private bool checkBoxUnblockBodian;
         private bool checkBoxUnblockKuwo;
-        private bool checkBoxUnblockEnableFlac;
+        private ObservableCollection<string> unblockAudioQualityOptions = new ObservableCollection<string>();
+        private int selectedUnblockAudioQuality;
         private bool isUnblockRestarting;
         private string unblockStatusText;
         private bool isUnblockStateSubscribed;
@@ -78,6 +81,45 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
         public DelegateCommand RefreshNeteaseQrCommand { get; set; }
         public DelegateCommand NeteaseLogoutCommand { get; set; }
         public DelegateCommand RestartUnblockSidecarCommand { get; set; }
+
+        public ObservableCollection<string> NeteaseAudioQualityOptions => this.neteaseAudioQualityOptions;
+
+        public int SelectedNeteaseAudioQuality
+        {
+            get { return this.selectedNeteaseAudioQuality; }
+            set
+            {
+                if (value < (int)NeteaseAudioQuality.Standard ||
+                    value > (int)NeteaseAudioQuality.ExHigh ||
+                    !SetProperty<int>(ref this.selectedNeteaseAudioQuality, value))
+                {
+                    return;
+                }
+
+                NeteaseAudioQualitySettings.Quality = (NeteaseAudioQuality)value;
+            }
+        }
+
+        public ObservableCollection<string> UnblockAudioQualityOptions => this.unblockAudioQualityOptions;
+
+        public int SelectedUnblockAudioQuality
+        {
+            get { return this.selectedUnblockAudioQuality; }
+            set
+            {
+                if (value < 0 || value > 1 ||
+                    !SetProperty<int>(ref this.selectedUnblockAudioQuality, value))
+                {
+                    return;
+                }
+
+                UnblockNeteaseMusicSettings.EnableFlac = value == 1;
+                if (this.CheckBoxEnableUnblockNeteaseMusic)
+                {
+                    this.RestartUnblockSidecarAsync();
+                }
+            }
+        }
 
         public bool CheckBoxEnableUnblockNeteaseMusic
         {
@@ -119,24 +161,6 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
         {
             get { return this.checkBoxUnblockKuwo; }
             set { this.SetUnblockSource(ref this.checkBoxUnblockKuwo, value, nameof(this.CheckBoxUnblockKuwo)); }
-        }
-
-        public bool CheckBoxUnblockEnableFlac
-        {
-            get { return this.checkBoxUnblockEnableFlac; }
-            set
-            {
-                if (!SetProperty<bool>(ref this.checkBoxUnblockEnableFlac, value))
-                {
-                    return;
-                }
-
-                UnblockNeteaseMusicSettings.EnableFlac = value;
-                if (this.CheckBoxEnableUnblockNeteaseMusic)
-                {
-                    this.RestartUnblockSidecarAsync();
-                }
-            }
         }
 
         public bool IsUnblockRestarting
@@ -391,11 +415,13 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             this.neteaseSessionService = neteaseSessionService;
             this.i18nService = i18nService;
             this.unblockSidecarService = unblockSidecarService;
+            this.selectedNeteaseAudioQuality = (int)NeteaseAudioQualitySettings.Quality;
             this.checkBoxEnableUnblockNeteaseMusic = UnblockNeteaseMusicSettings.IsEnabled;
             this.checkBoxUnblockKugou = UnblockNeteaseMusicSettings.Sources.Contains("kugou");
             this.checkBoxUnblockBodian = UnblockNeteaseMusicSettings.Sources.Contains("bodian");
             this.checkBoxUnblockKuwo = UnblockNeteaseMusicSettings.Sources.Contains("kuwo");
-            this.checkBoxUnblockEnableFlac = UnblockNeteaseMusicSettings.EnableFlac;
+            this.selectedUnblockAudioQuality = UnblockNeteaseMusicSettings.EnableFlac ? 1 : 0;
+            this.RefreshAudioQualityOptions();
 
             this.RefreshNeteaseQrCommand = new DelegateCommand(
                 () => this.BeginNeteaseQrLoginAsync(),
@@ -412,6 +438,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             {
                 this.DispatchNeteaseStateUpdate();
                 this.DispatchUnblockStatusUpdate();
+                this.DispatchAudioQualityOptionsUpdate();
             };
             this.UpdateNeteaseState();
             this.UpdateUnblockStatus();
@@ -685,6 +712,29 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             }
 
             Application.Current.Dispatcher.Invoke(new Action(this.UpdateNeteaseState));
+        }
+
+        private void DispatchAudioQualityOptionsUpdate()
+        {
+            if (Application.Current == null || Application.Current.Dispatcher.CheckAccess())
+            {
+                this.RefreshAudioQualityOptions();
+                return;
+            }
+
+            Application.Current.Dispatcher.Invoke(new Action(this.RefreshAudioQualityOptions));
+        }
+
+        private void RefreshAudioQualityOptions()
+        {
+            this.NeteaseAudioQualityOptions.Clear();
+            this.NeteaseAudioQualityOptions.Add(ResourceUtils.GetString("Language_Netease_Audio_Quality_Standard"));
+            this.NeteaseAudioQualityOptions.Add(ResourceUtils.GetString("Language_Netease_Audio_Quality_Higher"));
+            this.NeteaseAudioQualityOptions.Add(ResourceUtils.GetString("Language_Netease_Audio_Quality_ExHigh"));
+
+            this.UnblockAudioQualityOptions.Clear();
+            this.UnblockAudioQualityOptions.Add(ResourceUtils.GetString("Language_Netease_Unblock_Prefer_320K"));
+            this.UnblockAudioQualityOptions.Add(ResourceUtils.GetString("Language_Netease_Unblock_Prefer_Flac"));
         }
 
         private void UpdateNeteaseState()

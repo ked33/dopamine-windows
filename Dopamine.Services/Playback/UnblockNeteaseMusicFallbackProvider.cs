@@ -85,7 +85,7 @@ namespace Dopamine.Services.Playback
                 Url = result.Url,
                 ProviderId = string.IsNullOrWhiteSpace(result.Source) ? this.Id : result.Source,
                 MediaType = result.MediaType,
-                CacheVariant = UnblockNeteaseMusicSettings.EnableFlac ? "flac" : "standard",
+                CacheVariant = UnblockNeteaseMusicSettings.EnableFlac ? "flac" : "320k",
                 Bitrate = result.Bitrate,
                 Size = result.Size
             };

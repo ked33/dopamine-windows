@@ -478,6 +478,11 @@
   <Text Key="Confirm_Clear_Blacklist">你确定你要清空黑名单吗？</Text>
   <Text Key="Error_Clearing_Blacklist">黑名单不能被清空。请查阅日志文件以了解更多信息。</Text>
   <Text Key="Netease_Music">网易云音乐</Text>
+  <Text Key="Netease_Audio_Quality">网易云播放音质</Text>
+  <Text Key="Netease_Audio_Quality_Description">向网易云请求所选音质；受账号权限和歌曲可用性影响，接口可能返回更低的实际比特率。</Text>
+  <Text Key="Netease_Audio_Quality_Standard">标准 128K</Text>
+  <Text Key="Netease_Audio_Quality_Higher">较高 192K</Text>
+  <Text Key="Netease_Audio_Quality_ExHigh">极高 320K</Text>
   <Text Key="Online_Source">在线来源</Text>
   <Text Key="Source">来源</Text>
   <Text Key="Netease_Loading_Audio_Information">正在获取音频信息…</Text>
@@ -552,7 +557,10 @@
   <Text Key="Netease_Unblock_Description">可选的后备播放功能，仅处理版权受限、空播放地址、需要会员权限和仅提供试听的结果。官方地址可播放时始终优先使用，且此功能默认关闭。</Text>
   <Text Key="Netease_Unblock_Risk_Notice">使用时，本地辅助进程会把歌曲 ID、标题、歌手、专辑和时长发送给所选公开音源进行匹配，但不会接收网易云 Cookie。可用性及允许的使用方式取决于所在地区和音源服务条款。</Text>
   <Text Key="Netease_Unblock_Sources">后备音源顺序（至少保留一个）</Text>
-  <Text Key="Netease_Unblock_Enable_Flac">音源支持时优先使用无损音频；这可能增加匹配时间、下载大小和失败概率。</Text>
+  <Text Key="Netease_Unblock_Audio_Quality">后备音源优先音质</Text>
+  <Text Key="Netease_Unblock_Audio_Quality_Description">“优先 320K”使用提供器的高品质 MP3 分支，不可用时自动降级；“优先 FLAC”可能增加匹配时间、下载大小和失败概率。</Text>
+  <Text Key="Netease_Unblock_Prefer_320K">优先 320K</Text>
+  <Text Key="Netease_Unblock_Prefer_Flac">优先 FLAC</Text>
   <Text Key="Netease_Unblock_Restart">启动 / 重新启动辅助进程</Text>
   <Text Key="Netease_Unblock_Status_Disabled">状态：已关闭</Text>
   <Text Key="Netease_Unblock_Status_Stopped">状态：未运行；需要后备播放时会自动启动</Text>

@@ -524,7 +524,8 @@ namespace Dopamine.Services.Online.Netease
             }
 
             long generation = this.sessionService.SessionGeneration;
-            string key = generation + "|standard|" + songId;
+            string qualityLevel = NeteaseAudioQualitySettings.Level;
+            string key = generation + "|" + qualityLevel + "|" + songId;
             Task<NeteaseAudioResolution> task;
 
             lock (this.cacheLock)
@@ -543,7 +544,7 @@ namespace Dopamine.Services.Online.Netease
 
                 if (!this.audioInFlight.TryGetValue(key, out task))
                 {
-                    task = this.apiClient.GetSongUrlAsync(songId, "standard", cancellationToken);
+                    task = this.apiClient.GetSongUrlAsync(songId, qualityLevel, cancellationToken);
                     this.audioInFlight[key] = task;
                 }
             }
@@ -551,6 +552,22 @@ namespace Dopamine.Services.Online.Netease
             try
             {
                 NeteaseAudioResolution result = await task;
+
+                if (result == null)
+                {
+                    result = new NeteaseAudioResolution
+                    {
+                        SongId = songId,
+                        QualityLevel = qualityLevel,
+                        Error = new NeteaseError(
+                            NeteaseErrorCode.ApiChanged,
+                            "Language_Netease_Service_Unavailable")
+                    };
+                }
+                else
+                {
+                    result.QualityLevel = qualityLevel;
+                }
 
                 if (!result.IsSuccess && IsAuthenticationError(result.Error))
                 {

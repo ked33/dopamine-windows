@@ -478,6 +478,11 @@
   <Text Key="Confirm_Clear_Blacklist">Are you sure you want to clear the blacklist?</Text>
   <Text Key="Error_Clearing_Blacklist">The blacklist could not be cleared. Please consult the log file for more information.</Text>
   <Text Key="Netease_Music">Netease Cloud Music</Text>
+  <Text Key="Netease_Audio_Quality">Netease playback quality</Text>
+  <Text Key="Netease_Audio_Quality_Description">Requests the selected quality from Netease. Account permissions and availability may cause the service to return a lower actual bitrate.</Text>
+  <Text Key="Netease_Audio_Quality_Standard">Standard 128K</Text>
+  <Text Key="Netease_Audio_Quality_Higher">Higher 192K</Text>
+  <Text Key="Netease_Audio_Quality_ExHigh">ExHigh 320K</Text>
   <Text Key="Online_Source">Online source</Text>
   <Text Key="Source">Source</Text>
   <Text Key="Netease_Loading_Audio_Information">Loading audio information…</Text>
@@ -552,7 +557,10 @@
   <Text Key="Netease_Unblock_Description">Optional fallback for copyright-restricted, empty URL, subscription-required, and trial-only playback results. Official playable URLs always take priority, and the helper remains disabled by default.</Text>
   <Text Key="Netease_Unblock_Risk_Notice">When used, the local helper sends the song ID, title, artists, album, and duration to the selected public music providers. It never receives your Netease Cookie. Availability and permitted use depend on your region and the providers' terms.</Text>
   <Text Key="Netease_Unblock_Sources">Fallback source order (keep at least one enabled)</Text>
-  <Text Key="Netease_Unblock_Enable_Flac">Prefer lossless audio when a provider offers it. This may increase lookup time, download size, and failure rate.</Text>
+  <Text Key="Netease_Unblock_Audio_Quality">Preferred fallback quality</Text>
+  <Text Key="Netease_Unblock_Audio_Quality_Description">Prefer 320K uses the provider's high-quality MP3 branch and falls back when unavailable. Prefer FLAC may increase lookup time, download size, and failure rate.</Text>
+  <Text Key="Netease_Unblock_Prefer_320K">Prefer 320K</Text>
+  <Text Key="Netease_Unblock_Prefer_Flac">Prefer FLAC</Text>
   <Text Key="Netease_Unblock_Restart">Start / restart helper</Text>
   <Text Key="Netease_Unblock_Status_Disabled">Status: disabled</Text>
   <Text Key="Netease_Unblock_Status_Stopped">Status: stopped; it will start automatically when fallback is needed</Text>

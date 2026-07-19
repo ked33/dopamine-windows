@@ -62,6 +62,13 @@
                     <Button Margin="0,12,0,0" HorizontalAlignment="Left" Style="{StaticResource RegularButton}" Content="{DynamicResource Language_Sign_Out}" Command="{Binding NeteaseLogoutCommand}"/>
                 </StackPanel>
             </Grid>
+            <StackPanel Margin="0,15,0,0" MaxWidth="620" HorizontalAlignment="Left">
+                <TextBlock Text="{DynamicResource Language_Netease_Audio_Quality}" Foreground="{DynamicResource Brush_PrimaryText}"/>
+                <ComboBox Margin="0,8,0,0" Width="220" HorizontalAlignment="Left" Style="{StaticResource MetroComboBox}"
+                          ItemsSource="{Binding NeteaseAudioQualityOptions}"
+                          SelectedIndex="{Binding SelectedNeteaseAudioQuality, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Margin="0,8,0,0" Text="{DynamicResource Language_Netease_Audio_Quality_Description}" Foreground="{DynamicResource Brush_SecondaryText}" TextWrapping="Wrap"/>
+            </StackPanel>
             <Label Margin="0,20,0,0" Style="{StaticResource TitleLabel}" Content="UnblockNeteaseMusic" />
             <TextBlock Margin="0,5,0,0" MaxWidth="620" HorizontalAlignment="Left" Text="{DynamicResource Language_Netease_Unblock_Description}" Foreground="{DynamicResource Brush_PrimaryText}" TextWrapping="Wrap"/>
             <TextBlock Margin="0,8,0,0" MaxWidth="620" HorizontalAlignment="Left" Text="{DynamicResource Language_Netease_Unblock_Risk_Notice}" Foreground="{DynamicResource Brush_SecondaryText}" TextWrapping="Wrap"/>
@@ -73,8 +80,11 @@
                     <dc:Windows10ToggleSwitch HorizontalAlignment="Left" FontSize="12" OnLabel="Bodian" OffLabel="Bodian" Foreground="{DynamicResource Brush_PrimaryText}" Accent="{DynamicResource Brush_Accent}" IsChecked="{Binding CheckBoxUnblockBodian}"/>
                     <dc:Windows10ToggleSwitch HorizontalAlignment="Left" FontSize="12" OnLabel="Kuwo" OffLabel="Kuwo" Foreground="{DynamicResource Brush_PrimaryText}" Accent="{DynamicResource Brush_Accent}" IsChecked="{Binding CheckBoxUnblockKuwo}"/>
                 </UniformGrid>
-                <TextBlock Margin="0,12,0,0" Text="{DynamicResource Language_Netease_Unblock_Enable_Flac}" Foreground="{DynamicResource Brush_PrimaryText}" TextWrapping="Wrap"/>
-                <dc:Windows10ToggleSwitch Margin="0,8,0,0" HorizontalAlignment="Left" FontSize="12" OnLabel="{DynamicResource Language_Yes}" OffLabel="{DynamicResource Language_No}" Foreground="{DynamicResource Brush_PrimaryText}" Accent="{DynamicResource Brush_Accent}" IsChecked="{Binding CheckBoxUnblockEnableFlac}"/>
+                <TextBlock Margin="0,12,0,0" Text="{DynamicResource Language_Netease_Unblock_Audio_Quality}" Foreground="{DynamicResource Brush_PrimaryText}" TextWrapping="Wrap"/>
+                <ComboBox Margin="0,8,0,0" Width="220" HorizontalAlignment="Left" Style="{StaticResource MetroComboBox}"
+                          ItemsSource="{Binding UnblockAudioQualityOptions}"
+                          SelectedIndex="{Binding SelectedUnblockAudioQuality, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Margin="0,8,0,0" MaxWidth="620" HorizontalAlignment="Left" Text="{DynamicResource Language_Netease_Unblock_Audio_Quality_Description}" Foreground="{DynamicResource Brush_SecondaryText}" TextWrapping="Wrap"/>
                 <Grid Margin="0,12,0,0" MaxWidth="620" HorizontalAlignment="Left">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>

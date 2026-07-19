@@ -171,6 +171,8 @@ namespace Dopamine.Services.Online.Netease
 
         public string Type { get; set; }
 
+        public string QualityLevel { get; set; }
+
         public long BitRate { get; set; }
 
         public long Size { get; set; }

@@ -124,8 +124,12 @@ namespace Dopamine.Services.Playback
 
             // Direct CSCore HTTPS playback has not passed the required runtime probe on this machine.
             // Use the documented temporary-file compatibility path until that probe is completed.
+            string officialCacheKey = string.Format(
+                "official-{0}-{1}",
+                string.IsNullOrWhiteSpace(official.QualityLevel) ? "default" : official.QualityLevel,
+                official.SongId);
             NeteaseResult<string> cached = await this.temporaryAudioCache.GetOrDownloadAsync(
-                official.SongId,
+                officialCacheKey,
                 official.Url,
                 official.Type,
                 request?.BufferingProgress,
