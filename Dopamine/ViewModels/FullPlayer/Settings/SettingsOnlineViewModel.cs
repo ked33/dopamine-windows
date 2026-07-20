@@ -79,6 +79,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
         private int selectedDownloadSourcePriority;
         private ObservableCollection<string> gdDownloadQualityOptions = new ObservableCollection<string>();
         private int selectedGdDownloadQuality;
+        private bool checkBoxPersonalFmFilterLikedSongs;
 
         public DelegateCommand AddCommand { get; set; }
         public DelegateCommand EditCommand { get; set; }
@@ -161,6 +162,18 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                 }
 
                 NeteaseAudioQualitySettings.Quality = (NeteaseAudioQuality)value;
+            }
+        }
+
+        public bool CheckBoxPersonalFmFilterLikedSongs
+        {
+            get { return this.checkBoxPersonalFmFilterLikedSongs; }
+            set
+            {
+                if (SetProperty<bool>(ref this.checkBoxPersonalFmFilterLikedSongs, value))
+                {
+                    NeteasePersonalFmSettings.FilterLikedSongs = value;
+                }
             }
         }
 
@@ -480,6 +493,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             this.i18nService = i18nService;
             this.unblockSidecarService = unblockSidecarService;
             this.selectedNeteaseAudioQuality = (int)NeteaseAudioQualitySettings.Quality;
+            this.checkBoxPersonalFmFilterLikedSongs = NeteasePersonalFmSettings.FilterLikedSongs;
             this.checkBoxEnableUnblockNeteaseMusic = UnblockNeteaseMusicSettings.IsEnabled;
             this.checkBoxUnblockKugou = UnblockNeteaseMusicSettings.Sources.Contains("kugou");
             this.checkBoxUnblockBodian = UnblockNeteaseMusicSettings.Sources.Contains("bodian");

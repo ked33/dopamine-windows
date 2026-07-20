@@ -516,6 +516,8 @@
   <Text Key="Netease_Personal_Fm_Buffered">已缓冲后续 {0} 首歌曲</Text>
   <Text Key="Netease_Personal_Fm_Empty">网易云没有返回可播放的私人 FM 歌曲。</Text>
   <Text Key="Netease_Personal_Fm_Not_Active">当前未处于私人 FM 模式。</Text>
+  <Text Key="Netease_Personal_Fm_Filter_Liked">过滤已经喜欢的歌曲</Text>
+  <Text Key="Netease_Personal_Fm_Filter_Liked_Description">开启后，私人 FM 会跳过已加入“我喜欢的音乐”的推荐歌曲。</Text>
   <Text Key="Netease_Operation_In_Progress">另一个网易云操作仍在进行中。</Text>
   <Text Key="Netease_Daily_Recommendations_Count">首每日推荐</Text>
   <Text Key="Netease_Play_All">播放全部</Text>

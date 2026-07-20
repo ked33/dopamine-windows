@@ -516,6 +516,8 @@
   <Text Key="Netease_Personal_Fm_Buffered">{0} upcoming tracks buffered</Text>
   <Text Key="Netease_Personal_Fm_Empty">Netease did not return any Personal FM tracks.</Text>
   <Text Key="Netease_Personal_Fm_Not_Active">Personal FM is not currently active.</Text>
+  <Text Key="Netease_Personal_Fm_Filter_Liked">Filter songs you have already liked</Text>
+  <Text Key="Netease_Personal_Fm_Filter_Liked_Description">When enabled, Personal FM skips recommendations that are already in your Liked Music.</Text>
   <Text Key="Netease_Operation_In_Progress">Another Netease operation is still in progress.</Text>
   <Text Key="Netease_Daily_Recommendations_Count">daily recommendations</Text>
   <Text Key="Netease_Play_All">Play all</Text>

@@ -293,6 +293,7 @@
     <Compile Include="Online\Netease\NeteaseMusicService.cs" />
     <Compile Include="Online\Netease\NeteaseOnlineLyricsApi.cs" />
     <Compile Include="Online\Netease\NeteasePersonalFmService.cs" />
+    <Compile Include="Online\Netease\NeteasePersonalFmSettings.cs" />
     <Compile Include="Online\Netease\NeteaseTrackFactory.cs" />
     <Compile Include="Online\Netease\NeteaseQrStatusMapper.cs" />
     <Compile Include="Online\Netease\NeteaseSessionService.cs" />

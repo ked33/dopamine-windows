@@ -2,7 +2,7 @@
 <Settings>
   <Namespace Name="Configuration">
     <Setting Name="Version">
-      <Value>124</Value>
+      <Value>125</Value>
     </Setting>
     <Setting Name="IsPortable">
       <Value>False</Value>
@@ -283,6 +283,9 @@
     </Setting>
     <Setting Name="IntelligenceRecommendationsShuffle">
       <Value>False</Value>
+    </Setting>
+    <Setting Name="PersonalFmFilterLikedSongs">
+      <Value>True</Value>
     </Setting>
   </Namespace>
   <Namespace Name="Ordering">

@@ -687,7 +687,7 @@ namespace Dopamine.Services.Online.Netease
             }
         }
 
-        private async Task<NeteaseResult<IReadOnlyCollection<string>>> GetLikedSongIdsAsync(
+        public async Task<NeteaseResult<IReadOnlyCollection<string>>> GetLikedSongIdsAsync(
             CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)

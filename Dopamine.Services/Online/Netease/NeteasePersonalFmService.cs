@@ -14,6 +14,7 @@ namespace Dopamine.Services.Online.Netease
     public sealed class NeteasePersonalFmService : INeteasePersonalFmService
     {
         private const int RefillThreshold = 1;
+        private const int MaxFetchAttemptsWhenFiltering = 3;
 
         private readonly IContainerProvider container;
         private readonly INeteaseMusicService musicService;
@@ -90,16 +91,16 @@ namespace Dopamine.Services.Online.Netease
                 this.SetBusy(true);
                 this.SetError(null);
 
-                NeteaseResult<IReadOnlyList<NeteasePersonalFmItem>> result =
-                    await this.musicService.GetPersonalFmAsync(token);
+                NeteaseResult<List<TrackViewModel>> fetchResult =
+                    await this.FetchTracksAsync(null, token);
 
-                if (!result.IsSuccess)
+                if (!fetchResult.IsSuccess)
                 {
-                    this.SetError(result.Error);
-                    return NeteaseResult<bool>.Failure(result.Error);
+                    this.SetError(fetchResult.Error);
+                    return NeteaseResult<bool>.Failure(fetchResult.Error);
                 }
 
-                List<TrackViewModel> tracks = this.MapTracks(result.Value, null);
+                List<TrackViewModel> tracks = fetchResult.Value;
 
                 if (tracks.Count == 0)
                 {
@@ -283,14 +284,19 @@ namespace Dopamine.Services.Online.Netease
                     sessionToken,
                     cancellationToken))
                 {
-                    NeteaseResult<IReadOnlyList<NeteasePersonalFmItem>> result =
-                        await this.musicService.GetPersonalFmAsync(linkedSource.Token);
+                    var existingIds = new HashSet<string>(
+                        this.playbackService.Queue
+                            .Select(x => x?.SourceInfo?.RemoteId)
+                            .Where(x => !string.IsNullOrWhiteSpace(x)),
+                        StringComparer.Ordinal);
+                    NeteaseResult<List<TrackViewModel>> fetchResult =
+                        await this.FetchTracksAsync(existingIds, linkedSource.Token);
 
-                    if (!result.IsSuccess)
+                    if (!fetchResult.IsSuccess)
                     {
-                        if (result.Error?.Code != NeteaseErrorCode.Cancelled)
+                        if (fetchResult.Error?.Code != NeteaseErrorCode.Cancelled)
                         {
-                            this.SetError(result.Error);
+                            this.SetError(fetchResult.Error);
                         }
 
                         return;
@@ -301,12 +307,7 @@ namespace Dopamine.Services.Online.Netease
                         return;
                     }
 
-                    var existingIds = new HashSet<string>(
-                        this.playbackService.Queue
-                            .Select(x => x?.SourceInfo?.RemoteId)
-                            .Where(x => !string.IsNullOrWhiteSpace(x)),
-                        StringComparer.Ordinal);
-                    List<TrackViewModel> tracks = this.MapTracks(result.Value, existingIds);
+                    List<TrackViewModel> tracks = fetchResult.Value;
 
                     if (tracks.Count > 0)
                     {
@@ -380,9 +381,62 @@ namespace Dopamine.Services.Online.Netease
             }
         }
 
+        private async Task<NeteaseResult<List<TrackViewModel>>> FetchTracksAsync(
+            ISet<string> existingIds,
+            CancellationToken cancellationToken)
+        {
+            ISet<string> excludedIds = await this.GetLikedSongIdsToFilterAsync(cancellationToken);
+            ISet<string> seenIds = existingIds ?? new HashSet<string>(StringComparer.Ordinal);
+            var tracks = new List<TrackViewModel>();
+            int maxAttempts = excludedIds == null ? 1 : MaxFetchAttemptsWhenFiltering;
+
+            for (int attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                NeteaseResult<IReadOnlyList<NeteasePersonalFmItem>> result =
+                    await this.musicService.GetPersonalFmAsync(cancellationToken);
+
+                if (!result.IsSuccess)
+                {
+                    return NeteaseResult<List<TrackViewModel>>.Failure(result.Error);
+                }
+
+                tracks.AddRange(this.MapTracks(result.Value, seenIds, excludedIds));
+
+                if (tracks.Count > 0 || (result.Value?.Count ?? 0) == 0)
+                {
+                    break;
+                }
+            }
+
+            return NeteaseResult<List<TrackViewModel>>.Success(tracks);
+        }
+
+        private async Task<ISet<string>> GetLikedSongIdsToFilterAsync(
+            CancellationToken cancellationToken)
+        {
+            if (!NeteasePersonalFmSettings.FilterLikedSongs)
+            {
+                return null;
+            }
+
+            NeteaseResult<IReadOnlyCollection<string>> result =
+                await this.musicService.GetLikedSongIdsAsync(cancellationToken);
+
+            if (!result.IsSuccess || result.Value == null || result.Value.Count == 0)
+            {
+                // Filtering is best effort: when the liked songs cannot be loaded,
+                // keep personal FM playable instead of failing the whole session.
+                return null;
+            }
+
+            return result.Value as ISet<string> ??
+                new HashSet<string>(result.Value, StringComparer.Ordinal);
+        }
+
         private List<TrackViewModel> MapTracks(
             IReadOnlyList<NeteasePersonalFmItem> items,
-            ISet<string> existingIds)
+            ISet<string> existingIds,
+            ISet<string> excludedIds)
         {
             var tracks = new List<TrackViewModel>();
 
@@ -390,7 +444,9 @@ namespace Dopamine.Services.Online.Netease
             {
                 string id = item?.Song?.Id;
 
-                if (string.IsNullOrWhiteSpace(id) || (existingIds != null && !existingIds.Add(id)))
+                if (string.IsNullOrWhiteSpace(id) ||
+                    (excludedIds != null && excludedIds.Contains(id)) ||
+                    (existingIds != null && !existingIds.Add(id)))
                 {
                     continue;
                 }

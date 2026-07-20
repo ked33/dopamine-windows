@@ -34,6 +34,9 @@ namespace Dopamine.Services.Online.Netease
             string songId,
             CancellationToken cancellationToken);
 
+        Task<NeteaseResult<IReadOnlyCollection<string>>> GetLikedSongIdsAsync(
+            CancellationToken cancellationToken);
+
         Task<NeteaseResult<bool>> SetSongLikedAsync(
             string songId,
             bool isLiked,
