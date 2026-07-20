@@ -45,6 +45,7 @@ using Dopamine.Services.Update;
 using Dopamine.Services.Win32Input;
 using Dopamine.Services.WindowsIntegration;
 using Dopamine.Utils;
+using Dopamine.ViewModels.FullPlayer.Settings;
 using Dopamine.Views;
 using Dopamine.Views.Common;
 using Dopamine.Views.FullPlayer;
@@ -274,6 +275,7 @@ namespace Dopamine
             {
                 containerRegistry.RegisterSingleton<ICacheService, CacheService>();
                 containerRegistry.RegisterSingleton<IUpdateService, UpdateService>();
+                containerRegistry.RegisterSingleton<IThemeColorService, ThemeColorService>();
                 containerRegistry.RegisterSingleton<IAppearanceService, AppearanceService>();
                 containerRegistry.RegisterSingleton<II18nService, I18nService>();
                 containerRegistry.RegisterSingleton<IDialogService, DialogService>();
@@ -405,6 +407,8 @@ namespace Dopamine
                 containerRegistry.Register<object, SettingsMenu>(typeof(SettingsMenu).FullName);
                 containerRegistry.Register<object, Settings>(typeof(Settings).FullName);
                 containerRegistry.Register<object, SettingsAppearance>(typeof(SettingsAppearance).FullName);
+                containerRegistry.Register(typeof(ThemeColorsEditor));
+                containerRegistry.Register(typeof(ThemeColorsEditorViewModel));
                 containerRegistry.Register<object, SettingsBehaviour>(typeof(SettingsBehaviour).FullName);
                 containerRegistry.Register<object, SettingsOnline>(typeof(SettingsOnline).FullName);
                 containerRegistry.Register<object, SettingsPlayback>(typeof(SettingsPlayback).FullName);

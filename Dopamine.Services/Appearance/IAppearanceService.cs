@@ -15,6 +15,7 @@ namespace Dopamine.Services.Appearance
         event EventHandler ColorSchemeChanged;
         event EventHandler ColorSchemesChanged;
         Task ApplyColorSchemeAsync(string selectedColorScheme, bool followWindowsColor, bool followAlbumCoverColor);
+        Task RefreshAppliedColorsAsync();
         void WatchWindowsColor(object window);
         void OnThemeChanged(bool useLightTheme);
         void OnColorSchemeChanged(EventArgs e);

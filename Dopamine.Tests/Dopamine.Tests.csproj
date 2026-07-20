@@ -161,6 +161,7 @@
     <Compile Include="NeteaseWebLoginContractTests.cs" />
     <Compile Include="OnlineTrackViewModelTests.cs" />
     <Compile Include="TrackPathGeneratorTests.cs" />
+    <Compile Include="ThemeColorProfileTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Dopamine.Core\Dopamine.Core.csproj">

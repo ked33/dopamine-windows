@@ -149,6 +149,10 @@
     <Compile Include="Appearance\AppearanceService.cs" />
     <Compile Include="Appearance\ColorScheme.cs" />
     <Compile Include="Appearance\IAppearanceService.cs" />
+    <Compile Include="Appearance\IThemeColorService.cs" />
+    <Compile Include="Appearance\SemanticColorToken.cs" />
+    <Compile Include="Appearance\ThemeColorProfile.cs" />
+    <Compile Include="Appearance\ThemeColorService.cs" />
     <Compile Include="Blacklist\BlacklistService.cs" />
     <Compile Include="Blacklist\IBlacklistService.cs" />
     <Compile Include="Cache\CacheService.cs" />

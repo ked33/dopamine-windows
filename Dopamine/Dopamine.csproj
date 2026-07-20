@@ -351,6 +351,8 @@
     <Compile Include="ViewModels\FullPlayer\Settings\SettingsPlaybackViewModel.cs" />
     <Compile Include="ViewModels\FullPlayer\Settings\SettingsStartupViewModel.cs" />
     <Compile Include="ViewModels\FullPlayer\Settings\SettingsViewModel.cs" />
+    <Compile Include="ViewModels\FullPlayer\Settings\ThemeColorItemViewModel.cs" />
+    <Compile Include="ViewModels\FullPlayer\Settings\ThemeColorsEditorViewModel.cs" />
     <Compile Include="ViewModels\InitializeViewModel.cs" />
     <Compile Include="ViewModels\MiniPlayer\CoverPlayerViewModel.cs" />
     <Compile Include="ViewModels\MiniPlayer\MicroPlayerViewModel.cs" />
@@ -569,6 +571,9 @@
     </Compile>
     <Compile Include="Views\FullPlayer\Settings\SettingsAppearance.xaml.cs">
       <DependentUpon>SettingsAppearance.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\FullPlayer\Settings\ThemeColorsEditor.xaml.cs">
+      <DependentUpon>ThemeColorsEditor.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\FullPlayer\Settings\SettingsBehaviour.xaml.cs">
       <DependentUpon>SettingsBehaviour.xaml</DependentUpon>
@@ -1483,6 +1488,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\FullPlayer\Settings\SettingsAppearance.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\FullPlayer\Settings\ThemeColorsEditor.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

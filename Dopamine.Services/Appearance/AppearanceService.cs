@@ -29,11 +29,13 @@ namespace Dopamine.Services.Appearance
         private IPlaybackService playbackService;
         private IMetadataService metadataService;
         private IAppVisibilityService appVisibilityService;
+        private IThemeColorService themeColorService;
         private const int WM_DWMCOLORIZATIONCOLORCHANGED = 0x320;
         private bool followAlbumCoverColor;
         private GentleFolderWatcher watcher;
         private string colorSchemesSubDirectory;
         private bool followWindowsColor = false;
+        private bool useLightTheme;
         private List<ColorScheme> colorSchemes = new List<ColorScheme>();
         private ColorScheme[] builtInColorSchemes = {
                                                         new ColorScheme {
@@ -58,13 +60,15 @@ namespace Dopamine.Services.Appearance
                                                         }
                                                     };
 
-        public AppearanceService(IPlaybackService playbackService, IMetadataService metadataService, IAppVisibilityService appVisibilityService) : base()
+        public AppearanceService(IPlaybackService playbackService, IMetadataService metadataService, IAppVisibilityService appVisibilityService, IThemeColorService themeColorService) : base()
         {
             // Services
             // --------
             this.playbackService = playbackService;
             this.metadataService = metadataService;
             this.appVisibilityService = appVisibilityService;
+            this.themeColorService = themeColorService;
+            this.useLightTheme = SettingsClient.Get<bool>("Appearance", "EnableLightTheme");
 
             playbackService.PlaybackSuccess += PlaybackService_PlaybackSuccess;
             this.appVisibilityService.VisibilityChanged += AppVisibilityService_VisibilityChanged;
@@ -315,6 +319,7 @@ namespace Dopamine.Services.Appearance
 
         public void ApplyTheme(bool useLightTheme)
         {
+            this.useLightTheme = useLightTheme;
             string themeName = "Dark";
 
             if (useLightTheme)
@@ -329,6 +334,11 @@ namespace Dopamine.Services.Appearance
             // Prevent exceptions by adding the new dictionary before removing the old one
             Application.Current.Resources.MergedDictionaries.Add(newThemeDict);
             Application.Current.Resources.MergedDictionaries.Remove(currentThemeDict);
+
+            if (this.themeColorService != null)
+            {
+                this.themeColorService.ReapplyOverrides(useLightTheme);
+            }
 
             this.OnThemeChanged(useLightTheme);
         }
@@ -390,6 +400,16 @@ namespace Dopamine.Services.Appearance
                 accentColor = HSLColor.Normalize(accentColor, 30);
             }
 
+            // User accent overrides from Theme Colors editor take precedence
+            if (this.themeColorService != null && this.themeColorService.HasAccentOverride(this.useLightTheme))
+            {
+                Nullable<Color> overrideAccent = this.themeColorService.GetOverrideColor(this.useLightTheme, "Accent");
+                if (overrideAccent.HasValue)
+                {
+                    accentColor = overrideAccent.Value;
+                }
+            }
+
             if (Application.Current.Resources["Color_Accent"] == null)
             {
                 this.ApplyAccentColor(accentColor);
@@ -406,6 +426,11 @@ namespace Dopamine.Services.Appearance
 
             // Re-apply theme to ensure brushes referencing AccentColor are updated
             this.ReApplyTheme();
+            if (this.themeColorService != null)
+            {
+                this.themeColorService.ReapplyOverrides(this.useLightTheme);
+            }
+
             this.OnColorSchemeChanged(new EventArgs());
         }
 
@@ -430,7 +455,33 @@ namespace Dopamine.Services.Appearance
 
             // Re-apply theme to ensure brushes referencing AccentColor are updated
             this.ReApplyTheme();
+            if (this.themeColorService != null)
+            {
+                this.themeColorService.ReapplyOverrides(this.useLightTheme);
+            }
+
             this.OnColorSchemeChanged(new EventArgs());
+        }
+
+        /// <summary>
+        /// Reloads the current theme defaults, re-applies the active color scheme, then theme color overrides.
+        /// Used when clearing custom theme colors so defaults are restored correctly.
+        /// </summary>
+        public async Task RefreshAppliedColorsAsync()
+        {
+            this.ReApplyTheme();
+
+            // Clear accent so ApplyColorSchemeAsync takes the synchronous ApplyAccentColor path
+            // instead of the animated interpolation (which is fire-and-forget).
+            if (Application.Current.Resources.Contains("Color_Accent"))
+            {
+                Application.Current.Resources.Remove("Color_Accent");
+            }
+
+            await this.ApplyColorSchemeAsync(
+                SettingsClient.Get<string>("Appearance", "ColorScheme"),
+                this.followWindowsColor,
+                this.followAlbumCoverColor);
         }
 
         public void OnThemeChanged(bool useLightTheme)

@@ -1,0 +1,102 @@
+﻿<UserControl x:Class="Dopamine.Views.FullPlayer.Settings.ThemeColorsEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:pc="clr-namespace:Dopamine.Controls"
+             xmlns:conv="clr-namespace:Dopamine.Converters"
+             xmlns:prismMvvm="clr-namespace:Prism.Mvvm;assembly=Prism.Wpf"
+             mc:Ignorable="d"
+             d:DesignHeight="480" d:DesignWidth="480"
+             prismMvvm:ViewModelLocator.AutoWireViewModel="False">
+
+    <UserControl.Resources>
+        <conv:BooleanToCollapsedConverter x:Key="BooleanToCollapsedConverter"/>
+        <DataTemplate x:Key="ThemeColorItemTemplate">
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="8"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="{Binding DisplayName}"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource Brush_PrimaryText}"
+                           TextTrimming="CharacterEllipsis"/>
+
+                <Button Grid.Column="2"
+                        Width="44" Height="24"
+                        Cursor="Hand"
+                        ToolTip="{DynamicResource Language_Theme_Color_Pick}"
+                        Command="{Binding PickColorCommand}">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Border"
+                                    CornerRadius="3"
+                                    BorderThickness="1"
+                                    BorderBrush="{DynamicResource Brush_ControlBorder}"
+                                    Background="{Binding ColorBrush}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Border" Property="Opacity" Value="0.85"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+                <pc:IconTextButton Grid.Column="4"
+                                   Glyph="&#xE149;"
+                                   GlyphSize="12"
+                                   Content="{DynamicResource Language_Reset}"
+                                   Foreground="{DynamicResource Brush_Accent}"
+                                   Command="{Binding ResetCommand}"
+                                   Visibility="{Binding IsCustomized, Converter={StaticResource BooleanToCollapsedConverter}}"/>
+            </Grid>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid Margin="10,10,10,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" PanningMode="Both" MaxHeight="420">
+            <StackPanel>
+                <TextBlock Text="{DynamicResource Language_Theme_Color_Group_Background}"
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,8"
+                           Foreground="{DynamicResource Brush_PrimaryText}"/>
+                <ItemsControl ItemsSource="{Binding BackgroundColors}" ItemTemplate="{StaticResource ThemeColorItemTemplate}"/>
+
+                <TextBlock Text="{DynamicResource Language_Theme_Color_Group_Controls}"
+                           FontWeight="SemiBold"
+                           Margin="0,16,0,8"
+                           Foreground="{DynamicResource Brush_PrimaryText}"/>
+                <ItemsControl ItemsSource="{Binding ControlColors}" ItemTemplate="{StaticResource ThemeColorItemTemplate}"/>
+
+                <TextBlock Text="{DynamicResource Language_Theme_Color_Group_Text}"
+                           FontWeight="SemiBold"
+                           Margin="0,16,0,8"
+                           Foreground="{DynamicResource Brush_PrimaryText}"/>
+                <ItemsControl ItemsSource="{Binding TextColors}" ItemTemplate="{StaticResource ThemeColorItemTemplate}"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <pc:IconTextButton Grid.Row="1"
+                           Margin="0,16,0,0"
+                           HorizontalAlignment="Left"
+                           Glyph="&#xE149;"
+                           GlyphSize="13"
+                           Content="{DynamicResource Language_Reset_All_Theme_Colors}"
+                           Foreground="{DynamicResource Brush_Accent}"
+                           Command="{Binding ResetAllCommand}"/>
+    </Grid>
+</UserControl>

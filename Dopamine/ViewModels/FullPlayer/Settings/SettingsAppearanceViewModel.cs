@@ -1,13 +1,17 @@
 ﻿using Digimezzo.Foundation.Core.IO;
 using Digimezzo.Foundation.Core.Logging;
-using Dopamine.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
+using Digimezzo.Foundation.Core.Utils;
 using Dopamine.Core.Base;
 using Dopamine.Core.IO;
+using Dopamine.Core.Logging;
 using Dopamine.Core.Settings;
+using Dopamine.Services.Dialog;
 using Dopamine.Services.Playback;
+using Dopamine.Views.FullPlayer.Settings;
 using Prism.Commands;
 using Prism.Events;
+using Prism.Ioc;
 using Prism.Mvvm;
 using System;
 using System.Threading.Tasks;
@@ -17,6 +21,8 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
     public class SettingsAppearanceViewModel : BindableBase
     {
         private IPlaybackService playbackService;
+        private IDialogService dialogService;
+        private IContainerProvider container;
         private bool checkBoxCheckBoxShowWindowBorderChecked;
         private bool checkBoxEnableTransparencyChecked;
         private bool checkBoxEnableAnimationsChecked;
@@ -24,6 +30,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
         private IEventAggregator eventAggregator;
 
         public DelegateCommand<string> OpenColorSchemesDirectoryCommand { get; set; }
+        public DelegateCommand OpenThemeColorsEditorCommand { get; set; }
 
         public string ColorSchemesDirectory { get; set; }
 
@@ -69,10 +76,16 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             }
         }
 
-        public SettingsAppearanceViewModel(IPlaybackService playbackService, IEventAggregator eventAggregator)
+        public SettingsAppearanceViewModel(
+            IPlaybackService playbackService,
+            IEventAggregator eventAggregator,
+            IDialogService dialogService,
+            IContainerProvider container)
         {
             this.playbackService = playbackService;
             this.eventAggregator = eventAggregator;
+            this.dialogService = dialogService;
+            this.container = container;
 
             this.ColorSchemesDirectory = System.IO.Path.Combine(SettingsClient.ApplicationFolder(), ApplicationPaths.ColorSchemesFolder);
 
@@ -88,7 +101,31 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                 }
             });
 
+            this.OpenThemeColorsEditorCommand = new DelegateCommand(this.OpenThemeColorsEditor);
+
             this.GetCheckBoxesAsync();
+        }
+
+        private void OpenThemeColorsEditor()
+        {
+            var view = this.container.Resolve<ThemeColorsEditor>();
+            var viewModel = this.container.Resolve<ThemeColorsEditorViewModel>();
+            view.DataContext = viewModel;
+
+            this.dialogService.ShowCustomDialog(
+                0xe790,
+                16,
+                ResourceUtils.GetString("Language_Theme_Colors"),
+                view,
+                500,
+                0,
+                false,
+                true,
+                true,
+                false,
+                ResourceUtils.GetString("Language_Ok"),
+                ResourceUtils.GetString("Language_Cancel"),
+                viewModel.CloseAsync);
         }
 
         public async void GetCheckBoxesAsync()
