@@ -240,12 +240,13 @@ namespace Dopamine.Services.Appearance
 
             try
             {
-                if (!File.Exists(path))
+                // Fully qualify System.IO.File: Dopamine.Services.File is a sibling namespace.
+                if (!System.IO.File.Exists(path))
                 {
                     return new ThemeColorProfile();
                 }
 
-                string json = File.ReadAllText(path);
+                string json = System.IO.File.ReadAllText(path);
                 ThemeColorProfile profile = JsonConvert.DeserializeObject<ThemeColorProfile>(json);
 
                 if (profile == null)
@@ -303,16 +304,16 @@ namespace Dopamine.Services.Appearance
 
                 if (profile == null || !profile.HasAny)
                 {
-                    if (File.Exists(path))
+                    if (System.IO.File.Exists(path))
                     {
-                        File.Delete(path);
+                        System.IO.File.Delete(path);
                     }
 
                     return;
                 }
 
                 string json = JsonConvert.SerializeObject(profile, Formatting.Indented);
-                File.WriteAllText(path, json);
+                System.IO.File.WriteAllText(path, json);
             }
             catch (Exception ex)
             {
