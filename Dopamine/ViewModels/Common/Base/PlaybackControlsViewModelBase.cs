@@ -31,7 +31,7 @@ namespace Dopamine.ViewModels.Common.Base
             this.PlaybackService = container.Resolve<IPlaybackService>();
             this.DialogService = container.Resolve<IDialogService>();
             this.AppVisibilityService = container.Resolve<IAppVisibilityService>();
-            this.PlaybackService.PlaybackProgressChanged += (_, __) =>
+            this.PlaybackService.PlaybackUiProgressChanged += (_, __) =>
             {
                 if (this.CanRefreshUi)
                 {

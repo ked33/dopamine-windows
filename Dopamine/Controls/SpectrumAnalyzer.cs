@@ -41,7 +41,8 @@ namespace Dopamine.Controls
         private const double minDBValue = -90;
         private const double maxDBValue = 0;
         private const double dbScale = (maxDBValue - minDBValue);
-        private const int defaultRefreshInterval = 25;
+        // Keep as const so DependencyProperty metadata can use a compile-time constant safely.
+        private const int defaultRefreshInterval = 40; // matches Constants.SpectrumRefreshIntervalMs
 
         private readonly DispatcherTimer animationTimer;
         private Canvas spectrumCanvas;

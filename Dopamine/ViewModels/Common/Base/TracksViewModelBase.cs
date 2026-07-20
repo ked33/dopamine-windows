@@ -51,8 +51,20 @@ namespace Dopamine.ViewModels.Common.Base
         private ObservableCollection<TrackViewModel> tracks;
         private CollectionViewSource tracksCvs;
         private IList<TrackViewModel> selectedTracks;
+        private int trackFilterGeneration;
+        private bool tracksLoadedViaDatabaseSearch;
 
         public TrackViewModel PreviousPlayingTrack { get; set; }
+
+        /// <summary>
+        /// Soft cap for unfiltered track list loads. 0 means load all rows.
+        /// </summary>
+        protected virtual int TrackListLoadLimit => 0;
+
+        /// <summary>
+        /// When true, search hits the database instead of filtering an in-memory full list.
+        /// </summary>
+        protected virtual bool PreferDatabaseTrackSearch => false;
 
         public bool ShowRemoveFromDisk => SettingsClient.Get<bool>("Behaviour", "ShowRemoveFromDisk");
 
@@ -199,10 +211,18 @@ namespace Dopamine.ViewModels.Common.Base
             }
             else
             {
-                // Tracks have lowest priority
-                tracks = await this.trackRepository.GetTracksAsync();
+                // Tracks have lowest priority. Soft-cap large libraries to keep UI responsive.
+                if (this.TrackListLoadLimit > 0)
+                {
+                    tracks = await this.trackRepository.GetTracksPageAsync(this.TrackListLoadLimit, 0);
+                }
+                else
+                {
+                    tracks = await this.trackRepository.GetTracksAsync();
+                }
             }
 
+            this.tracksLoadedViaDatabaseSearch = false;
             await this.GetTracksCommonAsync(await this.container.ResolveTrackViewModelsAsync(tracks), trackOrder);
         }
 
@@ -406,6 +426,67 @@ namespace Dopamine.ViewModels.Common.Base
         }
 
         protected override void FilterLists()
+        {
+            if (this.PreferDatabaseTrackSearch)
+            {
+                _ = this.FilterListsWithDatabaseSearchAsync();
+                return;
+            }
+
+            this.ApplyClientSideTrackFilter();
+        }
+
+        private async Task FilterListsWithDatabaseSearchAsync()
+        {
+            int generation = System.Threading.Interlocked.Increment(ref this.trackFilterGeneration);
+            string searchText = this.searchService.SearchText?.Trim() ?? string.Empty;
+
+            try
+            {
+                if (!string.IsNullOrEmpty(searchText))
+                {
+                    IList<Track> tracks = await this.trackRepository.SearchTracksAsync(
+                        searchText,
+                        Constants.CollectionSearchResultLimit);
+
+                    if (generation != this.trackFilterGeneration)
+                    {
+                        return;
+                    }
+
+                    this.tracksLoadedViaDatabaseSearch = true;
+                    await this.GetTracksCommonAsync(
+                        await this.container.ResolveTrackViewModelsAsync(tracks),
+                        this.TrackOrder);
+                    return;
+                }
+
+                if (this.tracksLoadedViaDatabaseSearch || this.Tracks == null)
+                {
+                    if (generation != this.trackFilterGeneration)
+                    {
+                        return;
+                    }
+
+                    await this.GetTracksAsync(null, null, null, this.TrackOrder);
+                    return;
+                }
+
+                if (generation != this.trackFilterGeneration)
+                {
+                    return;
+                }
+
+                this.ApplyClientSideTrackFilter();
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error("Database track search failed. Exception: {0}", ex.Message);
+                this.ApplyClientSideTrackFilter();
+            }
+        }
+
+        private void ApplyClientSideTrackFilter()
         {
             Application.Current.Dispatcher.Invoke(() =>
             {

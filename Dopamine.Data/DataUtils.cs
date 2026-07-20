@@ -1,5 +1,6 @@
 ﻿using Dopamine.Core.Base;
 using Dopamine.Core.Extensions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -44,6 +45,44 @@ namespace Dopamine.Data
             sb.AppendLine(")");
 
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Builds a WHERE fragment that matches multi-word search across track fields.
+        /// Each space-separated piece must match at least one of title/artists/album/filename/year.
+        /// </summary>
+        public static string CreateTrackSearchClause(string searchText)
+        {
+            if (string.IsNullOrWhiteSpace(searchText))
+            {
+                return "1=1";
+            }
+
+            string[] pieces = searchText.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (pieces.Length == 0)
+            {
+                return "1=1";
+            }
+
+            var andClauses = new List<string>();
+
+            foreach (string piece in pieces)
+            {
+                string escaped = EscapeQuotes(piece.ToLowerInvariant());
+                string like = $"%{escaped}%";
+
+                andClauses.Add(
+                    "(" +
+                    $"LOWER(IFNULL(t.TrackTitle,'')) LIKE '{like}' OR " +
+                    $"LOWER(IFNULL(t.Artists,'')) LIKE '{like}' OR " +
+                    $"LOWER(IFNULL(t.AlbumArtists,'')) LIKE '{like}' OR " +
+                    $"LOWER(IFNULL(t.AlbumTitle,'')) LIKE '{like}' OR " +
+                    $"LOWER(IFNULL(t.FileName,'')) LIKE '{like}' OR " +
+                    $"CAST(IFNULL(t.Year,0) AS TEXT) LIKE '{like}'" +
+                    ")");
+            }
+
+            return "(" + string.Join(" AND ", andClauses) + ")";
         }
 
         public static IEnumerable<string> SplitColumnMultiValue(string columnMultiValue)

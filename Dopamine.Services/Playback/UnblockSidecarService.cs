@@ -1,4 +1,5 @@
-﻿using Dopamine.Core.Logging;
+﻿using Dopamine.Core.Base;
+using Dopamine.Core.Logging;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -22,15 +23,26 @@ namespace Dopamine.Services.Playback
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true
         };
+        // Fully qualify: System.Threading and System.Timers both expose Timer.
+        private readonly System.Timers.Timer idleTimer;
         private Process process;
         private UnblockProcessJob processJob;
         private HttpClient httpClient;
         private string token;
         private int consecutiveFailures;
         private DateTime circuitOpenUntilUtc;
+        private DateTime lastActivityUtc = DateTime.MinValue;
         private UnblockSidecarState state = UnblockSidecarState.Stopped;
         private string version = string.Empty;
         private bool disposed;
+
+        public UnblockSidecarService()
+        {
+            this.idleTimer = new System.Timers.Timer(30000);
+            this.idleTimer.AutoReset = true;
+            this.idleTimer.Elapsed += this.IdleTimer_Elapsed;
+            this.idleTimer.Start();
+        }
 
         public UnblockSidecarState State => !UnblockNeteaseMusicSettings.IsEnabled
             ? UnblockSidecarState.Disabled
@@ -58,6 +70,8 @@ namespace Dopamine.Services.Playback
             {
                 return Failure("sidecar_unavailable");
             }
+
+            this.TouchActivity();
 
             await this.requestGate.WaitAsync(cancellationToken);
             try
@@ -246,6 +260,7 @@ namespace Dopamine.Services.Playback
                     Timeout = TimeSpan.FromSeconds(RequestTimeoutSeconds)
                 };
                 this.consecutiveFailures = 0;
+                this.TouchActivity();
                 this.SetState(UnblockSidecarState.Ready);
                 return true;
             }
@@ -264,6 +279,41 @@ namespace Dopamine.Services.Playback
             finally
             {
                 this.lifecycleGate.Release();
+            }
+        }
+
+        private void TouchActivity()
+        {
+            this.lastActivityUtc = DateTime.UtcNow;
+        }
+
+        private void IdleTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            try
+            {
+                if (this.disposed || this.process == null)
+                {
+                    return;
+                }
+
+                if (this.lastActivityUtc == DateTime.MinValue)
+                {
+                    return;
+                }
+
+                TimeSpan idle = DateTime.UtcNow - this.lastActivityUtc;
+                if (idle.TotalMinutes < Constants.UnblockSidecarIdleTimeoutMinutes)
+                {
+                    return;
+                }
+
+                AppLog.Info("Stopping idle Unblock sidecar after {0} minutes without requests.",
+                    Constants.UnblockSidecarIdleTimeoutMinutes);
+                this.Stop();
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warning("Unblock sidecar idle check failed. ErrorType={0}", ex.GetType().Name);
             }
         }
 
@@ -366,6 +416,15 @@ namespace Dopamine.Services.Playback
             }
 
             this.disposed = true;
+            try
+            {
+                this.idleTimer.Stop();
+                this.idleTimer.Dispose();
+            }
+            catch
+            {
+            }
+
             this.StopProcess();
             this.lifecycleGate.Dispose();
             this.requestGate.Dispose();

@@ -1,5 +1,6 @@
 ﻿using Digimezzo.Foundation.Core.Settings;
 using Digimezzo.Foundation.Core.Utils;
+using Dopamine.Core.Base;
 using Dopamine.Data;
 using Dopamine.Services.Dialog;
 using Dopamine.Services.Playback;
@@ -20,6 +21,10 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
 
         // The Songs page has its own shuffle memory, independent of other sources.
         protected override PlaybackQueueContext QueueSourceContext => PlaybackQueueContext.Songs;
+
+        // Cap initial Songs-page load; search goes to SQLite with its own limit.
+        protected override int TrackListLoadLimit => Constants.CollectionTracksInitialLimit;
+        protected override bool PreferDatabaseTrackSearch => true;
 
         private bool ratingVisible;
         private bool loveVisible;

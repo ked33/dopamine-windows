@@ -154,7 +154,19 @@ namespace Dopamine.Services.Metadata
         public async Task<byte[]> GetArtworkAsync(string filename, int size = 0)
         {
             byte[] artwork = null;
+            // Never load original multi-megapixel artwork on the UI path.
+            // Callers that need full quality must read FileMetadata.ArtworkData directly.
+            if (size <= 0)
+            {
+                size = Constants.ArtworkDefaultSize;
+            }
+
             int normalizedSize = this.NormalizeArtworkSize(size);
+            if (normalizedSize <= 0)
+            {
+                normalizedSize = Constants.ArtworkDefaultSize;
+            }
+
             string cacheKey = this.GetArtworkCacheKey(filename, normalizedSize);
 
             if (System.IO.File.Exists(filename))

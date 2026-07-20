@@ -57,7 +57,7 @@ namespace Dopamine.Controls
             this.playbackService = ServiceLocator.Current.GetInstance<IPlaybackService>();
             this.animationTimer = new DispatcherTimer(DispatcherPriority.Render)
             {
-                Interval = TimeSpan.FromMilliseconds(33)
+                Interval = TimeSpan.FromMilliseconds(Dopamine.Core.Base.Constants.KaraokeRefreshIntervalMs)
             };
             this.animationTimer.Tick += this.AnimationTimer_Tick;
             this.Loaded += this.KaraokeLyricsControl_Loaded;

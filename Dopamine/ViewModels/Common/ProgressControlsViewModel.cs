@@ -16,9 +16,9 @@ namespace Dopamine.ViewModels.Common
         {
             get { return this.progressValue; }
             // We misuse the Property Setter to only set the PlayBackService Progress.
-            // OnPropertyChanged is fired by the returning PlayBackService.PlaybackProgressChanged event.
-            // This prevents a StackOverflow (infinite loop between the ProgressValue Property and the 
-            // PlayBackService.PlaybackProgressChanged event.
+            // OnPropertyChanged is fired by the returning PlayBackService.PlaybackUiProgressChanged event.
+            // This prevents a StackOverflow (infinite loop between the ProgressValue Property and the
+            // PlayBackService.PlaybackUiProgressChanged event.
             set { SetPlayBackServiceProgress(value); }
         }
 
@@ -45,7 +45,7 @@ namespace Dopamine.ViewModels.Common
             this.playBackService = playBackService;
             this.appVisibilityService = appVisibilityService;
 
-            this.playBackService.PlaybackProgressChanged += (sender,e) => this.RefreshFromPlayBackService();
+            this.playBackService.PlaybackUiProgressChanged += (sender,e) => this.RefreshFromPlayBackService();
             this.playBackService.PlaybackBufferingProgressChanged += (_, __) => this.RefreshFromPlayBackService();
             this.playBackService.PlaybackFailed += (_, __) => this.RefreshFromPlayBackService();
             this.playBackService.PlaybackStopped += (_, __) => this.RefreshFromPlayBackService();

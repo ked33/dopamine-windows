@@ -111,6 +111,24 @@ namespace Dopamine.Core.Base
         public static readonly int UpdateCheckIntervalSeconds = 900; // 900 seconds = 15 minutes
         public static readonly double SearchTimeoutSeconds = 0.4;
         public static readonly double ScrollToPlayingTrackTimeoutSeconds = 0.4;
+        public static readonly double PlaybackProgressIntervalSeconds = 0.5;
+        public static readonly double PlaybackProgressBackgroundIntervalSeconds = 2.0;
+
+        // Collection loading / search limits
+        // Soft cap for full Tracks page to avoid multi-10k ObservableCollection spikes.
+        public static readonly int CollectionTracksInitialLimit = 2500;
+        public static readonly int CollectionSearchResultLimit = 500;
+
+        // Visualization refresh (ms). Lower FPS still looks smooth and cuts GPU/CPU work.
+        public static readonly int SpectrumRefreshIntervalMs = 40; // ~25 FPS
+        public static readonly int KaraokeRefreshIntervalMs = 50; // ~20 FPS
+
+        // Unblock sidecar idle lifetime
+        public static readonly int UnblockSidecarIdleTimeoutMinutes = 5;
+
+        // Online temporary audio cache
+        public static readonly long OnlineTempAudioMaxCacheBytes = 256L * 1024L * 1024L; // 256 MB
+        public static readonly int OnlineTempAudioMaxAgeHours = 6;
 
         // Delays
         public static readonly int ClosingFadeOutDelay = 500;

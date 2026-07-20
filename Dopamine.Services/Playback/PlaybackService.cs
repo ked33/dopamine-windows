@@ -19,6 +19,7 @@ using Dopamine.Services.Extensions;
 using Dopamine.Services.File;
 using Dopamine.Services.I18n;
 using Dopamine.Services.Playlist;
+using Dopamine.Services.Shell;
 using Dopamine.Services.Utils;
 using Prism.Ioc;
 using System;
@@ -42,7 +43,8 @@ namespace Dopamine.Services.Playback
 
         private QueueManager queueManager;
         private System.Timers.Timer progressTimer = new System.Timers.Timer();
-        private double progressTimeoutSeconds = 0.5;
+        private double progressTimeoutSeconds = Constants.PlaybackProgressIntervalSeconds;
+        private IAppVisibilityService appVisibilityService;
         private double progress = 0.0;
         private float volume = 0.0f;
         private LoopMode loopMode;
@@ -344,7 +346,7 @@ namespace Dopamine.Services.Playback
 
         public PlaybackService(IFileService fileService, II18nService i18nService, ITrackRepository trackRepository, IBlacklistService blacklistService,
             IEqualizerService equalizerService, IQueuedTrackRepository queuedTrackRepository, IContainerProvider container, IPlaylistService playlistService,
-            IPlaybackSourceResolver playbackSourceResolver)
+            IPlaybackSourceResolver playbackSourceResolver, IAppVisibilityService appVisibilityService)
         {
             this.fileService = fileService;
             this.i18nService = i18nService;
@@ -355,6 +357,7 @@ namespace Dopamine.Services.Playback
             this.playlistService = playlistService;
             this.container = container;
             this.playbackSourceResolver = playbackSourceResolver;
+            this.appVisibilityService = appVisibilityService;
 
             this.context = SynchronizationContext.Current;
 
@@ -366,9 +369,10 @@ namespace Dopamine.Services.Playback
             this.i18nService.LanguageChanged += (_, __) => this.UpdateQueueLanguageAsync();
             this.playlistService.PlaylistRenamed += this.OnPlaylistRenamed;
             this.playlistService.PlaylistDeleted += this.OnPlaylistDeleted;
+            this.appVisibilityService.VisibilityChanged += (_, __) => this.ApplyProgressTimerInterval();
 
             // Set up timers
-            this.progressTimer.Interval = TimeSpan.FromSeconds(this.progressTimeoutSeconds).TotalMilliseconds;
+            this.ApplyProgressTimerInterval();
             this.progressTimer.Elapsed += new ElapsedEventHandler(this.ProgressTimeoutHandler);
 
             this.saveQueuedTracksTimer.Interval = TimeSpan.FromSeconds(this.saveQueuedTracksTimeoutSeconds).TotalMilliseconds;
@@ -393,6 +397,7 @@ namespace Dopamine.Services.Playback
         public event PlaybackPausedEventHandler PlaybackPaused = delegate { };
         public event PlaybackFailedEventHandler PlaybackFailed = delegate { };
         public event EventHandler PlaybackProgressChanged = delegate { };
+        public event EventHandler PlaybackUiProgressChanged = delegate { };
         public event EventHandler PlaybackBufferingProgressChanged = delegate { };
         public event EventHandler PlaybackResumed = delegate { };
         public event EventHandler PlaybackStopped = delegate { };
@@ -753,7 +758,7 @@ namespace Dopamine.Services.Playback
                 this.Progress = 0.0;
             }
 
-            this.PlaybackProgressChanged(this, new EventArgs());
+            this.RaiseProgressChanged(forceUi: true);
         }
 
         public void SkipSeconds(int seconds)
@@ -772,7 +777,7 @@ namespace Dopamine.Services.Playback
                 }
 
                 this.PlaybackSkipped(this, new EventArgs());
-                this.PlaybackProgressChanged(this, new EventArgs());
+                this.RaiseProgressChanged(forceUi: true);
                 this.ResetSaveQueuedTracksTimer(this.saveQueuedTracksQuickTimeoutSeconds);
             }
         }
@@ -2058,7 +2063,7 @@ namespace Dopamine.Services.Playback
                     this.player.SetVolume(this.Volume);
                 }
 
-                PlaybackProgressChanged(this, new EventArgs());
+                this.RaiseProgressChanged(forceUi: true);
             }
         }
 
@@ -2077,7 +2082,39 @@ namespace Dopamine.Services.Playback
                 this.Progress = 0.0;
             }
 
-            PlaybackProgressChanged(this, new EventArgs());
+            this.RaiseProgressChanged(forceUi: false);
+        }
+
+        private void ApplyProgressTimerInterval()
+        {
+            try
+            {
+                bool background = this.appVisibilityService != null && this.appVisibilityService.IsBackgroundPlaybackMode;
+                double seconds = background
+                    ? Constants.PlaybackProgressBackgroundIntervalSeconds
+                    : Constants.PlaybackProgressIntervalSeconds;
+                this.progressTimeoutSeconds = seconds;
+                this.progressTimer.Interval = TimeSpan.FromSeconds(seconds).TotalMilliseconds;
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warning("Could not apply progress timer interval. Exception: {0}", ex.Message);
+                this.progressTimer.Interval = TimeSpan.FromSeconds(Constants.PlaybackProgressIntervalSeconds).TotalMilliseconds;
+            }
+        }
+
+        private void RaiseProgressChanged(bool forceUi)
+        {
+            this.PlaybackProgressChanged(this, EventArgs.Empty);
+
+            bool raiseUi = forceUi ||
+                this.appVisibilityService == null ||
+                !this.appVisibilityService.IsBackgroundPlaybackMode;
+
+            if (raiseUi)
+            {
+                this.PlaybackUiProgressChanged(this, EventArgs.Empty);
+            }
         }
 
         private async Task EnqueueAlwaysAsync(IList<TrackViewModel> tracks, IList<long> shuffleOrderIDs)

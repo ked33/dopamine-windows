@@ -14,6 +14,7 @@ using Dopamine.Services.InfoDownload;
 using Dopamine.Services.Utils;
 using SQLite;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -378,58 +379,28 @@ namespace Dopamine.Services.Indexing
                     {
                         conn.BeginTransaction();
 
-                        // Create a list of folderIDs
-                        List<long> folderTrackIDs = conn.Table<FolderTrack>().ToList().Select((t) => t.TrackID).Distinct().ToList();
-
-                        List<Track> alltracks = conn.Table<Track>().Select((t) => t).ToList();
-                        List<Track> tracksInMissingFolders = alltracks.Select((t) => t).Where(t => !folderTrackIDs.Contains(t.TrackID)).ToList();
-                        List<Track> remainingTracks = new List<Track>();
-
-                        // Processing tracks in missing folders in bulk first, then checking 
-                        // existence of the remaining tracks, improves speed of removing tracks.
-                        if (tracksInMissingFolders.Count > 0 && tracksInMissingFolders.Count < alltracks.Count)
+                        // 1. Remove tracks that are no longer linked to any folder (SQL bulk, no full entity graph).
+                        int orphanCount = conn.Execute(
+                            "DELETE FROM Track WHERE TrackID NOT IN (SELECT DISTINCT TrackID FROM FolderTrack);");
+                        if (orphanCount > 0)
                         {
-                            remainingTracks = alltracks.Except(tracksInMissingFolders).ToList();
-                        }
-                        else
-                        {
-                            remainingTracks = alltracks;
-                        }
-
-                        // 1. Process tracks in missing folders
-                        // ------------------------------------
-                        if (tracksInMissingFolders.Count > 0)
-                        {
-                            // Report progress immediately, as there are tracks in missing folders.                           
+                            numberRemovedTracks += orphanCount;
                             this.IndexingStatusChanged(args);
-
-                            // Delete
-                            foreach (Track trk in tracksInMissingFolders)
-                            {
-                                conn.Delete(trk);
-                            }
-
-                            numberRemovedTracks += tracksInMissingFolders.Count;
                         }
 
-                        // 2. Process remaining tracks
-                        // ---------------------------
-                        if (remainingTracks.Count > 0)
+                        // 2. Check remaining tracks for missing files using a light projection only.
+                        List<Track> pathRows = conn.Query<Track>("SELECT TrackID, Path, SafePath FROM Track;");
+                        foreach (Track trk in pathRows)
                         {
-                            foreach (Track trk in remainingTracks)
+                            if (!System.IO.File.Exists(trk.Path))
                             {
-                                // If a remaining track doesn't exist on disk, delete it from the collection.
-                                if (!System.IO.File.Exists(trk.Path))
-                                {
-                                    conn.Delete(trk);
-                                    numberRemovedTracks += 1;
+                                conn.Execute("DELETE FROM Track WHERE TrackID=?", trk.TrackID);
+                                conn.Execute("DELETE FROM FolderTrack WHERE TrackID=?", trk.TrackID);
+                                numberRemovedTracks += 1;
 
-                                    // Report progress as soon as the first track was removed.
-                                    // This is indeterminate progress. No need to sent it multiple times.
-                                    if (numberRemovedTracks == 1)
-                                    {
-                                        this.IndexingStatusChanged(args);
-                                    }
+                                if (numberRemovedTracks == 1 || numberRemovedTracks == orphanCount + 1)
+                                {
+                                    this.IndexingStatusChanged(args);
                                 }
                             }
                         }
@@ -460,26 +431,54 @@ namespace Dopamine.Services.Indexing
             {
                 try
                 {
+                    List<Track> candidates;
+
+                    using (var conn = this.factory.GetConnection())
+                    {
+                        // Only rows that still need work or that may be outdated by mtime/size.
+                        candidates = conn.Query<Track>("SELECT * FROM Track;");
+                    }
+
+                    // Phase 1: cheap outdated filter (disk stat), still single-threaded I/O but no DB held open.
+                    var toProcess = new List<Track>();
+                    foreach (Track dbTrack in candidates)
+                    {
+                        try
+                        {
+                            if (dbTrack.NeedsIndexing == 1 || IndexerUtils.IsTrackOutdated(dbTrack))
+                            {
+                                toProcess.Add(dbTrack);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            AppLog.Error("Could not inspect Track with path='{0}'. Exception: {1}", dbTrack.Path, ex.Message);
+                        }
+                    }
+
+                    // Phase 2: parallel tag reads (ProcessTrack does not touch SQLite).
+                    int degree = Math.Max(2, Math.Min(4, Environment.ProcessorCount));
+
+                    Parallel.ForEach(
+                        toProcess,
+                        new ParallelOptions { MaxDegreeOfParallelism = degree },
+                        track => this.ProcessTrack(track));
+
+                    // Phase 3: serial DB writes.
                     using (var conn = this.factory.GetConnection())
                     {
                         conn.BeginTransaction();
 
-                        List<Track> alltracks = conn.Table<Track>().Select((t) => t).ToList();
-
                         long currentValue = 0;
-                        long totalValue = alltracks.Count;
+                        long totalValue = Math.Max(1, toProcess.Count);
                         int lastPercent = 0;
 
-                        foreach (Track dbTrack in alltracks)
+                        foreach (Track dbTrack in toProcess)
                         {
                             try
                             {
-                                if (IndexerUtils.IsTrackOutdated(dbTrack) | dbTrack.NeedsIndexing == 1)
-                                {
-                                    this.ProcessTrack(dbTrack, conn);
-                                    conn.Update(dbTrack);
-                                    numberUpdatedTracks += 1;
-                                }
+                                conn.Update(dbTrack);
+                                numberUpdatedTracks += 1;
                             }
                             catch (Exception ex)
                             {
@@ -487,11 +486,7 @@ namespace Dopamine.Services.Indexing
                             }
 
                             currentValue += 1;
-
                             int percent = IndexerUtils.CalculatePercent(currentValue, totalValue);
-
-                            // Report progress if at least 1 track is updated OR when the progress
-                            // interval has been exceeded OR the maximum has been reached.
                             bool mustReportProgress = numberUpdatedTracks == 1 || percent >= lastPercent + 5 || percent == 100;
 
                             if (mustReportProgress)
@@ -503,6 +498,12 @@ namespace Dopamine.Services.Indexing
                         }
 
                         conn.Commit();
+                    }
+
+                    if (toProcess.Count == 0)
+                    {
+                        args.ProgressPercent = 100;
+                        this.IndexingStatusChanged(args);
                     }
                 }
                 catch (Exception ex)
@@ -528,66 +529,85 @@ namespace Dopamine.Services.Indexing
             {
                 try
                 {
-                    long currentValue = 0;
                     long totalValue = this.newDiskPaths.Count;
+                    if (totalValue == 0)
+                    {
+                        return;
+                    }
 
                     long saveItemCount = IndexerUtils.CalculateSaveItemCount(totalValue);
                     long unsavedItemCount = 0;
                     int lastPercent = 0;
+                    long currentValue = 0;
+
+                    // Read tags in parallel chunks, then write serially to SQLite.
+                    const int chunkSize = 64;
+                    int degree = Math.Max(2, Math.Min(4, Environment.ProcessorCount));
 
                     using (var conn = this.factory.GetConnection())
                     {
                         conn.BeginTransaction();
 
-                        foreach (FolderPathInfo newDiskPath in this.newDiskPaths)
+                        for (int offset = 0; offset < this.newDiskPaths.Count; offset += chunkSize)
                         {
-                            Track diskTrack = Track.CreateDefault(newDiskPath.Path);
+                            List<FolderPathInfo> chunk = this.newDiskPaths.Skip(offset).Take(chunkSize).ToList();
+                            var prepared = new ConcurrentQueue<Tuple<FolderPathInfo, Track>>();
 
-                            try
-                            {
-                                this.ProcessTrack(diskTrack, conn);
-
-                                if (!this.cache.HasCachedTrack(ref diskTrack))
+                            Parallel.ForEach(
+                                chunk,
+                                new ParallelOptions { MaxDegreeOfParallelism = degree },
+                                diskPath =>
                                 {
-                                    conn.Insert(diskTrack);
-                                    this.cache.AddTrack(diskTrack);
-                                    numberAddedTracks += 1;
-                                    unsavedItemCount += 1;
+                                    Track diskTrack = Track.CreateDefault(diskPath.Path);
+                                    this.ProcessTrack(diskTrack);
+                                    prepared.Enqueue(Tuple.Create(diskPath, diskTrack));
+                                });
+
+                            Tuple<FolderPathInfo, Track> item;
+                            while (prepared.TryDequeue(out item))
+                            {
+                                FolderPathInfo newDiskPath = item.Item1;
+                                Track diskTrack = item.Item2;
+
+                                try
+                                {
+                                    if (!this.cache.HasCachedTrack(ref diskTrack))
+                                    {
+                                        conn.Insert(diskTrack);
+                                        this.cache.AddTrack(diskTrack);
+                                        numberAddedTracks += 1;
+                                        unsavedItemCount += 1;
+                                    }
+
+                                    conn.Insert(new FolderTrack(newDiskPath.FolderId, diskTrack.TrackID));
+
+                                    if (unsavedItemCount == saveItemCount)
+                                    {
+                                        unsavedItemCount = 0;
+                                        conn.Commit();
+                                        conn.BeginTransaction();
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    AppLog.Error("There was a problem while adding Track with path='{0}'. Exception: {1}", diskTrack.Path, ex.Message);
                                 }
 
-                                conn.Insert(new FolderTrack(newDiskPath.FolderId, diskTrack.TrackID));
+                                currentValue += 1;
+                                int percent = IndexerUtils.CalculatePercent(currentValue, totalValue);
+                                bool mustReportProgress = numberAddedTracks == 1 || percent >= lastPercent + 5 || percent == 100;
 
-                                // Intermediate save to the database if 20% is reached
-                                if (unsavedItemCount == saveItemCount)
+                                if (mustReportProgress)
                                 {
-                                    unsavedItemCount = 0;
-                                    conn.Commit(); // Intermediate save
-                                    conn.BeginTransaction();
+                                    lastPercent = percent;
+                                    args.ProgressCurrent = numberAddedTracks;
+                                    args.ProgressPercent = percent;
+                                    this.IndexingStatusChanged(args);
                                 }
-                            }
-                            catch (Exception ex)
-                            {
-                                AppLog.Error("There was a problem while adding Track with path='{0}'. Exception: {1}", diskTrack.Path, ex.Message);
-                            }
-
-                            currentValue += 1;
-
-                            int percent = IndexerUtils.CalculatePercent(currentValue, totalValue);
-
-                            // Report progress if at least 1 track is added OR when the progress
-                            // interval has been exceeded OR the maximum has been reached.
-                            bool mustReportProgress = numberAddedTracks == 1 || percent >= lastPercent + 5 || percent == 100;
-
-                            if (mustReportProgress)
-                            {
-                                lastPercent = percent;
-                                args.ProgressCurrent = numberAddedTracks;
-                                args.ProgressPercent = percent;
-                                this.IndexingStatusChanged(args);
                             }
                         }
 
-                        conn.Commit(); // Final save
+                        conn.Commit();
                     }
                 }
                 catch (Exception ex)
@@ -599,7 +619,7 @@ namespace Dopamine.Services.Indexing
             return numberAddedTracks;
         }
 
-        private void ProcessTrack(Track track, SQLiteConnection conn)
+        private void ProcessTrack(Track track)
         {
             try
             {
@@ -618,8 +638,6 @@ namespace Dopamine.Services.Indexing
 
                 AppLog.Error("Error while retrieving tag information for file {0}. Exception: {1}", track.Path, ex.Message);
             }
-
-            return;
         }
 
         private async void WatcherManager_FoldersChanged(object sender, EventArgs e)

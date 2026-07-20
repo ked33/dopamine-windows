@@ -281,6 +281,8 @@ namespace Dopamine
                 containerRegistry.RegisterSingleton<IDialogService, DialogService>();
                 containerRegistry.RegisterSingleton<IIndexingService, IndexingService>();
                 containerRegistry.RegisterSingleton<IStatisticsService, StatisticsService>();
+                // Visibility must be available before PlaybackService (progress throttle / UI event split).
+                containerRegistry.RegisterSingleton<IAppVisibilityService, AppVisibilityService>();
                 containerRegistry.RegisterSingleton<IPlaybackService, PlaybackService>();
                 containerRegistry.RegisterSingleton<IWin32InputService, Win32InputService>();
                 containerRegistry.RegisterSingleton<ISearchService, SearchService>();
@@ -298,7 +300,6 @@ namespace Dopamine
                 containerRegistry.RegisterSingleton<IExternalControlService, ExternalControlService>();
                 containerRegistry.RegisterSingleton<IWindowsIntegrationService, WindowsIntegrationService>();
                 containerRegistry.RegisterSingleton<ILyricsService, LyricsService>();
-                containerRegistry.RegisterSingleton<IAppVisibilityService, AppVisibilityService>();
                 containerRegistry.RegisterSingleton<IShellService, ShellService>();
                 containerRegistry.RegisterSingleton<ILifetimeService, LifetimeService>();
                 containerRegistry.RegisterSingleton<IInfoDownloadService, InfoDownloadService>();

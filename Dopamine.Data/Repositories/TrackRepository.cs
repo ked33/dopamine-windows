@@ -117,6 +117,122 @@ namespace Dopamine.Data.Repositories
             return tracks;
         }
 
+        public async Task<List<Track>> GetTracksPageAsync(int limit, int offset)
+        {
+            var tracks = new List<Track>();
+
+            if (limit <= 0)
+            {
+                return tracks;
+            }
+
+            if (offset < 0)
+            {
+                offset = 0;
+            }
+
+            await Task.Run(() =>
+            {
+                try
+                {
+                    using (var conn = this.factory.GetConnection())
+                    {
+                        try
+                        {
+                            string query =
+                                $"{this.SelectVisibleTracksQuery()} " +
+                                "ORDER BY t.AlbumTitle COLLATE NOCASE, t.DiscNumber, t.TrackNumber, t.TrackTitle COLLATE NOCASE " +
+                                $"LIMIT {limit} OFFSET {offset};";
+                            tracks = conn.Query<Track>(query);
+                        }
+                        catch (Exception ex)
+                        {
+                            AppLog.Error("Could not get paged Tracks. Exception: {0}", ex.Message);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                }
+            });
+
+            return tracks;
+        }
+
+        public async Task<List<Track>> SearchTracksAsync(string searchText, int limit)
+        {
+            var tracks = new List<Track>();
+
+            if (limit <= 0)
+            {
+                return tracks;
+            }
+
+            string searchClause = DataUtils.CreateTrackSearchClause(searchText);
+
+            await Task.Run(() =>
+            {
+                try
+                {
+                    using (var conn = this.factory.GetConnection())
+                    {
+                        try
+                        {
+                            string query =
+                                $"{this.SelectVisibleTracksQuery()} AND {searchClause} " +
+                                "ORDER BY t.AlbumTitle COLLATE NOCASE, t.DiscNumber, t.TrackNumber, t.TrackTitle COLLATE NOCASE " +
+                                $"LIMIT {limit};";
+                            tracks = conn.Query<Track>(query);
+                        }
+                        catch (Exception ex)
+                        {
+                            AppLog.Error("Could not search Tracks. Exception: {0}", ex.Message);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                }
+            });
+
+            return tracks;
+        }
+
+        public async Task<int> GetVisibleTracksCountAsync()
+        {
+            int count = 0;
+
+            await Task.Run(() =>
+            {
+                try
+                {
+                    using (var conn = this.factory.GetConnection())
+                    {
+                        try
+                        {
+                            count = conn.ExecuteScalar<int>(
+                                "SELECT COUNT(*) FROM Track t " +
+                                "INNER JOIN FolderTrack ft ON ft.TrackID = t.TrackID " +
+                                "INNER JOIN Folder f ON ft.FolderID = f.FolderID " +
+                                "WHERE f.ShowInCollection = 1 AND t.IndexingSuccess = 1 AND t.NeedsIndexing = 0;");
+                        }
+                        catch (Exception ex)
+                        {
+                            AppLog.Error("Could not count visible Tracks. Exception: {0}", ex.Message);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AppLog.Error("Could not connect to the database. Exception: {0}", ex.Message);
+                }
+            });
+
+            return count;
+        }
+
         public async Task<List<Track>> GetTracksAsync(string whereClause)
         {
             var tracks = new List<Track>();

@@ -12,6 +12,18 @@ namespace Dopamine.Data.Repositories
 
         Task<List<Track>> GetTracksAsync(string whereClause);
 
+        /// <summary>
+        /// Loads a page of visible tracks ordered by album/disc/track/title.
+        /// </summary>
+        Task<List<Track>> GetTracksPageAsync(int limit, int offset);
+
+        /// <summary>
+        /// Searches visible tracks on the database side with a hard result cap.
+        /// </summary>
+        Task<List<Track>> SearchTracksAsync(string searchText, int limit);
+
+        Task<int> GetVisibleTracksCountAsync();
+
         Task<List<Track>> GetArtistTracksAsync(IList<string> artistNames);
 
         Task<List<Track>> GetGenreTracksAsync(IList<string> genreNames);

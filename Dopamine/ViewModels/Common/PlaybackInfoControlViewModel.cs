@@ -120,7 +120,7 @@ namespace Dopamine.ViewModels.Common
                 this.refreshTimer.Start();
             };
 
-            this.playbackService.PlaybackProgressChanged += (_, __) =>
+            this.playbackService.PlaybackUiProgressChanged += (_, __) =>
             {
                 if (this.CanRefreshUi)
                 {

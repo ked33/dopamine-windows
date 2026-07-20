@@ -152,7 +152,17 @@ namespace Dopamine.Services.Playback
         event EventHandler PlaybackSkipped;
         event EventHandler PlaybackStopped;
         event EventHandler PlaybackResumed;
+        /// <summary>
+        /// Core progress tick for scrobbling, taskbar, external control, notifications.
+        /// Always raised on the progress timer (interval may slow in background).
+        /// </summary>
         event EventHandler PlaybackProgressChanged;
+
+        /// <summary>
+        /// UI-only progress tick. Suppressed while main window and tray controls are hidden.
+        /// </summary>
+        event EventHandler PlaybackUiProgressChanged;
+
         event EventHandler PlaybackBufferingProgressChanged;
         event PlaybackVolumeChangedEventhandler PlaybackVolumeChanged;
         event EventHandler PlaybackMuteChanged;

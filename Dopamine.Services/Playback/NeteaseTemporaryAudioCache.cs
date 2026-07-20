@@ -1,5 +1,6 @@
 ﻿using Digimezzo.Foundation.Core.Logging;
 using Digimezzo.Foundation.Core.Settings;
+using Dopamine.Core.Base;
 using Dopamine.Core.Logging;
 using Dopamine.Services.Online.Netease;
 using System;
@@ -15,9 +16,9 @@ namespace Dopamine.Services.Playback
 {
     public sealed class NeteaseTemporaryAudioCache
     {
-        private const long MaximumCacheBytes = 512L * 1024L * 1024L;
+        private static readonly long MaximumCacheBytes = Constants.OnlineTempAudioMaxCacheBytes;
         private const int MaximumRedirects = 5;
-        private static readonly TimeSpan MaximumAge = TimeSpan.FromHours(24);
+        private static readonly TimeSpan MaximumAge = TimeSpan.FromHours(Constants.OnlineTempAudioMaxAgeHours);
 
         private readonly HttpClient httpClient = new HttpClient(new HttpClientHandler
         {
