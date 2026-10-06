@@ -23,6 +23,6 @@ namespace Dopamine.Services.Online.GdMusic
 
         public int BitRate { get; set; }
 
-        public long SizeKilobytes { get; set; }
+        public long SizeBytes { get; set; }
     }
 }

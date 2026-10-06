@@ -19,6 +19,7 @@ namespace Dopamine.Services.Online.GdMusic
 
         private readonly HttpClient httpClient;
         private readonly SemaphoreSlim requestLock = new SemaphoreSlim(1, 1);
+        private readonly GdMusicRequestBudget requestBudget = new GdMusicRequestBudget();
         private readonly Stopwatch requestStopwatch = Stopwatch.StartNew();
         private long lastRequestElapsedMilliseconds = -MinimumRequestIntervalMilliseconds;
 
@@ -26,7 +27,8 @@ namespace Dopamine.Services.Online.GdMusic
         {
             var httpHandler = new HttpClientHandler
             {
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                UseCookies = false
             };
             this.httpClient = new HttpClient(httpHandler)
             {
@@ -217,7 +219,7 @@ namespace Dopamine.Services.Online.GdMusic
                 {
                     Url = ReadString(root["url"]),
                     BitRate = ReadInt32(root["br"]),
-                    SizeKilobytes = ReadInt64(root["size"])
+                    SizeBytes = ReadInt64(root["size"])
                 };
             }
             catch (Exception)
@@ -260,6 +262,14 @@ namespace Dopamine.Services.Online.GdMusic
                         cancellationToken);
                 }
 
+                // Search, pictures, downloads and fallback playback share this budget.
+                // Fail promptly instead of leaving playback queued for several minutes.
+                if (!this.requestBudget.TryAcquire(this.requestStopwatch.ElapsedMilliseconds))
+                {
+                    return NeteaseResult<string>.Failure(
+                        new NeteaseError(NeteaseErrorCode.RateLimited, "Language_GdMusic_Rate_Limited"));
+                }
+
                 Interlocked.Exchange(
                     ref this.lastRequestElapsedMilliseconds,
                     this.requestStopwatch.ElapsedMilliseconds);
@@ -268,6 +278,13 @@ namespace Dopamine.Services.Online.GdMusic
                 {
                     if ((int)response.StatusCode == 429)
                     {
+                        TimeSpan? retryAfter = response.Headers.RetryAfter?.Delta;
+                        if (!retryAfter.HasValue && response.Headers.RetryAfter?.Date != null)
+                        {
+                            retryAfter = response.Headers.RetryAfter.Date.Value - DateTimeOffset.UtcNow;
+                        }
+
+                        this.requestBudget.BackOff(this.requestStopwatch.ElapsedMilliseconds, retryAfter);
                         return NeteaseResult<string>.Failure(
                             new NeteaseError(NeteaseErrorCode.RateLimited, "Language_GdMusic_Rate_Limited"));
                     }

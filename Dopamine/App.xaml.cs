@@ -313,6 +313,8 @@ namespace Dopamine
                 containerRegistry.RegisterSingleton<INeteasePersonalFmService, NeteasePersonalFmService>();
                 containerRegistry.RegisterSingleton<IUnblockSidecarService, UnblockSidecarService>();
                 containerRegistry.RegisterSingleton<IOnlineAudioFallbackProvider, UnblockNeteaseMusicFallbackProvider>();
+                // A named registration preserves the existing provider in IEnumerable<T>.
+                containerRegistry.Register(typeof(IOnlineAudioFallbackProvider), typeof(GdMusicAudioFallbackProvider), "gdstudio");
                 containerRegistry.RegisterSingleton<NeteaseAudioSourceResolver>();
                 containerRegistry.RegisterSingleton<NeteaseTemporaryAudioCache>();
                 containerRegistry.RegisterSingleton<INeteaseDownloadService, NeteaseDownloadService>();

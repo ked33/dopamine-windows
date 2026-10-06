@@ -73,7 +73,7 @@ namespace Dopamine.Tests
             Assert.That(trackUrl, Is.Not.Null);
             Assert.That(trackUrl.Url, Is.EqualTo("https://example.com/a.mp3"));
             Assert.That(trackUrl.BitRate, Is.EqualTo(320));
-            Assert.That(trackUrl.SizeKilobytes, Is.EqualTo(10240L));
+            Assert.That(trackUrl.SizeBytes, Is.EqualTo(10240L));
         }
 
         [Test]
@@ -85,7 +85,7 @@ namespace Dopamine.Tests
 
             Assert.That(trackUrl, Is.Not.Null);
             Assert.That(trackUrl.BitRate, Is.EqualTo(999));
-            Assert.That(trackUrl.SizeKilobytes, Is.EqualTo(0L));
+            Assert.That(trackUrl.SizeBytes, Is.EqualTo(0L));
         }
 
         [TestCase("[1,2]")]

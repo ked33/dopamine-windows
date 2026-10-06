@@ -249,6 +249,8 @@
     <Compile Include="Playback\GdMusicPlaybackSourceResolver.cs" />
     <Compile Include="Playback\NeteaseAudioSourceResolution.cs" />
     <Compile Include="Playback\NeteaseAudioSourceResolver.cs" />
+    <Compile Include="Playback\GdMusicAudioFallbackProvider.cs" />
+    <Compile Include="Online\GdMusic\GdMusicRequestBudget.cs" />
     <Compile Include="Playback\NeteaseTemporaryAudioCache.cs" />
     <Compile Include="Playback\OnlineAudioFallbackModels.cs" />
     <Compile Include="Playback\PlaybackSourceResolution.cs" />

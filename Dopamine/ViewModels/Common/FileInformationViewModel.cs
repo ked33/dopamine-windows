@@ -267,7 +267,9 @@ namespace Dopamine.ViewModels.Common
                                 ? provider.Id
                                 : fallback.ProviderId;
                             this.ApplyAudioInformation(
-                                string.Format("UnblockNeteaseMusic ({0})", source),
+                                provider.Id == "gdstudio"
+                                    ? "GD音乐台 (music.gdstudio.xyz)"
+                                    : string.Format("UnblockNeteaseMusic ({0})", source),
                                 fallback.MediaType,
                                 fallback.Bitrate,
                                 fallback.Size);

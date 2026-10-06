@@ -106,6 +106,11 @@ namespace Dopamine.Services.Playback
                 {
                     return fallback;
                 }
+
+                if (fallback.Error?.Code == NeteaseErrorCode.Cancelled)
+                {
+                    return fallback;
+                }
             }
 
             return NeteaseAudioSourceResolution.Failure(songId, officialError);
@@ -121,6 +126,7 @@ namespace Dopamine.Services.Playback
             string songId = track?.SourceInfo?.RemoteId;
             foreach (IOnlineAudioFallbackProvider provider in this.fallbackProviders)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 if (!allowWithoutOfficialFailure &&
                     (officialFailure == null || !provider.CanHandle(officialFailure)))
                 {
@@ -130,6 +136,8 @@ namespace Dopamine.Services.Playback
                 OnlineAudioFallbackResult fallback;
                 try
                 {
+                    AppLog.Info("Trying online audio fallback. Provider={0}, SongId={1}, OfficialFailure={2}",
+                        provider.Id, songId, officialFailure?.Code.ToString() ?? "none");
                     fallback = await provider.TryResolveAsync(
                         new OnlineAudioFallbackRequest
                         {
@@ -155,8 +163,10 @@ namespace Dopamine.Services.Playback
                     continue;
                 }
 
+                cancellationToken.ThrowIfCancellationRequested();
                 if (fallback != null && fallback.IsSuccess && !string.IsNullOrWhiteSpace(fallback.Url))
                 {
+                    AppLog.Info("Online audio fallback succeeded. Provider={0}, SongId={1}", provider.Id, songId);
                     string providerId = string.IsNullOrWhiteSpace(fallback.ProviderId)
                         ? provider.Id
                         : fallback.ProviderId;
@@ -182,6 +192,8 @@ namespace Dopamine.Services.Playback
                     };
                 }
 
+                AppLog.Info("Online audio fallback did not resolve a source. Provider={0}, SongId={1}, Reason={2}",
+                    provider.Id, songId, fallback?.ErrorCode ?? "empty_response");
                 cancellationToken.ThrowIfCancellationRequested();
             }
 

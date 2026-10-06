@@ -622,7 +622,7 @@
   <Text Key="GdMusic_Search_Failed">The online search service is temporarily unavailable</Text>
   <Text Key="GdMusic_Rate_Limited">Too many requests. Please try again later (at most 50 requests per 5 minutes)</Text>
   <Text Key="GdMusic_Settings_Title">Online search</Text>
-  <Text Key="GdMusic_Settings_Description">Configure the aggregated search service used by the online search tab. Stable sources: netease, joox and bilibili; other sources may be unavailable. Netease results play through your Netease account, other sources play through the online search service.</Text>
+  <Text Key="GdMusic_Settings_Description">Configure the aggregated search service used by the online search tab. Stable sources: netease, joox and bilibili. Netease songs use the official source first; when only a preview or no playable URL is available, GD Music Station is tried at 320 kbps, followed by UnblockNeteaseMusic if enabled. The GD fallback is also used for Netease recommendations.</Text>
   <Text Key="GdMusic_Attribution">Data source: GD Music Station (music.gdstudio.xyz), for study purposes only</Text>
   <Text Key="GdMusic_Download_Quality">Download and playback quality</Text>
   <Text Key="GdMusic_Download_Quality_Description">The requested quality for online search downloads. It falls back automatically when a song does not offer the selected quality. Online playback of non-Netease sources also uses this quality.</Text>

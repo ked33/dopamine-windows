@@ -149,6 +149,9 @@
     <Compile Include="LyricsParserTests.cs" />
     <Compile Include="NeteaseApiMappingTests.cs" />
     <Compile Include="GdMusicApiMappingTests.cs" />
+    <Compile Include="GdMusicAudioFallbackTests.cs" />
+    <Compile Include="GdMusicRequestBudgetTests.cs" />
+    <Compile Include="NeteaseFallbackPipelineTests.cs" />
     <Compile Include="NeteaseCookieHeaderParserTests.cs" />
     <Compile Include="NeteaseDailyRecommendationScheduleTests.cs" />
     <Compile Include="NeteaseRecommendationStoreTests.cs" />
