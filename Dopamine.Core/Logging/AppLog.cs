@@ -21,12 +21,7 @@ namespace Dopamine.Core.Logging
             [CallerFilePath] string filePath = "",
             [CallerLineNumber] int lineNumber = 0)
         {
-            if (!LoggingSettings.IsEnabled())
-            {
-                return;
-            }
-
-            Write(() => LogClient.Info(message, param1, param2, param3, param4, param5, param6, param7, param8, memberName, filePath, lineNumber));
+            Write(() => LogClient.Info(message, param1, param2, param3, param4, param5, param6, param7, param8, filePath, memberName, lineNumber));
         }
 
         public static void Warning(
@@ -43,12 +38,7 @@ namespace Dopamine.Core.Logging
             [CallerFilePath] string filePath = "",
             [CallerLineNumber] int lineNumber = 0)
         {
-            if (!LoggingSettings.IsEnabled())
-            {
-                return;
-            }
-
-            Write(() => LogClient.Warning(message, param1, param2, param3, param4, param5, param6, param7, param8, memberName, filePath, lineNumber));
+            Write(() => LogClient.Warning(message, param1, param2, param3, param4, param5, param6, param7, param8, filePath, memberName, lineNumber));
         }
 
         public static void Error(
@@ -65,14 +55,11 @@ namespace Dopamine.Core.Logging
             [CallerFilePath] string filePath = "",
             [CallerLineNumber] int lineNumber = 0)
         {
-            if (!LoggingSettings.IsEnabled())
-            {
-                return;
-            }
-
-            Write(() => LogClient.Error(message, param1, param2, param3, param4, param5, param6, param7, param8, memberName, filePath, lineNumber));
+            Write(() => LogClient.Error(message, param1, param2, param3, param4, param5, param6, param7, param8, filePath, memberName, lineNumber));
         }
 
+        // Compatibility aliases for callers compiled against earlier Dopamine.Core versions.
+        // "Always" must never bypass the user's logging preference.
         public static void WarningAlways(
             string message,
             object param1 = null,
@@ -87,7 +74,7 @@ namespace Dopamine.Core.Logging
             [CallerFilePath] string filePath = "",
             [CallerLineNumber] int lineNumber = 0)
         {
-            Write(() => LogClient.Warning(message, param1, param2, param3, param4, param5, param6, param7, param8, memberName, filePath, lineNumber));
+            Warning(message, param1, param2, param3, param4, param5, param6, param7, param8, memberName, filePath, lineNumber);
         }
 
         public static void ErrorAlways(
@@ -104,7 +91,7 @@ namespace Dopamine.Core.Logging
             [CallerFilePath] string filePath = "",
             [CallerLineNumber] int lineNumber = 0)
         {
-            Write(() => LogClient.Error(message, param1, param2, param3, param4, param5, param6, param7, param8, memberName, filePath, lineNumber));
+            Error(message, param1, param2, param3, param4, param5, param6, param7, param8, memberName, filePath, lineNumber);
         }
 
         public static void InfoAlways(
@@ -121,13 +108,20 @@ namespace Dopamine.Core.Logging
             [CallerFilePath] string filePath = "",
             [CallerLineNumber] int lineNumber = 0)
         {
-            Write(() => LogClient.Info(message, param1, param2, param3, param4, param5, param6, param7, param8, memberName, filePath, lineNumber));
+            Info(message, param1, param2, param3, param4, param5, param6, param7, param8, memberName, filePath, lineNumber);
         }
 
         private static void Write(Action writeAction)
         {
             try
             {
+                // Keep the gate in one place, before the file logger is initialized or queued.
+                // This also applies to diagnostics and unhandled-exception logging.
+                if (!LoggingSettings.IsEnabled())
+                {
+                    return;
+                }
+
                 writeAction();
             }
             catch (Exception)

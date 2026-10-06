@@ -103,6 +103,9 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
 
             this.OpenThemeColorsEditorCommand = new DelegateCommand(this.OpenThemeColorsEditor);
 
+            // Initialize before binding. An asynchronous snapshot must not overwrite a
+            // logging preference changed by the user while the other settings load.
+            this.checkBoxEnableLoggingChecked = LoggingSettings.IsEnabled();
             this.GetCheckBoxesAsync();
         }
 
@@ -133,7 +136,6 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             bool showWindowBorder = false;
             bool enableTransparency = true;
             bool enableAnimations = true;
-            bool enableLogging = true;
 
             try
             {
@@ -142,7 +144,6 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                     showWindowBorder = SettingDefaults.GetOrAdd<bool>("Appearance", "ShowWindowBorder", false, true);
                     enableTransparency = SettingDefaults.GetOrAdd<bool>("Appearance", "EnableTransparency", true);
                     enableAnimations = SettingDefaults.GetOrAdd<bool>("Appearance", "EnableAnimations", true, true);
-                    enableLogging = LoggingSettings.IsEnabled();
                 });
             }
             catch (Exception ex)
@@ -153,7 +154,6 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             SetProperty<bool>(ref this.checkBoxCheckBoxShowWindowBorderChecked, showWindowBorder);
             SetProperty<bool>(ref this.checkBoxEnableTransparencyChecked, enableTransparency);
             SetProperty<bool>(ref this.checkBoxEnableAnimationsChecked, enableAnimations);
-            SetProperty<bool>(ref this.checkBoxEnableLoggingChecked, enableLogging);
             UiAnimationSettings.SyncWithSettingValue(enableAnimations);
         }
     }

@@ -16,21 +16,21 @@ namespace Dopamine.Views.FullPlayer.Settings
 
         public SettingsOnline()
         {
-            AppLog.InfoAlways("Settings Online view construction started.");
+            AppLog.Info("Settings Online view construction started.");
 
             try
             {
                 InitializeComponent();
-                AppLog.InfoAlways("Settings Online InitializeComponent completed.");
+                AppLog.Info("Settings Online InitializeComponent completed.");
 
                 this.scrobblingService = ServiceLocator.Current.GetInstance<IScrobblingService>();
                 this.scrobblingService.SignInStateChanged += (_) => this.PasswordBox.Password = scrobblingService.Password;
                 this.PasswordBox.Password = scrobblingService.Password;
-                AppLog.InfoAlways("Settings Online view construction completed.");
+                AppLog.Info("Settings Online view construction completed.");
             }
             catch (Exception ex)
             {
-                AppLog.ErrorAlways("Settings Online view construction failed. Error={0}", LogClient.GetAllExceptions(ex));
+                AppLog.Error("Settings Online view construction failed. Error={0}", LogClient.GetAllExceptions(ex));
                 throw;
             }
         }
@@ -43,7 +43,7 @@ namespace Dopamine.Views.FullPlayer.Settings
         private async void SettingsOnline_Loaded(object sender, RoutedEventArgs e)
         {
             var viewModel = this.DataContext as SettingsOnlineViewModel;
-            AppLog.InfoAlways("Settings Online Loaded event started. HasExpectedViewModel={0}", viewModel != null);
+            AppLog.Info("Settings Online Loaded event started. HasExpectedViewModel={0}", viewModel != null);
 
             try
             {
@@ -52,18 +52,18 @@ namespace Dopamine.Views.FullPlayer.Settings
                     await viewModel.OnNeteaseLoadedAsync();
                 }
 
-                AppLog.InfoAlways("Settings Online Loaded event completed.");
+                AppLog.Info("Settings Online Loaded event completed.");
             }
             catch (Exception ex)
             {
-                AppLog.ErrorAlways("Settings Online Loaded event failed. Error={0}", LogClient.GetAllExceptions(ex));
+                AppLog.Error("Settings Online Loaded event failed. Error={0}", LogClient.GetAllExceptions(ex));
                 throw;
             }
         }
 
         private void SettingsOnline_Unloaded(object sender, RoutedEventArgs e)
         {
-            AppLog.InfoAlways("Settings Online Unloaded event received.");
+            AppLog.Info("Settings Online Unloaded event received.");
             (this.DataContext as SettingsOnlineViewModel)?.OnNeteaseUnloaded();
         }
 

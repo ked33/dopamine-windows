@@ -47,17 +47,17 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                 case SettingsPage.Online:
                 {
                     string onlineTarget = typeof(SettingsOnline).FullName;
-                    AppLog.InfoAlways("Settings Online navigation requested. Region={0}, Target={1}", RegionNames.SettingsRegion, onlineTarget);
+                    AppLog.Info("Settings Online navigation requested. Region={0}, Target={1}", RegionNames.SettingsRegion, onlineTarget);
                     this.regionManager.RequestNavigate(RegionNames.SettingsRegion, onlineTarget, result =>
                     {
                         if (result.Result == true)
                         {
-                            AppLog.InfoAlways("Settings Online navigation completed successfully. Target={0}", onlineTarget);
+                            AppLog.Info("Settings Online navigation completed successfully. Target={0}", onlineTarget);
                             return;
                         }
 
                         string error = result.Error == null ? "No exception was provided by Prism." : LogClient.GetAllExceptions(result.Error);
-                        AppLog.ErrorAlways("Settings Online navigation failed. Target={0}, Error={1}", onlineTarget, error);
+                        AppLog.Error("Settings Online navigation failed. Target={0}, Error={1}", onlineTarget, error);
                     });
                     break;
                 }

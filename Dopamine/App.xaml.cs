@@ -596,7 +596,7 @@ namespace Dopamine
             {
                 if (this.CanLogUnhandledException())
                 {
-                    AppLog.WarningAlways($"Ignored Unhandled Exception: {ex.Message}");
+                    AppLog.Warning($"Ignored Unhandled Exception: {ex.Message}");
                 }
 
                 return;
@@ -609,7 +609,7 @@ namespace Dopamine
             {
                 if (this.CanLogUnhandledException())
                 {
-                    AppLog.WarningAlways($"Ignored Unhandled Exception: {ex.Message}");
+                    AppLog.Warning($"Ignored Unhandled Exception: {ex.Message}");
                 }
 
                 return;
@@ -623,21 +623,21 @@ namespace Dopamine
             {
                 if (this.CanLogUnhandledException())
                 {
-                    AppLog.WarningAlways($"Ignored Unhandled Exception: {ex.Message}");
+                    AppLog.Warning($"Ignored Unhandled Exception: {ex.Message}");
                 }
 
                 return;
             }
 
-            // AppLog.WarningAlways($"Ignored Unhandled Exception: Message=<<<<{ex.Message}>>>>");
-            // AppLog.WarningAlways($"Ignored Unhandled Exception: Type=<<<<{ex.GetType().ToString()}>>>>");
-            // AppLog.WarningAlways($"Ignored Unhandled Exception: Source=<<<<{ex.Source.ToString()}>>>>");
+            // AppLog.Warning($"Ignored Unhandled Exception: Message=<<<<{ex.Message}>>>>");
+            // AppLog.Warning($"Ignored Unhandled Exception: Type=<<<<{ex.GetType().ToString()}>>>>");
+            // AppLog.Warning($"Ignored Unhandled Exception: Source=<<<<{ex.Source.ToString()}>>>>");
             // return;
 
-            AppLog.ErrorAlways("Unhandled Exception. {0}", LogClient.GetAllExceptions(ex));
+            AppLog.Error("Unhandled Exception. {0}", LogClient.GetAllExceptions(ex));
 
             // Close the application to prevent further problems
-            AppLog.InfoAlways("### FORCED STOP of {0}, version {1} ###", ProductInformation.ApplicationName, ProcessExecutable.AssemblyVersion());
+            AppLog.Info("### FORCED STOP of {0}, version {1} ###", ProductInformation.ApplicationName, ProcessExecutable.AssemblyVersion());
 
             // Stop playing when the container finished initializing. Startup failures can happen before
             // CommonServiceLocator has a provider, so emergency cleanup must not hide the original exception.
@@ -649,12 +649,12 @@ namespace Dopamine
                 }
                 else
                 {
-                    AppLog.WarningAlways("Skipped playback stop during emergency shutdown because the service locator is not initialized.");
+                    AppLog.Warning("Skipped playback stop during emergency shutdown because the service locator is not initialized.");
                 }
             }
             catch (Exception cleanupException)
             {
-                AppLog.WarningAlways("Could not stop playback during emergency shutdown. ErrorType={0}", cleanupException.GetType().Name);
+                AppLog.Warning("Could not stop playback during emergency shutdown. ErrorType={0}", cleanupException.GetType().Name);
             }
 
             // Emergency save of the settings. This can also be unavailable during very early startup.
@@ -664,7 +664,7 @@ namespace Dopamine
             }
             catch (Exception cleanupException)
             {
-                AppLog.WarningAlways("Could not save settings during emergency shutdown. ErrorType={0}", cleanupException.GetType().Name);
+                AppLog.Warning("Could not save settings during emergency shutdown. ErrorType={0}", cleanupException.GetType().Name);
             }
 
             Current.Shutdown();

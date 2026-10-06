@@ -138,7 +138,7 @@ namespace Dopamine.Services.Online.Netease
                 bool hasProfile = result.Value?.Profile != null;
                 bool hasAccount = result.Value?.Account != null;
 
-                AppLog.InfoAlways(
+                AppLog.Info(
                     "Netease login status completed. ResponseCode={0}, HasProfile={1}, HasAccount={2}",
                     responseCode,
                     hasProfile,

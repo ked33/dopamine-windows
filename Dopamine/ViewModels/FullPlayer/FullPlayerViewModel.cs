@@ -101,7 +101,7 @@ namespace Dopamine.ViewModels.FullPlayer
 
         private void NavigateContentThenMenu(string contentTarget, string menuTarget, int generation)
         {
-            AppLog.InfoAlways(
+            AppLog.Info(
                 "Full player content navigation requested. Region={0}, Target={1}",
                 RegionNames.FullPlayerRegion,
                 contentTarget);
@@ -117,14 +117,14 @@ namespace Dopamine.ViewModels.FullPlayer
                     string error = result.Error == null
                         ? "No exception was provided by Prism."
                         : LogClient.GetAllExceptions(result.Error);
-                    AppLog.ErrorAlways(
+                    AppLog.Error(
                         "Full player content navigation failed. Target={0}, Error={1}",
                         contentTarget,
                         error);
                     return;
                 }
 
-                AppLog.InfoAlways(
+                AppLog.Info(
                     "Full player content navigation completed successfully. Target={0}",
                     contentTarget);
                 this.DispatchMenuNavigation(menuTarget, generation);
@@ -140,7 +140,7 @@ namespace Dopamine.ViewModels.FullPlayer
                     return;
                 }
 
-                AppLog.InfoAlways(
+                AppLog.Info(
                     "Full player menu navigation requested. Region={0}, Target={1}",
                     RegionNames.FullPlayerMenuRegion,
                     menuTarget);
@@ -153,7 +153,7 @@ namespace Dopamine.ViewModels.FullPlayer
 
                     if (result.Result == true)
                     {
-                        AppLog.InfoAlways(
+                        AppLog.Info(
                             "Full player menu navigation completed successfully. Target={0}",
                             menuTarget);
                         return;
@@ -162,7 +162,7 @@ namespace Dopamine.ViewModels.FullPlayer
                     string error = result.Error == null
                         ? "No exception was provided by Prism."
                         : LogClient.GetAllExceptions(result.Error);
-                    AppLog.ErrorAlways(
+                    AppLog.Error(
                         "Full player menu navigation failed. Target={0}, Error={1}",
                         menuTarget,
                         error);

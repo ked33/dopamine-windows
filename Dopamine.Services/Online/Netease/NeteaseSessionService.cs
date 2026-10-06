@@ -213,7 +213,7 @@ namespace Dopamine.Services.Online.Netease
                         return Failure(parsed.Error);
                     }
 
-                    AppLog.InfoAlways(
+                    AppLog.Info(
                         "Netease cookie login parsing completed. CookieCount={0}",
                         parsed.Value.Count);
                     this.apiClient.ReplaceCookies(parsed.Value);
@@ -229,7 +229,7 @@ namespace Dopamine.Services.Online.Netease
                         return Failure(status.Error);
                     }
 
-                    AppLog.InfoAlways("Netease cookie login validation succeeded.");
+                    AppLog.Info("Netease cookie login validation succeeded.");
 
                     NeteaseLoginResult persisted = await this.PersistAuthenticatedSessionAsync(status.Value, cancellationToken);
 
