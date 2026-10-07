@@ -24,12 +24,16 @@ namespace Dopamine.Tests
                 {
                     Kind = TrackSourceKind.Netease,
                     ProviderId = "netease",
-                    RemoteId = "123"
+                    RemoteId = "123",
+                    PreferFallbackAudio = true
                 }
             };
 
             TrackViewModel copy = viewModel.DeepCopy();
+            Assert.That(copy.SourceInfo.PreferFallbackAudio, Is.True);
+            copy.SourceInfo.PreferFallbackAudio = false;
             copy.SourceInfo.RemoteId = "456";
+            Assert.That(viewModel.SourceInfo.PreferFallbackAudio, Is.True);
 
             Assert.That(copy.IsOnline, Is.True);
             Assert.That(copy.SupportsFileMetadataActions, Is.False);

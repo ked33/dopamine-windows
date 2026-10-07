@@ -287,6 +287,8 @@
     <Compile Include="Online\Netease\INeteaseSessionService.cs" />
     <Compile Include="Online\Netease\INeteaseSessionStore.cs" />
     <Compile Include="Online\Netease\NeteaseApiClient.cs" />
+    <Compile Include="Online\Netease\NeteaseAudioAccessPolicy.cs" />
+    <Compile Include="Online\Netease\NeteasePersonalFmContracts.cs" />
     <Compile Include="Online\Netease\NeteaseAudioQualitySettings.cs" />
     <Compile Include="Online\Netease\INeteaseDownloadService.cs" />
     <Compile Include="Online\Netease\NeteaseDownloadModels.cs" />

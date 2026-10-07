@@ -92,6 +92,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Security" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Buffers, Version=4.0.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Buffers.4.6.1\lib\net462\System.Buffers.dll</HintPath>
@@ -148,6 +149,7 @@
     <Compile Include="PlaylistDecoderTests.cs" />
     <Compile Include="LyricsParserTests.cs" />
     <Compile Include="NeteaseApiMappingTests.cs" />
+    <Compile Include="NeteaseAudioAccessTests.cs" />
     <Compile Include="GdMusicApiMappingTests.cs" />
     <Compile Include="GdMusicAudioFallbackTests.cs" />
     <Compile Include="AudioFallbackSettingsTests.cs" />

@@ -594,7 +594,7 @@
   <Text Key="Netease_Unblock_Status_Unavailable">状态：不可用；不影响官方音源播放</Text>
   <Text Key="Netease_Unblock_Status_Incompatible">状态：辅助进程协议不兼容，请重新安装或更新 Portable 包</Text>
   <Text Key="Audio_Fallback_Title">备用音源</Text>
-  <Text Key="Audio_Fallback_Description">网易云歌曲无法取得完整音频或音频下载失败时，按下方顺序尝试已启用的备用来源。此总开关同时控制 GD Studio 和 UnblockNeteaseMusic，适用于网易云播放与下载。</Text>
+  <Text Key="Audio_Fallback_Description">已标记为会员、付费或版权受限的网易云歌曲会优先尝试备用来源；其他歌曲在官方音源不可用或音频下载失败时按顺序尝试。此总开关同时控制 GD Studio 和 UnblockNeteaseMusic，适用于网易云播放与下载。</Text>
   <Text Key="Audio_Fallback_Order">可同时启用多个来源，数量不限；越靠上越优先。关闭总开关仍可调整列表，所有修改自动保存。</Text>
   <Text Key="Audio_Fallback_Move_Up">提高优先级</Text>
   <Text Key="Audio_Fallback_Move_Down">降低优先级</Text>
@@ -608,7 +608,7 @@
   <Text Key="Netease_Download_Open_Directory">打开</Text>
   <Text Key="Netease_Download_Directory_Description">下载前必须先选择目录。文件名格式为“歌手 - 歌曲名”，同名文件不会被覆盖。</Text>
   <Text Key="Netease_Download_Source_Priority">下载音源优先级</Text>
-  <Text Key="Netease_Download_Source_Priority_Description">此优先级仅影响网易云下载；备用来源遵循下方备用音源的总开关、多选与排序。</Text>
+  <Text Key="Netease_Download_Source_Priority_Description">此优先级仅影响网易云下载；已有明确限制标记的歌曲自动优先备用。备用来源遵循下方备用音源的总开关、多选与排序。</Text>
   <Text Key="Netease_Download_Official_First">官方网易云优先</Text>
   <Text Key="Netease_Download_Unblock_First">备用音源优先（按配置顺序）</Text>
   <Text Key="Netease_Download_Directory_Required">请先在“设置 - 在线”中配置下载目录。</Text>

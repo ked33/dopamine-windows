@@ -594,7 +594,7 @@
   <Text Key="Netease_Unblock_Status_Unavailable">Status: unavailable; official playback is unaffected</Text>
   <Text Key="Netease_Unblock_Status_Incompatible">Status: incompatible helper protocol; reinstall or update the Portable package</Text>
   <Text Key="Audio_Fallback_Title">Fallback audio sources</Text>
-  <Text Key="Audio_Fallback_Description">When a Netease track has no full audio or its audio download fails, try enabled sources in the order below. This switch controls both GD Studio and UnblockNeteaseMusic for Netease playback and downloads.</Text>
+  <Text Key="Audio_Fallback_Description">Netease tracks marked as VIP, paid or copyright-restricted try fallback sources first. Other tracks try them when official audio is unavailable or fails to download. This switch controls GD Studio and UnblockNeteaseMusic for Netease playback and downloads.</Text>
   <Text Key="Audio_Fallback_Order">Enable any number of sources. Higher rows are tried first. You can edit the list while the switch is off. Changes are saved automatically.</Text>
   <Text Key="Audio_Fallback_Move_Up">Move up</Text>
   <Text Key="Audio_Fallback_Move_Down">Move down</Text>
@@ -608,7 +608,7 @@
   <Text Key="Netease_Download_Open_Directory">Open</Text>
   <Text Key="Netease_Download_Directory_Description">Choose a directory before downloading. Files are named “Artist - Song title” and existing files are not overwritten.</Text>
   <Text Key="Netease_Download_Source_Priority">Download source priority</Text>
-  <Text Key="Netease_Download_Source_Priority_Description">This priority applies to Netease downloads only. Fallback sources follow the master switch, selection and order below.</Text>
+  <Text Key="Netease_Download_Source_Priority_Description">This priority applies to Netease downloads only. Tracks with explicit restriction hints automatically try fallback sources first. Fallback sources follow the master switch, selection and order below.</Text>
   <Text Key="Netease_Download_Official_First">Official Netease first</Text>
   <Text Key="Netease_Download_Unblock_First">Fallback sources first (configured order)</Text>
   <Text Key="Netease_Download_Directory_Required">Configure the download directory in Settings - Online first.</Text>

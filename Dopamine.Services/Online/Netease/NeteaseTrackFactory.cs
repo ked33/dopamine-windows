@@ -62,7 +62,8 @@ namespace Dopamine.Services.Online.Netease
                 Kind = TrackSourceKind.Netease,
                 ProviderId = "netease",
                 RemoteId = song.Id,
-                ArtworkUrl = song.ArtworkUrl
+                ArtworkUrl = song.ArtworkUrl,
+                PreferFallbackAudio = song.PreferFallbackAudio || song.IsKnownUnavailable
             };
             return viewModel;
         }

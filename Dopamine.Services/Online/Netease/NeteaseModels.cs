@@ -103,6 +103,8 @@ namespace Dopamine.Services.Online.Netease
         public string ArtworkUrl { get; set; }
 
         public bool IsKnownUnavailable { get; set; }
+
+        public bool PreferFallbackAudio { get; set; }
     }
 
     public sealed class NeteaseLikedLibrary

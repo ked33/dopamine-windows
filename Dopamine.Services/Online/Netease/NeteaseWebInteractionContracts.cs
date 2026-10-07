@@ -156,6 +156,9 @@ namespace Dopamine.Services.Online.Netease
         [JsonPropertyName("duration")]
         public long LegacyDurationMilliseconds { get; set; }
 
+        [JsonPropertyName("fee")]
+        public int? Fee { get; set; }
+
         [JsonPropertyName("privilege")]
         public NeteaseWebRecommendationPrivilege Privilege { get; set; }
     }
@@ -181,6 +184,9 @@ namespace Dopamine.Services.Online.Netease
     internal sealed class NeteaseWebRecommendationPrivilege
     {
         [JsonPropertyName("st")]
-        public int Status { get; set; }
+        public int? Status { get; set; }
+
+        [JsonPropertyName("fee")]
+        public int? Fee { get; set; }
     }
 }

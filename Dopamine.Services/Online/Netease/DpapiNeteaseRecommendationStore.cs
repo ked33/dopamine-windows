@@ -12,7 +12,8 @@ namespace Dopamine.Services.Online.Netease
 {
     public sealed class DpapiNeteaseRecommendationStore : INeteaseRecommendationStore
     {
-        private const int CurrentVersion = 1;
+        // Version 2 includes song access hints; refresh old caches once after upgrade.
+        private const int CurrentVersion = 2;
         private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("Dopamine.Netease.DailyRecommendations.v1");
 
         private readonly string directory;

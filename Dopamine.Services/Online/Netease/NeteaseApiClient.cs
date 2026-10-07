@@ -209,20 +209,7 @@ namespace Dopamine.Services.Online.Netease
                 {
                     foreach (var song in sourceSongs.Where(x => x != null && !string.IsNullOrWhiteSpace(x.Id)))
                     {
-                        songs.Add(new NeteaseRecommendedSong
-                        {
-                            Id = song.Id,
-                            Name = song.Name ?? string.Empty,
-                            Artists = (song.Artists ?? Array.Empty<HyPlayer.NeteaseApi.Models.ResponseModels.ArtistDto>())
-                                .Where(x => x != null && !string.IsNullOrWhiteSpace(x.Name))
-                                .Select(x => x.Name)
-                                .ToList(),
-                            AlbumId = song.Album?.Id ?? string.Empty,
-                            AlbumName = song.Album?.Name ?? string.Empty,
-                            DurationMilliseconds = song.Duration,
-                            ArtworkUrl = song.Album?.PictureUrl,
-                            IsKnownUnavailable = song.Privilege != null && song.Privilege.St < 0
-                        });
+                        songs.Add(MapSong(song));
                     }
                 }
 
@@ -407,7 +394,7 @@ namespace Dopamine.Services.Online.Netease
             try
             {
                 var result = await this.handler.RequestAsync(
-                    NeteaseApis.PersonalFmApi,
+                    new NeteasePersonalFmApi(),
                     new PersonalFmRequest { Mode = "FAMILIAR", Limit = 3 },
                     cancellationToken);
 
@@ -425,7 +412,7 @@ namespace Dopamine.Services.Online.Netease
 
                 var items = new List<NeteasePersonalFmItem>();
 
-                foreach (var item in result.Value.Items ?? Array.Empty<PersonalFmResponse.PersonalFmDataItem>())
+                foreach (var item in result.Value.Items ?? Array.Empty<NeteasePersonalFmSong>())
                 {
                     NeteaseRecommendedSong song = MapSong(item);
 
@@ -795,7 +782,7 @@ namespace Dopamine.Services.Online.Netease
             };
         }
 
-        private static NeteaseRecommendedSong MapReplacementRecommendation(
+        internal static NeteaseRecommendedSong MapReplacementRecommendation(
             NeteaseWebRecommendationSong song)
         {
             if (song == null || string.IsNullOrWhiteSpace(song.Id))
@@ -821,11 +808,12 @@ namespace Dopamine.Services.Online.Netease
                     ? song.DurationMilliseconds
                     : song.LegacyDurationMilliseconds,
                 ArtworkUrl = album?.ArtworkUrl,
-                IsKnownUnavailable = song.Privilege != null && song.Privilege.Status < 0
+                IsKnownUnavailable = song.Privilege?.Status < 0,
+                PreferFallbackAudio = NeteaseAudioAccessPolicy.PrefersFallback(song.Fee, song.Privilege?.Fee, song.Privilege?.Status)
             };
         }
 
-        private static NeteaseRecommendedSong MapSong(
+        internal static NeteaseRecommendedSong MapSong(
             HyPlayer.NeteaseApi.Models.ResponseModels.EmittedSongDtoWithPrivilege song)
         {
             if (song == null || string.IsNullOrWhiteSpace(song.Id))
@@ -845,12 +833,13 @@ namespace Dopamine.Services.Online.Netease
                 AlbumName = song.Album?.Name ?? string.Empty,
                 DurationMilliseconds = song.Duration,
                 ArtworkUrl = song.Album?.PictureUrl,
-                IsKnownUnavailable = song.Privilege != null && song.Privilege.St < 0
+                IsKnownUnavailable = song.Privilege != null && song.Privilege.St < 0,
+                PreferFallbackAudio = NeteaseAudioAccessPolicy.PrefersFallback(song.Fee, song.Privilege?.Fee, song.Privilege?.St)
             };
         }
 
-        private static NeteaseRecommendedSong MapSong(
-            HyPlayer.NeteaseApi.Models.ResponseModels.SongDto song)
+        internal static NeteaseRecommendedSong MapSong(
+            NeteasePersonalFmSong song)
         {
             if (song == null || string.IsNullOrWhiteSpace(song.Id))
             {
@@ -869,7 +858,8 @@ namespace Dopamine.Services.Online.Netease
                 AlbumName = song.Album?.Name ?? string.Empty,
                 DurationMilliseconds = song.Duration,
                 ArtworkUrl = song.Album?.PictureUrl,
-                IsKnownUnavailable = false
+                IsKnownUnavailable = song.Privilege?.Status < 0,
+                PreferFallbackAudio = NeteaseAudioAccessPolicy.PrefersFallback(song.Fee, song.Privilege?.Fee, song.Privilege?.Status)
             };
         }
 

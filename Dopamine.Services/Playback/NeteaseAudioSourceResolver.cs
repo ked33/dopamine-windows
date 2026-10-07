@@ -45,7 +45,8 @@ namespace Dopamine.Services.Playback
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (priority == OnlineAudioSourcePriority.FallbackFirst)
+            bool fallbackFirst = priority == OnlineAudioSourcePriority.FallbackFirst || track.SourceInfo.PreferFallbackAudio;
+            if (fallbackFirst)
             {
                 NeteaseAudioSourceResolution proactiveFallback = await this.TryFallbackAsync(
                     track,
@@ -99,7 +100,7 @@ namespace Dopamine.Services.Playback
                 return NeteaseAudioSourceResolution.Failure(songId, officialError);
             }
 
-            if (priority != OnlineAudioSourcePriority.FallbackFirst)
+            if (!fallbackFirst)
             {
                 NeteaseAudioSourceResolution fallback = await this.TryFallbackAsync(
                     track,

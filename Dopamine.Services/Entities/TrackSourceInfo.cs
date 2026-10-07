@@ -10,6 +10,8 @@
 
         public string ArtworkUrl { get; set; }
 
+        public bool PreferFallbackAudio { get; set; }
+
         public string PictureId { get; set; }
 
         public TrackSourceInfo DeepCopy()
@@ -20,7 +22,8 @@
                 ProviderId = this.ProviderId,
                 RemoteId = this.RemoteId,
                 ArtworkUrl = this.ArtworkUrl,
-                PictureId = this.PictureId
+                PictureId = this.PictureId,
+                PreferFallbackAudio = this.PreferFallbackAudio
             };
         }
 

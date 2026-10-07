@@ -192,6 +192,79 @@ namespace Dopamine.Tests
             }
         }
 
+        [Test]
+        public async Task RestrictedTrackUsesConfiguredFallbackBeforeCallingOfficial()
+        {
+            var official = new FakeMusic { Response = new NeteaseAudioResolution { IsSuccess = true, Url = "https://official.test/song.mp3" } };
+            var api = new GdMusicAudioFallbackTests.FakeGdApi();
+            var track = GdMusicAudioFallbackTests.CreateRequest().Track;
+            track.SourceInfo.PreferFallbackAudio = true;
+            var result = await CreateResolver(official, api, new FakeUnblock()).ResolveAsync(track,
+                OnlineAudioSourcePriority.OfficialFirst, false, CancellationToken.None);
+            Assert.That(result.ConfiguredSourceId, Is.EqualTo("gd:netease"));
+            Assert.That(official.Calls, Is.Zero);
+        }
+
+        [Test]
+        public async Task RestrictionIsAHintAndOfficialIsStillTriedAfterFallbackFailure()
+        {
+            var calls = new List<string>();
+            var official = new FakeMusic { Response = new NeteaseAudioResolution { IsSuccess = true, Url = "https://official.test/song.mp3" } };
+            var track = GdMusicAudioFallbackTests.CreateRequest().Track;
+            track.SourceInfo.PreferFallbackAudio = true;
+            var resolver = new NeteaseAudioSourceResolver(official,
+                new[] { new RecordingProvider("gdstudio", calls) }, new FakeFallbackSettings());
+            var result = await resolver.ResolveAsync(track, OnlineAudioSourcePriority.OfficialFirst, false, CancellationToken.None);
+            Assert.That(calls, Is.EqualTo(new[] { "gd:netease" }));
+            Assert.That(result.ConfiguredSourceId, Is.EqualTo("official"));
+            Assert.That(official.Calls, Is.EqualTo(1));
+        }
+
+        [Test]
+        public async Task RestrictedTrackStillHonorsDisabledMasterSwitch()
+        {
+            var calls = new List<string>();
+            var official = new FakeMusic();
+            var track = GdMusicAudioFallbackTests.CreateRequest().Track;
+            track.SourceInfo.PreferFallbackAudio = true;
+            var resolver = new NeteaseAudioSourceResolver(official,
+                new[] { new RecordingProvider("gdstudio", calls) },
+                new FakeFallbackSettings(AudioFallbackConfiguration.CreateDefault(false)));
+            await resolver.ResolveAsync(track, OnlineAudioSourcePriority.OfficialFirst, false, CancellationToken.None);
+            Assert.That(calls, Is.Empty);
+            Assert.That(official.Calls, Is.EqualTo(1));
+        }
+
+        [Test]
+        public async Task RestrictedTrackDoesNotRepeatFailedFallbacksAfterOfficialFailure()
+        {
+            var calls = new List<string>();
+            var track = GdMusicAudioFallbackTests.CreateRequest().Track;
+            track.SourceInfo.PreferFallbackAudio = true;
+            var resolver = new NeteaseAudioSourceResolver(new FakeMusic(),
+                new[] { new RecordingProvider("gdstudio", calls) }, new FakeFallbackSettings());
+            var result = await resolver.ResolveAsync(track, OnlineAudioSourcePriority.OfficialFirst, false, CancellationToken.None);
+            Assert.That(calls.Count, Is.EqualTo(1));
+            Assert.That(result.Error.Code, Is.EqualTo(NeteaseErrorCode.TrialOnly));
+        }
+
+        [Test]
+        public async Task CancelledRestrictedTrackDoesNotContinueToOfficial()
+        {
+            var official = new FakeMusic();
+            var api = new GdMusicAudioFallbackTests.FakeGdApi
+            {
+                Response = NeteaseResult<Services.Online.GdMusic.GdMusicTrackUrl>.Failure(
+                    new NeteaseError(NeteaseErrorCode.Cancelled, "test"))
+            };
+            var track = GdMusicAudioFallbackTests.CreateRequest().Track;
+            track.SourceInfo.PreferFallbackAudio = true;
+            var result = await CreateResolver(official, api, new FakeUnblock()).ResolveAsync(track,
+                OnlineAudioSourcePriority.OfficialFirst, false, CancellationToken.None);
+            Assert.That(result.Error.Code, Is.EqualTo(NeteaseErrorCode.Cancelled));
+            Assert.That(official.Calls, Is.Zero);
+        }
+
         private static NeteaseAudioSourceResolver CreateResolver(FakeMusic official, GdMusicAudioFallbackTests.FakeGdApi api, FakeUnblock unblock)
         {
             // Deliberately reverse registration order to verify provider priorities.
