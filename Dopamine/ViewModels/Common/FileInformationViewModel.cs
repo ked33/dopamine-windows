@@ -48,8 +48,7 @@ namespace Dopamine.ViewModels.Common
         private bool isOnline;
         private string onlineSource;
         private readonly TrackViewModel onlineTrack;
-        private readonly INeteaseMusicService neteaseMusicService;
-        private readonly IList<IOnlineAudioFallbackProvider> audioFallbackProviders;
+        private readonly NeteaseAudioSourceResolver audioSourceResolver;
         private CancellationTokenSource audioInformationCancellationTokenSource;
         private bool hasLoadedOnlineAudioInformation;
 
@@ -180,8 +179,7 @@ namespace Dopamine.ViewModels.Common
 
         public FileInformationViewModel(
             TrackViewModel track,
-            INeteaseMusicService neteaseMusicService,
-            IEnumerable<IOnlineAudioFallbackProvider> audioFallbackProviders)
+            NeteaseAudioSourceResolver audioSourceResolver)
         {
             if (track == null || track.SourceInfo == null || track.IsLocalFile)
             {
@@ -189,10 +187,7 @@ namespace Dopamine.ViewModels.Common
             }
 
             this.onlineTrack = track;
-            this.neteaseMusicService = neteaseMusicService;
-            this.audioFallbackProviders = (audioFallbackProviders ?? Enumerable.Empty<IOnlineAudioFallbackProvider>())
-                .OrderBy(x => x.Order)
-                .ToList();
+            this.audioSourceResolver = audioSourceResolver;
             this.IsOnline = true;
             this.SongTitle = track.TrackTitle;
             this.SongArtists = track.ArtistName;
@@ -207,7 +202,7 @@ namespace Dopamine.ViewModels.Common
         public async Task LoadOnlineAudioInformationAsync()
         {
             if (!this.IsOnline || this.hasLoadedOnlineAudioInformation ||
-                this.onlineTrack?.SourceInfo == null || this.neteaseMusicService == null ||
+                this.onlineTrack?.SourceInfo == null || this.audioSourceResolver == null ||
                 string.IsNullOrWhiteSpace(this.onlineTrack.SourceInfo.RemoteId))
             {
                 return;
@@ -221,73 +216,17 @@ namespace Dopamine.ViewModels.Common
 
             try
             {
-                NeteaseAudioResolution official = await this.neteaseMusicService.ResolveOfficialAudioAsync(
-                    this.onlineTrack.SourceInfo.RemoteId,
-                    false,
-                    cancellationToken);
-
+                var source = await this.audioSourceResolver.ResolveAsync(this.onlineTrack,
+                    OnlineAudioSourcePriority.OfficialFirst, false, cancellationToken);
                 cancellationToken.ThrowIfCancellationRequested();
-
-                if (official != null && official.IsSuccess)
+                if (source != null && source.IsSuccess)
                 {
-                    this.ApplyAudioInformation(
-                        ResourceUtils.GetString("Language_Netease_Music"),
-                        official.Type,
-                        official.BitRate,
-                        official.Size);
+                    string name = source.ConfiguredSourceId == "official"
+                        ? ResourceUtils.GetString("Language_Netease_Music")
+                        : AudioFallbackCatalog.Find(source.ConfiguredSourceId)?.Name ?? source.ProviderId;
+                    this.ApplyAudioInformation(name, source.MediaType, source.BitRate, source.Size);
                     this.hasLoadedOnlineAudioInformation = true;
                     return;
-                }
-
-                foreach (IOnlineAudioFallbackProvider provider in this.audioFallbackProviders)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    if (!provider.CanHandle(official?.Error))
-                    {
-                        continue;
-                    }
-
-                    try
-                    {
-                        OnlineAudioFallbackResult fallback = await provider.TryResolveAsync(
-                            new OnlineAudioFallbackRequest
-                            {
-                                Track = this.onlineTrack,
-                                OfficialFailure = official.Error,
-                                ForceRefresh = false
-                            },
-                            cancellationToken);
-
-                        cancellationToken.ThrowIfCancellationRequested();
-
-                        if (fallback != null && fallback.IsSuccess)
-                        {
-                            string source = string.IsNullOrWhiteSpace(fallback.ProviderId)
-                                ? provider.Id
-                                : fallback.ProviderId;
-                            this.ApplyAudioInformation(
-                                provider.Id == "gdstudio"
-                                    ? "GD音乐台 (music.gdstudio.xyz)"
-                                    : string.Format("UnblockNeteaseMusic ({0})", source),
-                                fallback.MediaType,
-                                fallback.Bitrate,
-                                fallback.Size);
-                            this.hasLoadedOnlineAudioInformation = true;
-                            return;
-                        }
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        throw;
-                    }
-                    catch (Exception ex)
-                    {
-                        AppLog.Warning(
-                            "Could not resolve online audio information from fallback provider. Provider={0}, ErrorType={1}",
-                            provider.Id,
-                            ex.GetType().Name);
-                    }
                 }
 
                 this.SetAudioInformationUnavailable();

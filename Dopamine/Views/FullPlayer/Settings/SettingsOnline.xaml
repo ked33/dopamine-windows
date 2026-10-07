@@ -4,6 +4,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:dc="clr-namespace:Digimezzo.Foundation.WPF.Controls;assembly=Digimezzo.Foundation.WPF"
+             xmlns:settings="clr-namespace:Dopamine.Views.FullPlayer.Settings"
              xmlns:utils="clr-namespace:Dopamine.Utils"
              xmlns:prismMvvm="clr-namespace:Prism.Mvvm;assembly=Prism.Wpf"
              Loaded="SettingsOnline_Loaded"
@@ -117,39 +118,10 @@
                            Foreground="{DynamicResource Brush_SecondaryText}"
                            TextWrapping="Wrap"/>
             </StackPanel>
-            <Label Margin="0,20,0,0" Style="{StaticResource TitleLabel}" Content="UnblockNeteaseMusic" />
-            <TextBlock Margin="0,5,0,0" MaxWidth="620" HorizontalAlignment="Left" Text="{DynamicResource Language_Netease_Unblock_Description}" Foreground="{DynamicResource Brush_PrimaryText}" TextWrapping="Wrap"/>
-            <TextBlock Margin="0,8,0,0" MaxWidth="620" HorizontalAlignment="Left" Text="{DynamicResource Language_Netease_Unblock_Risk_Notice}" Foreground="{DynamicResource Brush_SecondaryText}" TextWrapping="Wrap"/>
-            <dc:Windows10ToggleSwitch Margin="0,12,0,0" HorizontalAlignment="Left" FontSize="12" OnLabel="{DynamicResource Language_Yes}" OffLabel="{DynamicResource Language_No}" Foreground="{DynamicResource Brush_PrimaryText}" Accent="{DynamicResource Brush_Accent}" IsChecked="{Binding CheckBoxEnableUnblockNeteaseMusic}"/>
-            <StackPanel Margin="0,12,0,0" IsEnabled="{Binding CheckBoxEnableUnblockNeteaseMusic}">
-                <TextBlock Text="{DynamicResource Language_Netease_Unblock_Sources}" Foreground="{DynamicResource Brush_PrimaryText}"/>
-                <UniformGrid Margin="0,8,0,0" Columns="3" Width="450" HorizontalAlignment="Left">
-                    <dc:Windows10ToggleSwitch HorizontalAlignment="Left" FontSize="12" OnLabel="Kugou" OffLabel="Kugou" Foreground="{DynamicResource Brush_PrimaryText}" Accent="{DynamicResource Brush_Accent}" IsChecked="{Binding CheckBoxUnblockKugou}"/>
-                    <dc:Windows10ToggleSwitch HorizontalAlignment="Left" FontSize="12" OnLabel="Bodian" OffLabel="Bodian" Foreground="{DynamicResource Brush_PrimaryText}" Accent="{DynamicResource Brush_Accent}" IsChecked="{Binding CheckBoxUnblockBodian}"/>
-                    <dc:Windows10ToggleSwitch HorizontalAlignment="Left" FontSize="12" OnLabel="Kuwo" OffLabel="Kuwo" Foreground="{DynamicResource Brush_PrimaryText}" Accent="{DynamicResource Brush_Accent}" IsChecked="{Binding CheckBoxUnblockKuwo}"/>
-                </UniformGrid>
-                <TextBlock Margin="0,12,0,0" Text="{DynamicResource Language_Netease_Unblock_Audio_Quality}" Foreground="{DynamicResource Brush_PrimaryText}" TextWrapping="Wrap"/>
-                <ComboBox Margin="0,8,0,0" Width="220" HorizontalAlignment="Left" Style="{StaticResource MetroComboBox}"
-                          ItemsSource="{Binding UnblockAudioQualityOptions}"
-                          SelectedIndex="{Binding SelectedUnblockAudioQuality, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                <TextBlock Margin="0,8,0,0" MaxWidth="620" HorizontalAlignment="Left" Text="{DynamicResource Language_Netease_Unblock_Audio_Quality_Description}" Foreground="{DynamicResource Brush_SecondaryText}" TextWrapping="Wrap"/>
-                <Grid Margin="0,12,0,0" MaxWidth="620" HorizontalAlignment="Left">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource Brush_SecondaryText}" Text="{Binding UnblockStatusText}" TextWrapping="Wrap"/>
-                    <Button Grid.Column="1" Margin="15,0,0,0" Style="{StaticResource RegularButton}" Content="{DynamicResource Language_Netease_Unblock_Restart}" Command="{Binding RestartUnblockSidecarCommand}"/>
-                </Grid>
-                <StackPanel.Style>
-                    <Style>
-                        <Style.Triggers>
-                            <Trigger Property="StackPanel.IsEnabled" Value="False">
-                                <Setter Property="StackPanel.Opacity" Value="0.5" />
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </StackPanel.Style>
+            <settings:AudioFallbackSettingsView DataContext="{Binding AudioFallback}"/>
+            <StackPanel Margin="0,12,0,0" Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource Brush_SecondaryText}" Text="{Binding UnblockStatusText}" TextWrapping="Wrap"/>
+                <Button Margin="15,0,0,0" Style="{StaticResource RegularButton}" Content="{DynamicResource Language_Netease_Unblock_Restart}" Command="{Binding RestartUnblockSidecarCommand}"/>
             </StackPanel>
             <Label Margin="0,20,0,0" Style="{StaticResource TitleLabel}" Content="{DynamicResource Language_GdMusic_Settings_Title}" />
             <StackPanel MaxWidth="620" HorizontalAlignment="Left">

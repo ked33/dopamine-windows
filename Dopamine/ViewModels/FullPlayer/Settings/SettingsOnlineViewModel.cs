@@ -65,12 +65,6 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
         private ObservableCollection<string> neteaseAudioQualityOptions = new ObservableCollection<string>();
         private int selectedNeteaseAudioQuality;
         private readonly IUnblockSidecarService unblockSidecarService;
-        private bool checkBoxEnableUnblockNeteaseMusic;
-        private bool checkBoxUnblockKugou;
-        private bool checkBoxUnblockBodian;
-        private bool checkBoxUnblockKuwo;
-        private ObservableCollection<string> unblockAudioQualityOptions = new ObservableCollection<string>();
-        private int selectedUnblockAudioQuality;
         private bool isUnblockRestarting;
         private string unblockStatusText;
         private bool isUnblockStateSubscribed;
@@ -127,7 +121,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                 }
 
                 NeteaseDownloadSettings.SourcePriority = value == 1
-                    ? OnlineAudioSourcePriority.UnblockFirst
+                    ? OnlineAudioSourcePriority.FallbackFirst
                     : OnlineAudioSourcePriority.OfficialFirst;
             }
         }
@@ -177,68 +171,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             }
         }
 
-        public ObservableCollection<string> UnblockAudioQualityOptions => this.unblockAudioQualityOptions;
-
-        public int SelectedUnblockAudioQuality
-        {
-            get { return this.selectedUnblockAudioQuality; }
-            set
-            {
-                if (value < 0 || value > 1 ||
-                    !SetProperty<int>(ref this.selectedUnblockAudioQuality, value))
-                {
-                    return;
-                }
-
-                UnblockNeteaseMusicSettings.EnableFlac = value == 1;
-                if (this.CheckBoxEnableUnblockNeteaseMusic)
-                {
-                    this.RestartUnblockSidecarAsync();
-                }
-            }
-        }
-
-        public bool CheckBoxEnableUnblockNeteaseMusic
-        {
-            get { return this.checkBoxEnableUnblockNeteaseMusic; }
-            set
-            {
-                if (!SetProperty<bool>(ref this.checkBoxEnableUnblockNeteaseMusic, value))
-                {
-                    return;
-                }
-
-                UnblockNeteaseMusicSettings.IsEnabled = value;
-                this.RestartUnblockSidecarCommand?.RaiseCanExecuteChanged();
-                if (value)
-                {
-                    this.RestartUnblockSidecarAsync();
-                }
-                else
-                {
-                    this.unblockSidecarService.Stop();
-                    this.UpdateUnblockStatus();
-                }
-            }
-        }
-
-        public bool CheckBoxUnblockKugou
-        {
-            get { return this.checkBoxUnblockKugou; }
-            set { this.SetUnblockSource(ref this.checkBoxUnblockKugou, value, nameof(this.CheckBoxUnblockKugou)); }
-        }
-
-        public bool CheckBoxUnblockBodian
-        {
-            get { return this.checkBoxUnblockBodian; }
-            set { this.SetUnblockSource(ref this.checkBoxUnblockBodian, value, nameof(this.CheckBoxUnblockBodian)); }
-        }
-
-        public bool CheckBoxUnblockKuwo
-        {
-            get { return this.checkBoxUnblockKuwo; }
-            set { this.SetUnblockSource(ref this.checkBoxUnblockKuwo, value, nameof(this.CheckBoxUnblockKuwo)); }
-        }
+        public AudioFallbackSettingsViewModel AudioFallback { get; }
 
         public bool IsUnblockRestarting
         {
@@ -472,7 +405,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
 
         public SettingsOnlineViewModel(IContainerProvider container, IProviderService providerService, IDialogService dialogService,
             IScrobblingService scrobblingService, IEventAggregator eventAggregator, INeteaseSessionService neteaseSessionService,
-            II18nService i18nService, IUnblockSidecarService unblockSidecarService)
+            II18nService i18nService, IUnblockSidecarService unblockSidecarService, IAudioFallbackSettings fallbackSettings)
         {
             AppLog.Info(
                 "Settings Online ViewModel construction started. HasContainer={0}, HasProviderService={1}, HasDialogService={2}, HasScrobblingService={3}, HasEventAggregator={4}, HasNeteaseSessionService={5}, HasI18nService={6}",
@@ -494,14 +427,11 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             this.unblockSidecarService = unblockSidecarService;
             this.selectedNeteaseAudioQuality = (int)NeteaseAudioQualitySettings.Quality;
             this.checkBoxPersonalFmFilterLikedSongs = NeteasePersonalFmSettings.FilterLikedSongs;
-            this.checkBoxEnableUnblockNeteaseMusic = UnblockNeteaseMusicSettings.IsEnabled;
-            this.checkBoxUnblockKugou = UnblockNeteaseMusicSettings.Sources.Contains("kugou");
-            this.checkBoxUnblockBodian = UnblockNeteaseMusicSettings.Sources.Contains("bodian");
-            this.checkBoxUnblockKuwo = UnblockNeteaseMusicSettings.Sources.Contains("kuwo");
-            this.selectedUnblockAudioQuality = UnblockNeteaseMusicSettings.EnableFlac ? 1 : 0;
+            this.AudioFallback = new AudioFallbackSettingsViewModel(fallbackSettings);
+            this.AudioFallback.PropertyChanged += (_, __) => this.RestartUnblockSidecarCommand?.RaiseCanExecuteChanged();
             this.downloadDirectory = NeteaseDownloadSettings.DownloadDirectory;
             this.selectedDownloadSourcePriority = NeteaseDownloadSettings.SourcePriority ==
-                OnlineAudioSourcePriority.UnblockFirst ? 1 : 0;
+                OnlineAudioSourcePriority.FallbackFirst ? 1 : 0;
             this.selectedGdDownloadQuality = GetGdDownloadQualityIndex(GdMusicSettings.DownloadQuality);
             this.RefreshAudioQualityOptions();
             this.RefreshDownloadSourcePriorityOptions();
@@ -515,7 +445,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                 () => !this.IsNeteaseSigningIn);
             this.RestartUnblockSidecarCommand = new DelegateCommand(
                 () => this.RestartUnblockSidecarAsync(),
-                () => this.CheckBoxEnableUnblockNeteaseMusic && !this.IsUnblockRestarting);
+                () => this.AudioFallback.HasUnblockSources && !this.IsUnblockRestarting);
             this.BrowseDownloadDirectoryCommand = new DelegateCommand(this.BrowseDownloadDirectory);
             this.OpenDownloadDirectoryCommand = new DelegateCommand(
                 this.OpenDownloadDirectory,
@@ -822,9 +752,6 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             this.NeteaseAudioQualityOptions.Add(ResourceUtils.GetString("Language_Netease_Audio_Quality_Higher"));
             this.NeteaseAudioQualityOptions.Add(ResourceUtils.GetString("Language_Netease_Audio_Quality_ExHigh"));
 
-            this.UnblockAudioQualityOptions.Clear();
-            this.UnblockAudioQualityOptions.Add(ResourceUtils.GetString("Language_Netease_Unblock_Prefer_320K"));
-            this.UnblockAudioQualityOptions.Add(ResourceUtils.GetString("Language_Netease_Unblock_Prefer_Flac"));
         }
 
         private void DispatchDownloadSourcePriorityOptionsUpdate()
@@ -873,6 +800,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
 
         private void RefreshGdDownloadQualityOptions()
         {
+            this.AudioFallback.RefreshLanguage();
             this.GdDownloadQualityOptions.Clear();
             this.GdDownloadQualityOptions.Add(ResourceUtils.GetString("Language_GdMusic_Quality_128"));
             this.GdDownloadQualityOptions.Add(ResourceUtils.GetString("Language_GdMusic_Quality_192"));
@@ -971,42 +899,9 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
             }
         }
 
-        private void SetUnblockSource(ref bool field, bool value, string propertyName)
-        {
-            if (field == value)
-            {
-                return;
-            }
-
-            int enabledSourceCount = (this.checkBoxUnblockKugou ? 1 : 0) +
-                (this.checkBoxUnblockBodian ? 1 : 0) +
-                (this.checkBoxUnblockKuwo ? 1 : 0);
-            if (!value && enabledSourceCount <= 1)
-            {
-                RaisePropertyChanged(propertyName);
-                return;
-            }
-
-            SetProperty<bool>(ref field, value, propertyName);
-            var sources = new List<string>();
-            if (this.checkBoxUnblockKugou)
-            {
-                sources.Add("kugou");
-            }
-            if (this.checkBoxUnblockBodian)
-            {
-                sources.Add("bodian");
-            }
-            if (this.checkBoxUnblockKuwo)
-            {
-                sources.Add("kuwo");
-            }
-            UnblockNeteaseMusicSettings.Sources = sources;
-        }
-
         private async void RestartUnblockSidecarAsync()
         {
-            if (!this.CheckBoxEnableUnblockNeteaseMusic || this.IsUnblockRestarting)
+            if (!this.AudioFallback.HasUnblockSources || this.IsUnblockRestarting)
             {
                 return;
             }
@@ -1092,7 +987,7 @@ namespace Dopamine.ViewModels.FullPlayer.Settings
                     break;
             }
 
-            this.UnblockStatusText = ResourceUtils.GetString(key);
+            this.UnblockStatusText = "UnblockNeteaseMusic: " + ResourceUtils.GetString(key);
         }
 
         private string GetNeteaseErrorText(NeteaseError error)

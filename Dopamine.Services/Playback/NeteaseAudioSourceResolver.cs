@@ -13,14 +13,16 @@ namespace Dopamine.Services.Playback
     {
         private readonly INeteaseMusicService musicService;
         private readonly IList<IOnlineAudioFallbackProvider> fallbackProviders;
+        private readonly IAudioFallbackSettings settings;
 
         public NeteaseAudioSourceResolver(
             INeteaseMusicService musicService,
-            IEnumerable<IOnlineAudioFallbackProvider> fallbackProviders)
+            IEnumerable<IOnlineAudioFallbackProvider> fallbackProviders,
+            IAudioFallbackSettings settings)
         {
             this.musicService = musicService;
+            this.settings = settings;
             this.fallbackProviders = (fallbackProviders ?? Enumerable.Empty<IOnlineAudioFallbackProvider>())
-                .OrderBy(x => x.Order)
                 .ToList();
         }
 
@@ -28,8 +30,10 @@ namespace Dopamine.Services.Playback
             TrackViewModel track,
             OnlineAudioSourcePriority priority,
             bool forceRefresh,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            ISet<string> excludedSources = null)
         {
+            excludedSources = excludedSources ?? new HashSet<string>(StringComparer.Ordinal);
             string songId = track?.SourceInfo?.RemoteId;
             if (track?.SourceInfo == null || track.SourceInfo.Kind != TrackSourceKind.Netease ||
                 string.IsNullOrWhiteSpace(songId))
@@ -41,14 +45,14 @@ namespace Dopamine.Services.Playback
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (priority == OnlineAudioSourcePriority.UnblockFirst)
+            if (priority == OnlineAudioSourcePriority.FallbackFirst)
             {
                 NeteaseAudioSourceResolution proactiveFallback = await this.TryFallbackAsync(
                     track,
                     null,
                     true,
                     forceRefresh,
-                    cancellationToken);
+                    cancellationToken, excludedSources);
                 if (proactiveFallback.IsSuccess)
                 {
                     return proactiveFallback;
@@ -61,7 +65,7 @@ namespace Dopamine.Services.Playback
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            NeteaseAudioResolution official = await this.musicService.ResolveOfficialAudioAsync(
+            NeteaseAudioResolution official = excludedSources.Contains("official") ? null : await this.musicService.ResolveOfficialAudioAsync(
                 songId,
                 forceRefresh,
                 cancellationToken);
@@ -73,6 +77,7 @@ namespace Dopamine.Services.Playback
                     SongId = official.SongId ?? songId,
                     Url = official.Url,
                     ProviderId = "netease",
+                    ConfiguredSourceId = "official",
                     MediaType = official.Type,
                     CacheVariant = official.QualityLevel,
                     CacheKey = string.Format(
@@ -86,7 +91,7 @@ namespace Dopamine.Services.Playback
             }
 
             NeteaseError officialError = official?.Error ?? new NeteaseError(
-                NeteaseErrorCode.EmptyResponse,
+                excludedSources.Contains("official") ? NeteaseErrorCode.EmptyUrl : NeteaseErrorCode.EmptyResponse,
                 "Language_Netease_Service_Unavailable");
 
             if (officialError.Code == NeteaseErrorCode.Cancelled)
@@ -94,14 +99,14 @@ namespace Dopamine.Services.Playback
                 return NeteaseAudioSourceResolution.Failure(songId, officialError);
             }
 
-            if (priority != OnlineAudioSourcePriority.UnblockFirst)
+            if (priority != OnlineAudioSourcePriority.FallbackFirst)
             {
                 NeteaseAudioSourceResolution fallback = await this.TryFallbackAsync(
                     track,
                     officialError,
                     false,
                     forceRefresh,
-                    cancellationToken);
+                    cancellationToken, excludedSources);
                 if (fallback.IsSuccess)
                 {
                     return fallback;
@@ -121,12 +126,28 @@ namespace Dopamine.Services.Playback
             NeteaseError officialFailure,
             bool allowWithoutOfficialFailure,
             bool forceRefresh,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            ISet<string> excludedSources)
         {
             string songId = track?.SourceInfo?.RemoteId;
-            foreach (IOnlineAudioFallbackProvider provider in this.fallbackProviders)
+            AudioFallbackConfiguration configuration = this.settings.Current;
+            if (!configuration.Enabled) return NeteaseAudioSourceResolution.Failure(songId, null);
+            bool gdRateLimited = false;
+            foreach (AudioFallbackSource row in configuration.Sources.Where(x => x.Enabled))
             {
                 cancellationToken.ThrowIfCancellationRequested();
+                var beforeRequest = this.settings.Current;
+                if (!beforeRequest.Enabled) break;
+                if (!beforeRequest.Sources.Any(x => x.Id == row.Id && x.Enabled)) continue;
+                var definition = AudioFallbackCatalog.Find(row.Id);
+                if (definition == null || excludedSources.Contains(row.Id)) continue;
+                if (gdRateLimited && definition.ProviderId == "gdstudio")
+                {
+                    excludedSources.Add(row.Id);
+                    continue;
+                }
+                var provider = this.fallbackProviders.FirstOrDefault(x => x.Id == definition.ProviderId);
+                if (provider == null) continue;
                 if (!allowWithoutOfficialFailure &&
                     (officialFailure == null || !provider.CanHandle(officialFailure)))
                 {
@@ -137,11 +158,14 @@ namespace Dopamine.Services.Playback
                 try
                 {
                     AppLog.Info("Trying online audio fallback. Provider={0}, SongId={1}, OfficialFailure={2}",
-                        provider.Id, songId, officialFailure?.Code.ToString() ?? "none");
+                        row.Id, songId, officialFailure?.Code.ToString() ?? "none");
                     fallback = await provider.TryResolveAsync(
                         new OnlineAudioFallbackRequest
                         {
                             Track = track,
+                            Source = definition.Source,
+                            GdQuality = configuration.GdQuality,
+                            UnblockEnableFlac = configuration.UnblockEnableFlac,
                             OfficialFailure = officialFailure,
                             ForceRefresh = forceRefresh,
                             AllowWithoutOfficialFailure = allowWithoutOfficialFailure
@@ -160,10 +184,13 @@ namespace Dopamine.Services.Playback
                         "Online audio fallback failed. Provider={0}, ErrorType={1}",
                         provider.Id,
                         ex.GetType().Name);
+                    excludedSources.Add(row.Id);
                     continue;
                 }
 
                 cancellationToken.ThrowIfCancellationRequested();
+                var current = this.settings.Current;
+                if (!current.Enabled || !current.Sources.Any(x => x.Id == row.Id && x.Enabled)) continue;
                 if (fallback != null && fallback.IsSuccess && !string.IsNullOrWhiteSpace(fallback.Url))
                 {
                     AppLog.Info("Online audio fallback succeeded. Provider={0}, SongId={1}", provider.Id, songId);
@@ -180,6 +207,7 @@ namespace Dopamine.Services.Playback
                         SongId = songId,
                         Url = fallback.Url,
                         ProviderId = providerId,
+                        ConfiguredSourceId = row.Id,
                         MediaType = fallback.MediaType,
                         CacheVariant = cacheVariant,
                         CacheKey = string.Format(
@@ -192,8 +220,10 @@ namespace Dopamine.Services.Playback
                     };
                 }
 
+                if (fallback?.ErrorCode == "gd_RateLimited") gdRateLimited = true;
+                excludedSources.Add(row.Id);
                 AppLog.Info("Online audio fallback did not resolve a source. Provider={0}, SongId={1}, Reason={2}",
-                    provider.Id, songId, fallback?.ErrorCode ?? "empty_response");
+                    row.Id, songId, fallback?.ErrorCode ?? "empty_response");
                 cancellationToken.ThrowIfCancellationRequested();
             }
 

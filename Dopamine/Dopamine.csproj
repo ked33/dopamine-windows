@@ -347,6 +347,9 @@
     <Compile Include="ViewModels\FullPlayer\Settings\SettingsBlacklistViewModel.cs" />
     <Compile Include="ViewModels\FullPlayer\Settings\SettingsMenuViewModel.cs" />
     <Compile Include="ViewModels\FullPlayer\Settings\SettingsOnlineAddEditSearchProviderViewModel.cs" />
+    <Compile Include="ViewModels\FullPlayer\Settings\AudioFallbackSettingsViewModel.cs" />
+    <Compile Include="Views\FullPlayer\Settings\AudioFallbackSettingsView.xaml.cs"><DependentUpon>AudioFallbackSettingsView.xaml</DependentUpon></Compile>
+    <Page Include="Views\FullPlayer\Settings\AudioFallbackSettingsView.xaml"><Generator>MSBuild:Compile</Generator><SubType>Designer</SubType></Page>
     <Compile Include="ViewModels\FullPlayer\Settings\SettingsOnlineViewModel.cs" />
     <Compile Include="ViewModels\FullPlayer\Settings\SettingsPlaybackViewModel.cs" />
     <Compile Include="ViewModels\FullPlayer\Settings\SettingsStartupViewModel.cs" />

@@ -9,6 +9,12 @@ namespace Dopamine.Services.Playback
 
         public NeteaseError OfficialFailure { get; set; }
 
+        public string Source { get; set; } = "netease";
+
+        public int GdQuality { get; set; } = 320;
+
+        public bool UnblockEnableFlac { get; set; }
+
         public bool ForceRefresh { get; set; }
 
         public bool AllowWithoutOfficialFailure { get; set; }

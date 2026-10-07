@@ -35,16 +35,21 @@ namespace Dopamine.Services.Playback
         private UnblockSidecarState state = UnblockSidecarState.Stopped;
         private string version = string.Empty;
         private bool disposed;
+        private readonly IAudioFallbackSettings settings;
+        private bool enableFlac;
 
-        public UnblockSidecarService()
+        public UnblockSidecarService(IAudioFallbackSettings settings)
         {
+            this.settings = settings;
+            this.enableFlac = settings.Current.UnblockEnableFlac;
+            this.settings.Changed += this.Settings_Changed;
             this.idleTimer = new System.Timers.Timer(30000);
             this.idleTimer.AutoReset = true;
             this.idleTimer.Elapsed += this.IdleTimer_Elapsed;
             this.idleTimer.Start();
         }
 
-        public UnblockSidecarState State => !UnblockNeteaseMusicSettings.IsEnabled
+        public UnblockSidecarState State => !this.settings.Current.HasUnblockSources
             ? UnblockSidecarState.Disabled
             : this.state;
 
@@ -56,7 +61,7 @@ namespace Dopamine.Services.Playback
             UnblockSidecarMatchRequest request,
             CancellationToken cancellationToken)
         {
-            if (!UnblockNeteaseMusicSettings.IsEnabled)
+            if (!this.settings.Current.HasUnblockSources)
             {
                 return Failure("disabled");
             }
@@ -140,13 +145,14 @@ namespace Dopamine.Services.Playback
         public void Stop()
         {
             this.StopProcess();
-            this.SetState(UnblockNeteaseMusicSettings.IsEnabled
+            this.SetState(this.settings.Current.HasUnblockSources
                 ? UnblockSidecarState.Stopped
                 : UnblockSidecarState.Disabled);
         }
 
         private async Task<bool> EnsureStartedAsync(CancellationToken cancellationToken)
         {
+            if (!this.settings.Current.HasUnblockSources) return false;
             if (this.process != null && !this.process.HasExited && this.httpClient != null && this.state == UnblockSidecarState.Ready)
             {
                 return true;
@@ -155,6 +161,7 @@ namespace Dopamine.Services.Playback
             await this.lifecycleGate.WaitAsync(cancellationToken);
             try
             {
+                if (!this.settings.Current.HasUnblockSources) return false;
                 if (this.process != null && !this.process.HasExited && this.httpClient != null && this.state == UnblockSidecarState.Ready)
                 {
                     return true;
@@ -183,7 +190,7 @@ namespace Dopamine.Services.Playback
                 };
                 startInfo.EnvironmentVariables["DOPAMINE_UNBLOCK_TOKEN"] = this.token;
                 startInfo.EnvironmentVariables["DOPAMINE_PARENT_PID"] = Process.GetCurrentProcess().Id.ToString();
-                startInfo.EnvironmentVariables["ENABLE_FLAC"] = UnblockNeteaseMusicSettings.EnableFlac ? "true" : "false";
+                startInfo.EnvironmentVariables["ENABLE_FLAC"] = this.settings.Current.UnblockEnableFlac ? "true" : "false";
                 startInfo.EnvironmentVariables["LOG_LEVEL"] = "error";
                 startInfo.EnvironmentVariables["JSON_LOG"] = "true";
                 startInfo.EnvironmentVariables["FOLLOW_SOURCE_ORDER"] = "true";
@@ -285,6 +292,32 @@ namespace Dopamine.Services.Playback
         private void TouchActivity()
         {
             this.lastActivityUtc = DateTime.UtcNow;
+        }
+
+        private async void Settings_Changed(object sender, EventArgs e)
+        {
+            var configuration = this.settings.Current;
+            bool shouldStop = !configuration.HasUnblockSources || configuration.UnblockEnableFlac != this.enableFlac;
+            this.enableFlac = configuration.UnblockEnableFlac;
+            try
+            {
+                if (shouldStop && !this.disposed)
+                {
+                    await this.lifecycleGate.WaitAsync();
+                    try
+                    {
+                        await this.requestGate.WaitAsync();
+                        try { this.Stop(); }
+                        finally { this.requestGate.Release(); }
+                    }
+                    finally { this.lifecycleGate.Release(); }
+                }
+                this.StateChanged(this, EventArgs.Empty);
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warning("Could not update Unblock sidecar settings. ErrorType={0}", ex.GetType().Name);
+            }
         }
 
         private void IdleTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
@@ -416,6 +449,7 @@ namespace Dopamine.Services.Playback
             }
 
             this.disposed = true;
+            this.settings.Changed -= this.Settings_Changed;
             try
             {
                 this.idleTimer.Stop();

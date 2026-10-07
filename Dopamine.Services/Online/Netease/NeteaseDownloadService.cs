@@ -130,23 +130,20 @@ namespace Dopamine.Services.Online.Netease
                 }
 
                 OnlineAudioSourcePriority preferredPriority = NeteaseDownloadSettings.SourcePriority;
-                OnlineAudioSourcePriority alternatePriority = preferredPriority == OnlineAudioSourcePriority.UnblockFirst
-                    ? OnlineAudioSourcePriority.OfficialFirst
-                    : OnlineAudioSourcePriority.UnblockFirst;
                 var attemptedSources = new HashSet<string>(StringComparer.Ordinal);
                 NeteaseAudioSourceResolution source = null;
                 NeteaseResult<string> cached = null;
                 string extension = null;
                 string failureMessageKey = "Language_Netease_Download_Source_Unavailable";
 
-                foreach (OnlineAudioSourcePriority priority in new[] { preferredPriority, alternatePriority })
+                for (int attempt = 0; attempt <= AudioFallbackCatalog.Sources.Count; attempt++)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     NeteaseAudioSourceResolution candidate = await this.audioSourceResolver.ResolveAsync(
                         track,
-                        priority,
-                        priority != preferredPriority,
-                        cancellationToken);
+                        preferredPriority,
+                        false,
+                        cancellationToken, attemptedSources);
                     if (candidate == null || !candidate.IsSuccess)
                     {
                         if (candidate?.Error?.Code == NeteaseErrorCode.Cancelled)
@@ -155,8 +152,10 @@ namespace Dopamine.Services.Online.Netease
                         }
 
                         failureMessageKey = candidate?.Error?.MessageKey ?? failureMessageKey;
-                        continue;
+                        break;
                     }
+
+                    if (!attemptedSources.Add(candidate.ConfiguredSourceId)) break;
 
                     string candidateExtension = NeteaseTemporaryAudioCache.NormalizeExtension(
                         candidate.MediaType,
@@ -164,13 +163,6 @@ namespace Dopamine.Services.Online.Netease
                     if (string.Equals(candidateExtension, ".audio", StringComparison.OrdinalIgnoreCase))
                     {
                         failureMessageKey = "Language_Netease_Download_Unsupported_Format";
-                        continue;
-                    }
-
-                    string sourceIdentity = (candidate.CacheKey ?? string.Empty) + "\n" + candidate.Url;
-                    if (string.IsNullOrWhiteSpace(candidate.CacheKey) ||
-                        !attemptedSources.Add(sourceIdentity))
-                    {
                         continue;
                     }
 

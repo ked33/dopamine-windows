@@ -108,18 +108,18 @@ namespace Dopamine.Tests
         }
 
         [Test]
-        public async Task DoesNotReplaceExplicitUnblockFirstOrResolveOtherPlatforms()
+        public async Task FallbackFirstIsSupportedButExternalOnlineTracksAreNot()
         {
             var api = new FakeGdApi();
             var provider = new GdMusicAudioFallbackProvider(api);
             var request = CreateRequest();
             request.OfficialFailure = null;
             request.AllowWithoutOfficialFailure = true;
-            Assert.That((await provider.TryResolveAsync(request, CancellationToken.None)).IsSuccess, Is.False);
+            Assert.That((await provider.TryResolveAsync(request, CancellationToken.None)).IsSuccess, Is.True);
             request = CreateRequest();
             request.Track.SourceInfo.Kind = TrackSourceKind.ExternalOnline;
             Assert.That((await provider.TryResolveAsync(request, CancellationToken.None)).IsSuccess, Is.False);
-            Assert.That(api.Calls, Is.Zero);
+            Assert.That(api.Calls, Is.EqualTo(1));
         }
 
         [Test]
@@ -143,6 +143,50 @@ namespace Dopamine.Tests
             };
         }
 
+        [TestCase("joox")]
+        [TestCase("bilibili")]
+        [TestCase("tencent")]
+        [TestCase("kuwo")]
+        [TestCase("tidal")]
+        [TestCase("qobuz")]
+        [TestCase("apple")]
+        [TestCase("ytmusic")]
+        [TestCase("spotify")]
+        public async Task EveryCrossPlatformSourceUsesItsOwnMatchedIdAndConfiguredQuality(string source)
+        {
+            var request = CreateRequest();
+            request.Source = source;
+            request.GdQuality = 999;
+            request.Track.Track.TrackTitle = "Song";
+            request.Track.Track.Artists = "Artist";
+            var api = new FakeGdApi { SearchResults = new[] {
+                new GdMusicSearchResult { Id = "different-id", Name = "Song", Artists = new[] { "Artist" }, Source = source }
+            } };
+            var provider = new GdMusicAudioFallbackProvider(api);
+            Assert.That((await provider.TryResolveAsync(request, CancellationToken.None)).IsSuccess, Is.True);
+            Assert.That(api.Source, Is.EqualTo(source));
+            Assert.That(api.TrackId, Is.EqualTo("different-id"));
+            Assert.That(api.Bitrate, Is.EqualTo(999));
+            await provider.TryResolveAsync(request, CancellationToken.None);
+            Assert.That(api.SearchCalls, Is.EqualTo(1));
+            request.GdQuality = 320;
+            await provider.TryResolveAsync(request, CancellationToken.None);
+            Assert.That(api.Calls, Is.EqualTo(2));
+        }
+
+        [Test]
+        public async Task NoConfidentMatchDoesNotRequestAnAudioUrl()
+        {
+            var request = CreateRequest();
+            request.Source = "joox";
+            request.Track.Track.TrackTitle = "Song";
+            request.Track.Track.Artists = "Artist";
+            var api = new FakeGdApi();
+            var result = await new GdMusicAudioFallbackProvider(api).TryResolveAsync(request, CancellationToken.None);
+            Assert.That(result.ErrorCode, Is.EqualTo("gd_no_confident_match"));
+            Assert.That(api.Calls, Is.Zero);
+        }
+
         internal static NeteaseResult<GdMusicTrackUrl> Success(string url = "https://example.test/song.mp3")
         {
             return NeteaseResult<GdMusicTrackUrl>.Success(new GdMusicTrackUrl { Url = url, BitRate = 320, SizeBytes = 8837805 });
@@ -150,6 +194,8 @@ namespace Dopamine.Tests
 
         internal sealed class FakeGdApi : IGdMusicApiClient
         {
+            public int SearchCalls;
+            public IReadOnlyList<GdMusicSearchResult> SearchResults = new GdMusicSearchResult[0];
             public int Calls;
             public string Source;
             public string TrackId;
@@ -165,7 +211,7 @@ namespace Dopamine.Tests
                 return Response;
             }
             public Task<NeteaseResult<IReadOnlyList<GdMusicSearchResult>>> SearchAsync(string source, string keyword, int count, int page, CancellationToken cancellationToken)
-            { throw new InvalidOperationException("Fallback must not search for a potentially different song."); }
+            { SearchCalls++; return Task.FromResult(NeteaseResult<IReadOnlyList<GdMusicSearchResult>>.Success(SearchResults)); }
             public Task<NeteaseResult<string>> GetPictureUrlAsync(string source, string pictureId, CancellationToken cancellationToken)
             { throw new NotSupportedException(); }
         }

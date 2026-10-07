@@ -44,7 +44,8 @@ namespace Dopamine.Services.Playback
             OnlineAudioFallbackRequest request,
             CancellationToken cancellationToken)
         {
-            if (!UnblockNeteaseMusicSettings.IsEnabled || request?.Track?.SourceInfo == null ||
+            if (request?.Track?.SourceInfo?.Kind != TrackSourceKind.Netease ||
+                AudioFallbackCatalog.Find("unblock:" + request.Source) == null ||
                 (!request.AllowWithoutOfficialFailure && !this.CanHandle(request.OfficialFailure)))
             {
                 return OnlineAudioFallbackResult.Failure("not_applicable");
@@ -57,7 +58,7 @@ namespace Dopamine.Services.Playback
             long duration = track.Track.Duration ?? 0;
 
             if (string.IsNullOrWhiteSpace(track.SourceInfo.RemoteId) || string.IsNullOrWhiteSpace(track.TrackTitle) ||
-                duration <= 0 || UnblockNeteaseMusicSettings.Sources.Count == 0)
+                duration <= 0)
             {
                 return OnlineAudioFallbackResult.Failure("invalid_track_metadata");
             }
@@ -70,7 +71,7 @@ namespace Dopamine.Services.Playback
                     Artists = artists,
                     Album = track.Track.AlbumTitle ?? string.Empty,
                     DurationMilliseconds = duration,
-                    Sources = UnblockNeteaseMusicSettings.Sources
+                    Sources = new[] { request.Source }
                 },
                 cancellationToken);
 
@@ -83,9 +84,9 @@ namespace Dopamine.Services.Playback
             {
                 IsSuccess = true,
                 Url = result.Url,
-                ProviderId = string.IsNullOrWhiteSpace(result.Source) ? this.Id : result.Source,
+                ProviderId = "unblock-" + request.Source,
                 MediaType = result.MediaType,
-                CacheVariant = UnblockNeteaseMusicSettings.EnableFlac ? "flac" : "320k",
+                CacheVariant = request.UnblockEnableFlac ? "flac" : "320k",
                 Bitrate = result.Bitrate,
                 Size = result.Size
             };

@@ -1,6 +1,7 @@
 ﻿using Dopamine.Core.Audio;
 using Dopamine.Services.Entities;
 using Dopamine.Services.Online.Netease;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -35,32 +36,43 @@ namespace Dopamine.Services.Playback
                 this.temporaryAudioCache.Invalidate(track.SourceInfo.RemoteId);
             }
 
-            NeteaseAudioSourceResolution source = await this.audioSourceResolver.ResolveAsync(
-                track,
-                OnlineAudioSourcePriority.OfficialFirst,
-                forceRefresh,
-                cancellationToken);
-            if (source == null || !source.IsSuccess)
+            var excluded = new HashSet<string>();
+            NeteaseError lastDownloadError = null;
+            for (int attempt = 0; attempt <= AudioFallbackCatalog.Sources.Count; attempt++)
             {
-                return Failure(MapFailureReason(source?.Error), source?.Error?.MessageKey);
-            }
+                NeteaseAudioSourceResolution source = await this.audioSourceResolver.ResolveAsync(
+                    track,
+                    OnlineAudioSourcePriority.OfficialFirst,
+                    forceRefresh,
+                    cancellationToken, excluded);
+                if (source == null || !source.IsSuccess)
+                {
+                    var error = source?.Error?.Code == NeteaseErrorCode.Cancelled ? source.Error : lastDownloadError ?? source?.Error;
+                    return Failure(MapFailureReason(error), error?.MessageKey);
+                }
 
-            NeteaseResult<string> cached = await this.temporaryAudioCache.GetOrDownloadAsync(
-                source.CacheKey,
-                source.Url,
-                source.MediaType,
-                request?.BufferingProgress,
-                cancellationToken);
-            if (!cached.IsSuccess)
-            {
-                return Failure(MapFailureReason(cached.Error), cached.Error?.MessageKey);
-            }
+                NeteaseResult<string> cached = await this.temporaryAudioCache.GetOrDownloadAsync(
+                    source.CacheKey,
+                    source.Url,
+                    source.MediaType,
+                    request?.BufferingProgress,
+                    cancellationToken);
+                if (!cached.IsSuccess)
+                {
+                    if (cached.Error?.Code == NeteaseErrorCode.Cancelled)
+                        return Failure(MapFailureReason(cached.Error), cached.Error.MessageKey);
+                    lastDownloadError = cached.Error;
+                    excluded.Add(source.ConfiguredSourceId);
+                    continue;
+                }
 
-            return new PlaybackSourceResolution
-            {
-                IsSuccess = true,
-                AudioSource = AudioSource.FromLocalFile(cached.Value)
-            };
+                return new PlaybackSourceResolution
+                {
+                    IsSuccess = true,
+                    AudioSource = AudioSource.FromLocalFile(cached.Value)
+                };
+            }
+            return Failure(MapFailureReason(lastDownloadError), lastDownloadError?.MessageKey);
         }
 
         private static PlaybackSourceResolution Failure(PlaybackFailureReason reason, string messageKey)

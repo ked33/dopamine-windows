@@ -150,6 +150,8 @@
     <Compile Include="NeteaseApiMappingTests.cs" />
     <Compile Include="GdMusicApiMappingTests.cs" />
     <Compile Include="GdMusicAudioFallbackTests.cs" />
+    <Compile Include="AudioFallbackSettingsTests.cs" />
+    <Compile Include="GdMusicFallbackMatcherTests.cs" />
     <Compile Include="GdMusicRequestBudgetTests.cs" />
     <Compile Include="NeteaseFallbackPipelineTests.cs" />
     <Compile Include="NeteaseCookieHeaderParserTests.cs" />

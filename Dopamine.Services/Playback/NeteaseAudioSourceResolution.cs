@@ -5,7 +5,8 @@ namespace Dopamine.Services.Playback
     public enum OnlineAudioSourcePriority
     {
         OfficialFirst = 0,
-        UnblockFirst = 1
+        FallbackFirst = 1,
+        UnblockFirst = FallbackFirst
     }
 
     public sealed class NeteaseAudioSourceResolution
@@ -15,6 +16,8 @@ namespace Dopamine.Services.Playback
         public string SongId { get; set; }
 
         public string Url { get; set; }
+
+        public string ConfiguredSourceId { get; set; }
 
         public string ProviderId { get; set; }
 

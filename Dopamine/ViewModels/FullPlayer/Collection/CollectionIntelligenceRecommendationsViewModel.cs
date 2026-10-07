@@ -699,8 +699,7 @@ namespace Dopamine.ViewModels.FullPlayer.Collection
             FileInformation view = this.container.Resolve<FileInformation>();
             view.DataContext = new FileInformationViewModel(
                 target,
-                this.musicService,
-                this.container.Resolve<IEnumerable<IOnlineAudioFallbackProvider>>());
+                this.container.Resolve<NeteaseAudioSourceResolver>());
             this.dialogService.ShowCustomDialog(
                 0xe8d6,
                 16,

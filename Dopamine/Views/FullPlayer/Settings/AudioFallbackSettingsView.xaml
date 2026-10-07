@@ -1,0 +1,48 @@
+<UserControl x:Class="Dopamine.Views.FullPlayer.Settings.AudioFallbackSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dc="clr-namespace:Digimezzo.Foundation.WPF.Controls;assembly=Digimezzo.Foundation.WPF">
+    <StackPanel MaxWidth="620" HorizontalAlignment="Left">
+        <Label Margin="0,20,0,0" Style="{StaticResource TitleLabel}" Content="{DynamicResource Language_Audio_Fallback_Title}"/>
+        <TextBlock Text="{DynamicResource Language_Audio_Fallback_Description}" Foreground="{DynamicResource Brush_PrimaryText}" TextWrapping="Wrap"/>
+        <dc:Windows10ToggleSwitch Margin="0,12,0,0" HorizontalAlignment="Left" FontSize="12"
+            OnLabel="{DynamicResource Language_Yes}" OffLabel="{DynamicResource Language_No}"
+            Foreground="{DynamicResource Brush_PrimaryText}" Accent="{DynamicResource Brush_Accent}"
+            IsChecked="{Binding Enabled, Mode=TwoWay}"/>
+        <TextBlock Margin="0,8,0,0" Text="{Binding SaveError}" Foreground="{DynamicResource Brush_PrimaryText}" TextWrapping="Wrap"/>
+        <TextBlock Margin="0,8,0,8" Text="{DynamicResource Language_Audio_Fallback_Order}" Foreground="{DynamicResource Brush_SecondaryText}" TextWrapping="Wrap"/>
+        <ItemsControl ItemsSource="{Binding Sources}" HorizontalContentAlignment="Stretch">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <dc:Windows10ToggleSwitch HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="12"
+                            OnLabel="{Binding Name}" OffLabel="{Binding Name}" Foreground="{DynamicResource Brush_PrimaryText}"
+                            Accent="{DynamicResource Brush_Accent}" IsChecked="{Binding Enabled, Mode=TwoWay}"/>
+                        <Button Grid.Column="1" Margin="12,0,0,0" Style="{StaticResource RegularButton}"
+                            Content="↑" ToolTip="{DynamicResource Language_Audio_Fallback_Move_Up}"
+                            AutomationProperties.Name="{DynamicResource Language_Audio_Fallback_Move_Up}" Command="{Binding MoveUpCommand}"/>
+                        <Button Grid.Column="2" Margin="6,0,0,0" Style="{StaticResource RegularButton}"
+                            Content="↓" ToolTip="{DynamicResource Language_Audio_Fallback_Move_Down}"
+                            AutomationProperties.Name="{DynamicResource Language_Audio_Fallback_Move_Down}" Command="{Binding MoveDownCommand}"/>
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock Margin="0,12,0,0" Text="{DynamicResource Language_Audio_Fallback_Gd_Quality}" Foreground="{DynamicResource Brush_PrimaryText}"/>
+        <ComboBox Margin="0,8,0,0" Width="220" HorizontalAlignment="Left" Style="{StaticResource MetroComboBox}"
+            ItemsSource="{Binding GdQualities}" DisplayMemberPath="Value" SelectedValuePath="Key"
+            SelectedValue="{Binding GdQuality, Mode=TwoWay}"/>
+        <TextBlock Margin="0,8,0,0" Text="{DynamicResource Language_Audio_Fallback_Gd_Notice}" Foreground="{DynamicResource Brush_SecondaryText}" TextWrapping="Wrap"/>
+        <TextBlock Margin="0,12,0,0" Text="{DynamicResource Language_Audio_Fallback_Unblock_Flac}" Foreground="{DynamicResource Brush_PrimaryText}"/>
+        <dc:Windows10ToggleSwitch Margin="0,8,0,0" HorizontalAlignment="Left" FontSize="12"
+            OnLabel="{DynamicResource Language_Yes}" OffLabel="{DynamicResource Language_No}"
+            Foreground="{DynamicResource Brush_PrimaryText}" Accent="{DynamicResource Brush_Accent}"
+            IsChecked="{Binding UnblockEnableFlac, Mode=TwoWay}"/>
+        <TextBlock Margin="0,8,0,0" Text="{DynamicResource Language_GdMusic_Attribution}" Foreground="{DynamicResource Brush_SecondaryText}" TextWrapping="Wrap"/>
+    </StackPanel>
+</UserControl>

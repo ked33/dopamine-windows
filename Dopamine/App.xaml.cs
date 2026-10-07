@@ -311,6 +311,7 @@ namespace Dopamine
                 containerRegistry.RegisterSingleton<INeteaseSessionService, NeteaseSessionService>();
                 containerRegistry.RegisterSingleton<INeteaseMusicService, NeteaseMusicService>();
                 containerRegistry.RegisterSingleton<INeteasePersonalFmService, NeteasePersonalFmService>();
+                containerRegistry.RegisterInstance<IAudioFallbackSettings>(new AudioFallbackSettings());
                 containerRegistry.RegisterSingleton<IUnblockSidecarService, UnblockSidecarService>();
                 containerRegistry.RegisterSingleton<IOnlineAudioFallbackProvider, UnblockNeteaseMusicFallbackProvider>();
                 // A named registration preserves the existing provider in IEnumerable<T>.
